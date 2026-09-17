@@ -1,0 +1,18 @@
+#share-dialog{width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #78908030;border-radius:24px;padding:24px;color:#35483b;background:#faf9f3;box-shadow:0 24px 100px #10271f40}
+#share-dialog::backdrop{background:#142b255c;backdrop-filter:blur(6px)}
+.share-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.share-heading span{font-size:12px;letter-spacing:3px;color:#647967}
+#share-close{display:grid;place-items:center;width:44px;height:44px;min-width:44px;padding:10px;border:0;border-radius:50%}
+#share-close svg{width:20px;height:20px}
+#share-image{display:block;width:100%;height:auto;aspect-ratio:1200/630;object-fit:contain;border-radius:16px;background:#e9f0e5}
+#share-title{font-size:23px;line-height:1.4;letter-spacing:1px;margin:22px 0 8px}
+#share-description{font-size:14px;line-height:1.8;margin:0;color:#617363}
+.share-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.share-actions button{flex:1;white-space:nowrap;padding:13px 18px}
+.share-actions .primary:hover{background:#294c39}
+#share-download{display:block;text-align:center;font-size:13px;padding:12px;margin-top:6px;text-underline-offset:4px}
+#share-message{font-size:12px;line-height:1.7;color:#617363;margin:10px 0 0;min-height:21px}
+#share-manual{width:100%;min-height:118px;margin-top:12px;padding:12px;border:1px solid #78908060;border-radius:12px;background:#fff;color:#35483b;font:inherit;font-size:13px;line-height:1.7;resize:vertical}
+.night #share-dialog .primary{background:#355d47;color:#fff}
+.night #share-dialog .primary:hover{background:#294c39}
+@media(max-width:480px){#share-dialog{padding:20px;border-radius:20px}#share-title{font-size:21px}}

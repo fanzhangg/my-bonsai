@@ -9,10 +9,12 @@ import {configForClaim} from './prototype/claim.mjs';
 import {applyCheat} from './prototype/cheats.mjs';
 import {coordinates,weatherAt} from './weather-service.mjs';
 import {activity,activityKey,GALLERY_LIMIT,GALLERY_PAGE_SIZE,GALLERY_SORTS} from './activity.mjs';
+import {publicOrigin,shareMetadata,createShareImageCache} from './share-preview.mjs';
 const root=path.resolve(fileURLToPath(new URL('./prototype/',import.meta.url)));
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
-export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_WEATHER_ENABLED!=='false'}={}){
+export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_WEATHER_ENABLED!=='false',publicBaseUrl=process.env.PUBLIC_BASE_URL||process.env.RENDER_EXTERNAL_URL}={}){
+  const shareImage=createShareImageCache();
   return http.createServer(async(req,res)=>{
     const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
     try{
@@ -103,9 +105,21 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
         fail(405,'不支持的操作');
       }
       if(!['GET','HEAD'].includes(req.method))fail(405,'不支持的操作');
+      const treePage=url.pathname.match(/^\/t\/([^/]+)(\/share\.png)?$/);
+      let sharedTree;
+      if(treePage){
+        if(!uuid(treePage[1]))fail(404,'找不到这盆树');
+        sharedTree=await store.get(treePage[1]);if(!sharedTree)fail(404,'找不到这盆树，请检查链接');
+        if(treePage[2]){
+          const png=req.method==='HEAD'?undefined:shareImage(sharedTree);
+          res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'public, max-age=60','X-Content-Type-Options':'nosniff'});
+          return res.end(png);
+        }
+      }
       const name=url.pathname==='/gallery'||url.pathname==='/gallery/'?'/gallery.html':url.pathname==='/'||/^\/t\/[^/]+$/.test(url.pathname)?'/index.html':decodeURIComponent(url.pathname);
       const target=path.resolve(root,`.${name}`);if(!target.startsWith(root+path.sep)||!['.html','.css','.mjs','.svg'].includes(path.extname(target)))fail(404,'找不到页面');
       let file;try{file=await readFile(target);}catch{fail(404,'找不到页面');}
+      if(sharedTree)file=file.toString('utf8').replace('<title>一盆树</title>',shareMetadata(sharedTree,publicOrigin(req,publicBaseUrl)));
       res.writeHead(200,{'Content-Type':({'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[path.extname(target)]+'; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});res.end(req.method==='HEAD'?undefined:file);
     }catch(e){send(e.status||503,{error:e.status?e.message:'暂时无法保存，请稍后重试'});}
   });
