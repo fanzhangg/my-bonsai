@@ -5,6 +5,7 @@ import {render} from './growing-render.mjs';
 import {TONES,SHAPES,PATTERNS,POT_PRESETS,potSvg} from './design-system-pots.mjs';
 import {createColorReview} from './colors.mjs';
 import {createVisitorReview} from './design-system-visitors.mjs';
+import {createWateringReview} from './design-system-watering.mjs';
 import {createPruningReview} from './design-system-pruning.mjs';
 import {MORPHOLOGY} from './morphology.mjs';
 
@@ -75,6 +76,7 @@ function showPanel(name,updateHash=true){
   if(name==='colors')colorReview.render();
   visitorReview.setActive(name==='visitors');
   pruningReview.setActive(name==='pruning');
+  wateringReview.setActive(name==='watering');
   const motionFrame=$('motion-preview');
   if(name==='motion'){if(!motionFrame.hasAttribute('src'))motionFrame.src='/motion-preview.html';}
   else if(motionFrame.hasAttribute('src'))motionFrame.removeAttribute('src');
@@ -117,5 +119,6 @@ const colorReview=createColorReview({
 document.querySelectorAll('[data-open-colors]').forEach(button=>button.addEventListener('click',()=>{showPanel('colors');$('tab-colors').focus();}));
 const visitorReview=createVisitorReview({getState:()=>state,renderTree:()=>scene(state.tree,state,state.look,state.stage)});
 const pruningReview=createPruningReview();
+const wateringReview=createWateringReview();
 window.addEventListener('hashchange',()=>showPanel(location.hash.slice(1),false));
 paint();showPanel(location.hash.slice(1)||'compose',false);

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"><link rel="stylesheet" href="/design-system-watering.css"></head>
 <body>
 <header class="masthead"><a class="brand" href="/">一盆树<span>形态、色彩与界面设计系统</span></a><span class="draft">v0.2 · 待审核</span></header>
 <main>
@@ -14,6 +14,7 @@
     <button id="tab-motion" role="tab" aria-controls="panel-motion" aria-selected="false" tabindex="-1">06 动效设计</button>
     <button id="tab-visitors" role="tab" aria-controls="panel-visitors" aria-selected="false" tabindex="-1">07 小小访客</button>
     <button id="tab-pruning" role="tab" aria-controls="panel-pruning" aria-selected="false" tabindex="-1">08 剪枝</button>
+    <button id="tab-watering" role="tab" aria-controls="panel-watering" aria-selected="false" tabindex="-1">09 浇水</button>
   </nav>
   <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
     <div class="composer">
@@ -98,6 +99,27 @@
             <path d="M-13 17 C-20 12 -30 19 -32 29 C-35 41 -29 48 -21 45 C-13 43 -8 32 -9 24 C-9 21 -11 19 -13 17 Z M-17 23 C-13 25 -16 36 -22 39 C-27 42 -29 36 -27 30 C-25 23 -21 20 -17 23 Z" fill-rule="evenodd"/>
           </g>
           <circle r="4" fill="#b49a70"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+  <section id="panel-watering" role="tabpanel" aria-labelledby="tab-watering" hidden>
+    <div id="watering-scene" class="watering-scene">
+      <div id="watering-tree" class="watering-tree"></div>
+      <svg id="watering-water" class="watering-water" aria-hidden="true"></svg>
+      <p id="watering-status" class="watering-sr-only" role="status" aria-live="polite">拖动水壶到花盆附近，自动浇水。</p>
+      <button id="watering-can" class="watering-can" aria-label="拖动水壶到花盆附近浇水，浇水时可继续移动；也可按空格拿起，方向键移动" aria-describedby="watering-status">
+        <svg viewBox="-60 -55 120 110" aria-hidden="true">
+          <g class="watering-vessel">
+            <path d="M19 -17 C51 -27 55 14 26 20" fill="none" stroke="#768b77" stroke-width="8"/>
+            <path d="M-17 11 L-42 -15 L-48 -11 L-30 22 L-14 24Z" fill="#8b9d89"/>
+            <path d="M-49 -22 L-39 -15 L-45 -6 L-55 -13Z" fill="#b7bca7"/>
+            <path class="watering-nozzle-water" d="M-49 -20 L-52 -13 L-46 -9 L-42 -15Z" fill="#78afc6"/>
+            <path d="M-25 -17 Q-29 -17 -28 -10 L-24 29 Q0 39 25 29 L29 -10 Q30 -17 25 -17Z" fill="#839780"/>
+            <ellipse cy="-17" rx="26" ry="6" fill="#a9b69e"/>
+            <ellipse cy="-18" rx="16" ry="3" fill="#5f7565"/>
+            <ellipse class="watering-nozzle-water" cy="-18" rx="16" ry="3" fill="#78afc6"/>
+          </g>
         </svg>
       </button>
     </div>
