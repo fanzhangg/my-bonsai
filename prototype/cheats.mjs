@@ -37,9 +37,9 @@ export function applyCheat(record,body,at){
  const rawWater=body.waterings??(record.waterings??[]).map(w=>({id:w.id,used:w.used,hour:(w.at-record.createdAt)/HOUR}));
  if(!Array.isArray(rawWater)||rawWater.length>256)fail(400,'无效浇水记录');
  const waterIds=new Set(),waterings=rawWater.map(w=>{
-  if(!w||!uuid(w.id)||waterIds.has(w.id)||!Number.isFinite(w.used)||w.used<=0||w.used>WATER_CAPACITY+.01||!validHour(w.hour))fail(400,'无效浇水记录');
-  if(!Number.isFinite(w.recoveryHours??0)||(w.recoveryHours??0)<0||(w.recoveryHours??0)>Math.min(w.used,WATER_CAPACITY)/WATER_CAPACITY*WATER_RECOVERY_HOURS_PER_TANK+1e-8)fail(400,'无效恢复生长记录');
-  const previous=(record.waterings??[]).find(old=>old.id===w.id&&old.used===w.used);
+  const previous=(record.waterings??[]).find(old=>old.id===w?.id&&old.used===w?.used);
+  if(!w||!uuid(w.id)||waterIds.has(w.id)||!Number.isFinite(w.used)||w.used<=0||(!previous&&w.used>WATER_CAPACITY+.01)||!validHour(w.hour))fail(400,'无效浇水记录');
+  if(!Number.isFinite(w.recoveryHours??0)||(w.recoveryHours??0)<0||(w.recoveryHours??0)>Math.max(previous?.recoveryHours??0,Math.min(w.used,WATER_CAPACITY)/WATER_CAPACITY*WATER_RECOVERY_HOURS_PER_TANK)+1e-8)fail(400,'无效恢复生长记录');
   waterIds.add(w.id);return {id:w.id,used:w.used,recoveryHours:w.recoveryHours??0,at:createdAt+w.hour*HOUR,amount:previous?.amount??Math.min(w.used,WATER_CAPACITY)/WATER_CAPACITY*WATER_GROWTH_PER_TANK};
  });
  const history={config,createdAt,cuts:[],waterings};

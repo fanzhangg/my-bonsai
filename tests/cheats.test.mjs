@@ -84,3 +84,13 @@ test('rebasing preserves historical watering amounts after growth rate changes',
  assert.equal(saved.waterings[0].amount,.025);
  assert.deepEqual(snapshot(saved,2000000000000),snapshot(record,record.createdAt+24*HOUR));
 });
+
+test('rebasing preserves saved larger tanks and recovery from before the slowdown',()=>{
+ const record={createdAt:100000,config:configForClaim(randomUUID()),cuts:[],waterings:[{id:randomUUID(),at:100000,used:8000,amount:.2,recoveryHours:48}]};
+ const saved=applyCheat(record,cheatRequest(record,24),2000000000000);
+ assert.equal(saved.waterings[0].amount,.2);
+ assert.equal(saved.waterings[0].recoveryHours,48);
+ assert.equal(saved.waterings[0].used,8000);
+ const request=cheatRequest(record,24);request.waterings[0].id=randomUUID();
+ assert.throws(()=>applyCheat(record,request,2000000000000),{status:400});
+});

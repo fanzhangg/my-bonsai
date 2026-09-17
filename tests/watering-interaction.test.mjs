@@ -27,7 +27,7 @@ test('only the primary touch can pick up the watering can; unrelated capture los
  fire(can,'pointerdown');assert.equal(watering.busy,true);
  fire(can,'pointerdown',secondary);fire(can,'pointercancel',secondary);fire(can,'lostpointercapture',secondary);fire(can,'pointerup',secondary);
  assert.equal(watering.busy,true);assert.ok(can.classList.contains('is-held'));
- fire(can,'pointercancel');assert.equal(watering.busy,false);assert.equal(can.dataset.remaining,'8000');
+ fire(can,'pointercancel');assert.equal(watering.busy,false);assert.equal(can.dataset.remaining,'4000');
  fire(can,'pointerdown');fire(can,'lostpointercapture');assert.equal(watering.busy,false);
 });
 
