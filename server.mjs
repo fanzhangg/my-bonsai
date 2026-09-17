@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {openStore} from './storage.mjs';
-import {VERSION} from './prototype/growth.mjs';
+import {VERSION,snapshot} from './prototype/growth.mjs';
 import {configForClaim} from './prototype/claim.mjs';
 import {coordinates,weatherAt} from './weather-service.mjs';
 const root=path.resolve(fileURLToPath(new URL('./prototype/',import.meta.url)));
@@ -29,7 +29,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
       if(url.pathname.startsWith('/api/')){
         const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts))?)?$/);if(!route)fail(404,'找不到页面');
         const [,id,action]=route;if(id&&!uuid(id))fail(404,'找不到这盆树');
-        if(action)fail(410,'当前版本仅支持观察生长');
+        if(action==='join')fail(410,'当前版本不支持加入');
         let body={};
         if(req.method==='POST'){
           if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)fail(403,'请从应用页面提交');
@@ -39,6 +39,18 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
         const result=tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,serverNow:Date.now()});
         if(req.method==='GET'&&id&&!action){const tree=await store.get(id);if(!tree)fail(404,'找不到这盆树，请检查链接');return send(200,result(tree));}
         if(req.method!=='POST')fail(405,'不支持的操作');
+        if(action==='cuts'){
+          if(!uuid(body.id)||typeof body.branchId!=='string'||body.branchId.length>100)fail(400,'无效剪枝请求');
+          const tree=await store.mutate(id,old=>{
+            if(!old)fail(404,'找不到这盆树');
+            const existing=old.cuts.find(c=>c.id===body.id);
+            if(existing){if(existing.branchId!==body.branchId)fail(409,'剪枝请求已使用');return old;}
+            const at=Date.now(),branch=snapshot(old,at).nodes.find(n=>n.id===body.branchId);
+            if(!branch||branch.role!=='primary'||branch.growth<=0)fail(409,'这根枝条无法修剪');
+            return {...old,cuts:[...old.cuts,{id:body.id,seq:old.cuts.length+1,at,branchId:branch.id}]};
+          });
+          return send(200,result(tree));
+        }
         if(!id){
           if(!uuid(body.id))fail(400,'无效创建编号');
           const tree=await store.mutate(body.id,old=>old??{id:body.id,version:VERSION,createdAt:Date.now(),config:configForClaim(body.id),cuts:[]});

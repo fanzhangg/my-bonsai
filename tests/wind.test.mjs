@@ -52,6 +52,9 @@ test('wind preserves phase after rendering, pauses when hidden, and respects red
  assert.ok(twig);assert.equal(wood[0].attrs.transform,undefined);assert.equal(wood[2].attrs.transform,undefined);
  wood=makeWood();wind.refresh();assert.equal(leaf.attrs.transform,pose);assert.equal(wood[4].attrs.transform,twig);
  assert.equal(frames.size,1);
+ wind.setPaused(true);assert.equal(frames.size,0);assert.equal(leaf.attrs.transform,undefined);
+ wind.refresh();assert.equal(frames.size,0);assert.equal(wood[4].attrs.transform,undefined);
+ wind.setPaused(false);assert.equal(frames.size,1);
  doc.hidden=true;doc.dispatchEvent(new Event('visibilitychange'));assert.equal(frames.size,0);
  media.matches=true;media.dispatchEvent(new Event('change'));
  assert.equal(leaf.attrs.transform,undefined);assert.equal(wood[4].attrs.transform,undefined);

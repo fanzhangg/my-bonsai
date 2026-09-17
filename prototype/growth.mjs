@@ -3,6 +3,7 @@ import {generate as reference} from './core/v1/canopy.mjs';
 import {render} from './growing-render.mjs';
 import {sample,pointOn} from './core/v1/model.mjs';
 import {normalizePot} from './pots.mjs';
+import {branchFamily} from './pruning-model.mjs';
 
 export const HOUR=3600000;
 export const VERSION='bonsai-growth-2';
@@ -14,9 +15,9 @@ const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 export function profile(record){return {days:3+sample(record.config.seed,'lifetime','days')*3,initial:({broom:.5,literati:.55,cascade:.35}[record.config.preset]??.3)};}
 export function snapshot(record,at=Date.now()){
  const {days,initial}=profile(record),p=clamp(initial+(at-record.createdAt)/(days*24*HOUR)*(1-initial));
- return grow(record,p);
+ return grow(record,p,{at});
 }
-export function grow(record,p,{morphology=true}={}){
+export function grow(record,p,{morphology=true,at=Infinity}={}){
  p=clamp(p);const tree=(morphology?generate:reference)(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),schedule=new Map(),attachments=new Map();
  const pot=normalizePot(record.config.pot);if(pot)tree.config.pot=pot;
  tree.viewBox={x:tree.root.x-FRAME.width/2,y:tree.root.y-FRAME.aboveSoil,width:FRAME.width,height:FRAME.height};
@@ -36,6 +37,14 @@ export function grow(record,p,{morphology=true}={}){
  tree.nodes.forEach(transform);tree.nodes=[...mapped.values()].filter(n=>n.growth>0||!n.parent);
  tree.clusters=tree.clusters.flatMap(c=>{const s=schedule.get(c.node),leafAmount=smooth((clock-s.born-s.duration)/1.6);if(!leafAmount)return [];const n=mapped.get(c.node),old=original.get(c.node);return [{...c,x:n.ex+(c.x-old.ex)*scale,y:n.ey+(c.y-old.ey)*scale,rx:c.rx*scale,ry:c.ry*scale,born:-100,leafAmount}];});
  tree.hour=clock;tree.progress=p;tree.matureDays=profile(record).days;tree.seedOpacity=1-smooth(p/.035);tree.scars=[];
+ // Resolve descendants against the complete scaffold, including unborn twigs.
+ // Filtering after growth keeps all surviving wood and the camera unchanged.
+ const removed=new Set();
+ for(const cut of record.cuts??[])if(cut.at<=at&&original.get(cut.branchId)?.role==='primary'){
+   for(const id of branchFamily([...original.values()],cut.branchId))removed.add(id);
+ }
+ tree.nodes=tree.nodes.filter(n=>!removed.has(n.id));
+ tree.clusters=tree.clusters.filter(c=>!removed.has(c.node));
  return tree;
 }
 export function draw(tree,{transparent=false,viewBox=tree.viewBox}={}){

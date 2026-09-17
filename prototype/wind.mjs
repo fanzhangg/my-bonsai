@@ -31,7 +31,7 @@ export function branchPoses(nodes,baseWidth,seconds,strength){
 const matrix=p=>`matrix(${p.a} ${p.b} ${-p.b} ${p.a} ${p.x} ${p.y})`;
 export function startWind(stage){
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
- let crown=null,leaves=[],nodes=[],baseWidth=1,raf=0,last=0,seconds=0,strength=windStrength(document.body.dataset.weather);
+ let crown=null,leaves=[],nodes=[],baseWidth=1,raf=0,last=0,seconds=0,paused=false,strength=windStrength(document.body.dataset.weather);
  function restore(){for(const item of [...nodes,...leaves])item.element.removeAttribute('transform');}
  function paint(){
   if(!crown)return;
@@ -48,14 +48,14 @@ export function startWind(stage){
   }
  }
  function frame(time){
-  raf=0;if(document.hidden||motion.matches)return;
+  raf=0;if(document.hidden||motion.matches||paused)return;
   const dt=Math.min((time-last)/1000,.05);last=time;seconds+=dt;
   strength+=(windStrength(document.body.dataset.weather)-strength)*(1-Math.exp(-dt/1.8));
   paint();raf=requestAnimationFrame(frame);
  }
  function run(){
   cancelAnimationFrame(raf);raf=0;
-  if(motion.matches){restore();return;}
+  if(motion.matches||paused){restore();return;}
   if(!document.hidden&&crown){last=performance.now();raf=requestAnimationFrame(frame);}
  }
  function refresh(){
@@ -65,9 +65,9 @@ export function startWind(stage){
    return {element,id:Number(d.windWood),parent:Number(d.windParent),role:d.windRole,width:Number(d.windWidth),x:Number(d.windX),y:Number(d.windY)};
   });
   leaves=[...stage.querySelectorAll('[data-wind-leaf]')].map(element=>({element,node:Number(element.dataset.windNode),phase:Number(element.dataset.windLeaf),x:Number(element.dataset.windX),y:Number(element.dataset.windY)}));
-  if(!motion.matches)paint();run();
+  if(!motion.matches&&!paused)paint();run();
  }
  motion.addEventListener('change',run);
  document.addEventListener('visibilitychange',run);
- return {refresh,destroy(){cancelAnimationFrame(raf);motion.removeEventListener('change',run);document.removeEventListener('visibilitychange',run);restore();}};
+ return {refresh,setPaused(value){paused=value;run();},destroy(){cancelAnimationFrame(raf);motion.removeEventListener('change',run);document.removeEventListener('visibilitychange',run);restore();}};
 }
