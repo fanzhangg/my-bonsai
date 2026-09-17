@@ -1,4 +1,5 @@
-import {generate} from './core/v1/canopy.mjs';
+import {generate} from './morphology.mjs';
+import {generate as reference} from './core/v1/canopy.mjs';
 import {render} from './growing-render.mjs';
 import {sample,pointOn} from './core/v1/model.mjs';
 import {normalizePot} from './pots.mjs';
@@ -15,8 +16,8 @@ export function snapshot(record,at=Date.now()){
  const {days,initial}=profile(record),p=clamp(initial+(at-record.createdAt)/(days*24*HOUR)*(1-initial));
  return grow(record,p);
 }
-export function grow(record,p){
- p=clamp(p);const tree=generate(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),schedule=new Map(),attachments=new Map();
+export function grow(record,p,{morphology=true}={}){
+ p=clamp(p);const tree=(morphology?generate:reference)(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),schedule=new Map(),attachments=new Map();
  const pot=normalizePot(record.config.pot);if(pot)tree.config.pot=pot;
  tree.viewBox={x:tree.root.x-FRAME.width/2,y:tree.root.y-FRAME.aboveSoil,width:FRAME.width,height:FRAME.height};
  function timing(n){if(schedule.has(n.id))return schedule.get(n.id);const parent=original.get(n.parent);let attach=1;

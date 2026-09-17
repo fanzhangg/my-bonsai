@@ -5,6 +5,7 @@ import {render} from './growing-render.mjs';
 import {TONES,SHAPES,PATTERNS,POT_PRESETS,potMarkup,potSvg} from './design-system-pots.mjs';
 import {createColorReview} from './colors.mjs';
 import {createVisitorReview} from './design-system-visitors.mjs';
+import {MORPHOLOGY} from './morphology.mjs';
 
 const $=id=>document.getElementById(id);
 const state={tree:'juniper',shape:'oval',tone:'sand',pattern:'plain',look:'original',stage:'mature'};
@@ -19,15 +20,17 @@ const notes={
 };
 let serial=0;
 const cache=new Map();
-function scene(treeId,config,lookId='original',stage='mature',compact=false,applicationPot=false){
-  const key=[treeId,lookId,stage].join(':');
+const treeReview={view:'foliage',morphology:true,sample:1};
+function scene(treeId,config,lookId='original',stage='mature',compact=false,applicationPot=false,review={}){
+  const {view='foliage',morphology=true,sample=1}=review;
+  const key=[treeId,lookId,stage,morphology,sample].join(':');
   if(!cache.has(key)){
-    const record={version:VERSION,createdAt:0,cuts:[],config:normalize({preset:treeId,seed:'DESIGN-SYSTEM-01',appearance:LOOKS.find(l=>l.id===lookId)})};
-    const tree=grow(record,stage==='young'?profile(record).initial:1);
+    const record={version:VERSION,createdAt:0,cuts:[],config:normalize({preset:treeId,seed:`DESIGN-SYSTEM-${String(sample).padStart(2,'0')}`,appearance:LOOKS.find(l=>l.id===lookId)})};
+    const tree=grow(record,stage==='young'?profile(record).initial:1,{morphology});
     cache.set(key,tree);
   }
   const tree=cache.get(key),id=`design-tree-${++serial}`;
-  const parsed=new DOMParser().parseFromString(render(tree,{hour:tree.hour,transparent:true,id}),'text/html');
+  const parsed=new DOMParser().parseFromString(render(tree,{hour:tree.hour,transparent:true,id,view}),'text/html');
   const svg=parsed.querySelector('svg'),wood=svg.querySelector('[data-wind-tree]');
   // Replace only the review instance's pot. The actual tree and soil contact stay intact.
   if(!applicationPot){
@@ -35,8 +38,8 @@ function scene(treeId,config,lookId='original',stage='mature',compact=false,appl
     const pot=new DOMParser().parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${potMarkup(config,tree.root.x,tree.root.y,`${id}-clip`)}</svg>`,'image/svg+xml');
     svg.insertBefore(svg.ownerDocument.importNode(pot.documentElement.firstElementChild,true),wood);
   }
-  if(compact)svg.setAttribute('viewBox',`${tree.root.x-290} ${tree.root.y-410} 580 570`);
-  svg.setAttribute('aria-label',`${tree.preset.name}，${applicationPot?'应用默认盆器':SHAPES.find(s=>s.id===config.shape).name+'，'+TONES.find(t=>t.id===config.tone).name}，${stage==='young'?'幼苗':'成树'}`);
+  if(compact)svg.setAttribute('viewBox',`${tree.viewBox.x} ${tree.viewBox.y} ${tree.viewBox.width} ${tree.viewBox.height}`);
+  svg.setAttribute('aria-label',`${tree.preset.name}，${applicationPot?'应用默认盆器':SHAPES.find(s=>s.id===config.shape).name+'，'+TONES.find(t=>t.id===config.tone).name}，${stage==='young'?'幼苗':'成树'}，${view==='skeleton'?'裸枝':view==='silhouette'?'单色剪影':'完整枝叶'}`);
   return new XMLSerializer().serializeToString(svg);
 }
 function buttons(items,field){return items.map(item=>`<button type="button" data-field="${field}" data-value="${item.id}" aria-pressed="${state[field]===item.id}">${item.name}</button>`).join('');}
@@ -88,9 +91,13 @@ function usePot(id){const p=POT_PRESETS.find(p=>p.id===id);for(const key of ['sh
 $('preset-strip').addEventListener('click',e=>{const b=e.target.closest('[data-preset]');if(b)usePot(b.dataset.preset);});
 
 function buildTrees(){
-  $('tree-gallery').innerHTML=PRESETS.map((p,i)=>`<article class="tree-card"><span class="index">T0${i+1} / ${notes[p.id].form}</span><div class="tree-art">${scene(p.id,POT_PRESETS.find(x=>x.id===notes[p.id].pot),'original','mature',true)}</div><h3>${p.name}</h3><p>${p.note}<br>建议盆形：${notes[p.id].pair}</p><button type="button" data-tree-preview="${p.id}">搭配这棵树 →</button></article>`).join('');
-  $('tree-gallery').addEventListener('click',e=>{const b=e.target.closest('[data-tree-preview]');if(b){state.tree=b.dataset.treePreview;usePot(notes[state.tree].pot);tabs[0].focus();}});
+  $('tree-gallery').innerHTML=PRESETS.map((p,i)=>`<article class="tree-card"><span class="index">T0${i+1} / ${MORPHOLOGY[p.id].form}</span><div class="tree-art">${scene(p.id,POT_PRESETS.find(x=>x.id===notes[p.id].pot),'original','mature',true,false,treeReview)}</div><h3>${p.name}</h3><p>${treeReview.morphology?MORPHOLOGY[p.id].note:p.note}<br>建议盆形：${notes[p.id].pair}</p><button type="button" data-tree-preview="${p.id}">搭配这棵树 →</button></article>`).join('');
+  $('tree-review-status').textContent=`${treeReview.morphology?'新版形态':'旧版对照'} · 样本 ${String(treeReview.sample).padStart(2,'0')} · 同一镜头与盆器`;
 }
+$('tree-gallery').addEventListener('click',e=>{const b=e.target.closest('[data-tree-preview]');if(b){state.tree=b.dataset.treePreview;usePot(notes[state.tree].pot);tabs[0].focus();}});
+$('tree-review-view').addEventListener('change',e=>{treeReview.view=e.target.value;buildTrees();});
+$('tree-review-version').addEventListener('change',e=>{treeReview.morphology=e.target.value==='new';buildTrees();});
+$('tree-review-sample').addEventListener('click',()=>{treeReview.sample=treeReview.sample%5+1;buildTrees();});
 function buildPots(){
   $('pot-gallery').innerHTML=POT_PRESETS.map(p=>{const s=SHAPES.find(s=>s.id===p.shape);return `<article class="pot-card"><span class="index">P${p.id} / ${s.name}</span>${potSvg(p,`gallery-${p.id}`)}<h3>${p.name}</h3><p>${s.note}</p><div class="ratio"><span>宽 : 高 ≈ ${(s.width/s.height).toFixed(1)} : 1</span><span>${PATTERNS.find(x=>x.id===p.pattern).name}</span></div><button type="button" data-gallery-preset="${p.id}">放入组合预览</button></article>`;}).join('');
   $('pot-gallery').addEventListener('click',e=>{const b=e.target.closest('[data-gallery-preset]');if(b){usePot(b.dataset.galleryPreset);tabs[0].focus();}});

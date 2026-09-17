@@ -2,12 +2,13 @@ import {sample,pointOn} from './core/v1/model.mjs';
 import {taperedPath} from './core/v1/style-render.mjs';
 import {normalizeAppearance,colorsFor} from './core/v1/appearance.mjs';
 import {normalizePot,potMarkup} from './pots.mjs';
+import {canopyPoint} from './morphology.mjs';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const f=x=>Number(x).toFixed(2);
 const progress=(born,h,duration=20)=>clamp((h-born)/duration,0,1);
 // Rounded but irregular outlines, derived from leaf-bearing twig volumes.
 function outline(c,rand){
-  const pts=Array.from({length:16},(_,i)=>{const a=i*Math.PI/8,r=.89+rand(`${c.key}:${i}`,'edge')*.17;return {x:c.x+Math.cos(a)*c.rx*r,y:c.y+Math.sin(a)*c.ry*r};});
+  const pts=Array.from({length:24},(_,i)=>{const a=i*Math.PI/12,r=.94+rand(`${c.key}:${i}`,'edge')*.1;return canopyPoint(c,a,r);});
   const mid=(a,b)=>`${f((a.x+b.x)/2)} ${f((a.y+b.y)/2)}`;
   return `M${mid(pts.at(-1),pts[0])} ${pts.map((p,i)=>`Q${f(p.x)} ${f(p.y)} ${mid(p,pts[(i+1)%pts.length])}`).join(' ')}Z`;
 }
@@ -48,13 +49,13 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   function foliage(c){const g=progress(c.born,hour,c.duration??20);if(!g)return '';
     const base=outline(c,rand);
     if(silhouette)return `<path d="${base}" fill="${silhouetteColor}"/>`;
-    const detail=[],density=config.coverage;
+    const detail=[],density=clamp(config.coverage*(c.foliageDensity??1),.3,1);
     // Coherent core volume; porous boundaries receive individually visible leaves.
     if(density>=.6 && (c.leafAmount??1)>.35)detail.push(`<path d="${base}" fill="${palette[c.z<0?0:1]}" opacity="${f((.68+(density-.6)*.7)*(c.leafAmount??1))}"/>`);
-    const count=Math.round((broad?37:needle?40:48)*density);
+    const count=Math.round((broad?37:needle?40:48)*density*(c.leafBudget??1));
     for(let j=0;j<Math.ceil(count*(c.leafAmount??1));j++){
       const k=`${c.key}:${j}`,a=rand(k,'a')*Math.PI*2,r=Math.sqrt(rand(k,'r'));
-      const x=c.x+Math.cos(a)*c.rx*r,y=c.y+Math.sin(a)*c.ry*r;
+      const {x,y}=canopyPoint(c,a,r);
       // Lighting follows the cluster surface rather than independent bright speckles.
       const light=clamp(Math.floor((1-(y-c.y)/c.ry)*1.4+(rand(k,'tone')-.5)*1.2),0,3),color=palette[light];
       const size=(broad?5.2:needle?6:4.7)*config.leafScale*(.78+rand(k,'size')*.4);
