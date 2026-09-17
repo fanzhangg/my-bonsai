@@ -5,6 +5,7 @@ import path from 'node:path';
 import {openStore} from './storage.mjs';
 import {VERSION} from './prototype/growth.mjs';
 import {configForClaim} from './prototype/claim.mjs';
+import {coordinates,weatherAt} from './weather-service.mjs';
 const root=path.resolve(fileURLToPath(new URL('./prototype/',import.meta.url)));
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
@@ -14,6 +15,11 @@ export function createServer(store){
     try{
       const url=new URL(req.url,'http://localhost');
       if(url.pathname==='/healthz'){await store.health();return send(200,{ok:true});}
+      if(url.pathname==='/api/weather'){
+        if(req.method!=='GET')fail(405,'不支持的操作');
+        let c;try{c=coordinates(url.searchParams.get('lat'),url.searchParams.get('lon'));}catch{fail(400,'无效位置');}
+        try{return send(200,await weatherAt(c.lat,c.lon));}catch{fail(503,'天气暂不可用');}
+      }
       if(url.pathname.startsWith('/api/')){
         const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts))?)?$/);if(!route)fail(404,'找不到页面');
         const [,id,action]=route;if(id&&!uuid(id))fail(404,'找不到这盆树');

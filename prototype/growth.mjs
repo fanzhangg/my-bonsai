@@ -35,8 +35,8 @@ export function grow(record,p){
  tree.hour=clock;tree.progress=p;tree.matureDays=profile(record).days;tree.seedOpacity=1-smooth(p/.035);tree.scars=[];
  return tree;
 }
-export function draw(tree){
- const svg=render(tree,{hour:tree.hour,id:'growing-tree'});
+export function draw(tree,{transparent=false}={}){
+ const svg=render(tree,{hour:tree.hour,id:'growing-tree',transparent});
  const seed=`<ellipse cx="${tree.root.x}" cy="${tree.root.y-4}" rx="4" ry="2.5" fill="#8f6240" opacity="${tree.seedOpacity}"/>`;
  return svg.replace('</svg>',seed+'</svg>');
 }
