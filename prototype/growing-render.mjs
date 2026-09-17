@@ -35,13 +35,14 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   const silhouetteColor=appearance.background==='night'?'#d6dfd7':'#334c3e',woodColor=silhouette?silhouetteColor:material('bark',colors.bark);
   const basePalette=appearance.foliage!=='native'?colors.foliage:preset.kind==='broad'?['#42613d','#577647','#6d8952','#81995b']:preset.kind==='needle'?['#2e5144','#426653','#5b7a5c','#788d67']:colors.foliage;
   const palette=basePalette.map((c,i)=>material('leaf-'+i,c));
+  const nodeIndex=new Map(tree.nodes.map((n,i)=>[n.id,i]));
   function wood(n){const g=n.role==='twig'?progress(n.born,hour,n.duration??12):1;if(!g)return '';
     const end=pointOn(n,g),scale=.4+.6*g,startRadius=n.width*scale/2,endRadius=(n.width+(n.tipWidth-n.width)*g)*scale/2;
     // Shared round caps overlap the flat tube ends, sealing antialiasing seams
     // and filling the wedge between branches with different tangent directions.
     // Match wood colors across the junction rather than drawing a centerline.
     const joint=n.parent?`<circle cx="${f(n.x)}" cy="${f(n.y)}" r="${f(startRadius)}"/>`:'';
-    return `<g fill="${woodColor}"><path d="${n.role==='trunk'&&!n.parent?basalPath(n):taperedPath(n,g)}"/>${joint}<circle cx="${f(end.x)}" cy="${f(end.y)}" r="${f(endRadius)}"/></g>`;
+    return `<g data-wind-wood="${nodeIndex.get(n.id)}" data-wind-parent="${nodeIndex.get(n.parent)??-1}" data-wind-role="${n.role}" data-wind-width="${f(n.width)}" data-wind-x="${f(n.x)}" data-wind-y="${f(n.y)}" fill="${woodColor}"><path d="${n.role==='trunk'&&!n.parent?basalPath(n):taperedPath(n,g)}"/>${joint}<circle cx="${f(end.x)}" cy="${f(end.y)}" r="${f(endRadius)}"/></g>`;
   }
   function foliage(c){const g=progress(c.born,hour,c.duration??20);if(!g)return '';
     const base=outline(c,rand);
@@ -64,7 +65,8 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
         detail.push(`<path d="${path}" fill="${color}" transform="translate(${f(x)} ${f(y)}) rotate(${f(angle)}) scale(${f(size*(shape==='lance'?1:1.18))})"/>`);
       }else detail.push(`<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(size)}" ry="${f(size*(shape==='round'?.91:broad?.64:.57))}" fill="${color}" transform="rotate(${f(angle)} ${f(x)} ${f(y)})"/>`);
     }
-    return `<g transform="translate(${f(c.x)} ${f(c.y)}) scale(${f(.4+.6*g)}) translate(${f(-c.x)} ${f(-c.y)})" opacity="${f(g)}">${detail.join('')}</g>`;
+    const anchor=tree.nodes.find(n=>n.id===c.node);
+    return `<g data-wind-node="${nodeIndex.get(c.node)??-1}" data-wind-leaf="${f(rand(c.key,'wind')*Math.PI*2)}" data-wind-x="${f(anchor?.ex??c.x)}" data-wind-y="${f(anchor?.ey??c.y)}"><g transform="translate(${f(c.x)} ${f(c.y)}) scale(${f(.4+.6*g)}) translate(${f(-c.x)} ${f(-c.y)})" opacity="${f(g)}">${detail.join('')}</g></g>`;
   }
   function padMarkup(p){return tree.nodes.filter(n=>n.pad===p.id).map(wood).join('')+(view==='skeleton'?'':tree.clusters.filter(c=>c.pad===p.id).sort((a,b)=>a.z-b.z).map(foliage).join(''));}
   const back=tree.pads.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).map(padMarkup).join('');
@@ -87,5 +89,5 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   // The soil hides the lower edge of the flare and the tapering root tips.
   const soilContact=`<path d="M${f(x-radius*1.58)} ${f(y-1.7)} Q${f(x-radius*.72)} ${f(y-.3)} ${f(x)} ${f(y-.9)} T${f(x+radius*1.58)} ${f(y-1.1)} L${f(x+radius*1.65)} ${f(y+3.6)} Q${f(x)} ${f(y+5)} ${f(x-radius*1.65)} ${f(y+3.6)}Z" fill="${material('moss','#76815e')}"/>`;
   const b=viewBox;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.width} ${b.height}" style="background:${transparent?'transparent':colors.background}" role="img" aria-label="${preset.name}，${view==='skeleton'?'裸枝':silhouette?'单色轮廓':'完整枝叶'}"><defs><linearGradient id="${id}-pot" x2="0" y2="1"><stop stop-color="${potColor[0]}"/><stop offset="1" stop-color="${potColor[1]}"/></linearGradient></defs>${transparent?'':`<rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" fill="${colors.background}"/>`}${pot}<g fill="${woodColor}">${roots}</g>${back}${trunks}${front}${soilContact}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.width} ${b.height}" style="background:${transparent?'transparent':colors.background}" role="img" aria-label="${preset.name}，${view==='skeleton'?'裸枝':silhouette?'单色轮廓':'完整枝叶'}"><defs><linearGradient id="${id}-pot" x2="0" y2="1"><stop stop-color="${potColor[0]}"/><stop offset="1" stop-color="${potColor[1]}"/></linearGradient></defs>${transparent?'':`<rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" fill="${colors.background}"/>`}${pot}<g data-wind-tree data-wind-root="${f(root.y)}" data-wind-base-width="${f(base.width)}"><g fill="${woodColor}">${roots}</g>${back}${trunks}${front}</g>${soilContact}</svg>`;
 }
