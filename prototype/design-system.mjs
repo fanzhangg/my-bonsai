@@ -1,7 +1,7 @@
 import {PRESETS,normalize} from './core/v1/canopy.mjs';
 import {LOOKS,BACKGROUNDS} from './core/v1/appearance.mjs';
 import {grow,profile,VERSION} from './growth.mjs';
-import {render} from './growing-render.mjs';
+import {render,POT_SCALE} from './growing-render.mjs';
 import {TONES,SHAPES,PATTERNS,POT_PRESETS,potSvg} from './design-system-pots.mjs';
 import {createColorReview} from './colors.mjs';
 import {createVisitorReview} from './design-system-visitors.mjs';
@@ -10,7 +10,7 @@ import {createPruningReview} from './design-system-pruning.mjs';
 import {MORPHOLOGY} from './morphology.mjs';
 
 const $=id=>document.getElementById(id);
-const state={tree:'juniper',shape:'oval',tone:'sand',pattern:'plain',look:'original',stage:'mature'};
+const state={tree:'juniper',shape:'oval',tone:'sand',pattern:'plain',look:'original',stage:'mature',potScale:POT_SCALE};
 const notes={
   juniper:{form:'曲干 · 横向叶层',pair:'浅椭圆 / 圆角长方',pot:'01'},
   broom:{form:'直干 · 连续圆冠',pair:'圆腹 / 圆角方',pot:'02'},
@@ -24,7 +24,7 @@ let serial=0;
 const cache=new Map();
 const treeReview={view:'foliage',morphology:true,sample:1};
 function scene(treeId,config,lookId='original',stage='mature',compact=false,applicationPot=false,review={}){
-  const {view='foliage',morphology=true,sample=1}=review;
+  const {view='foliage',morphology=true,sample=1,potScale}=review;
   const key=[treeId,lookId,stage,morphology,sample].join(':');
   if(!cache.has(key)){
     const record={version:VERSION,createdAt:0,cuts:[],config:normalize({preset:treeId,seed:`DESIGN-SYSTEM-${String(sample).padStart(2,'0')}`,appearance:LOOKS.find(l=>l.id===lookId)})};
@@ -33,7 +33,7 @@ function scene(treeId,config,lookId='original',stage='mature',compact=false,appl
   }
   const cached=cache.get(key),id=`design-tree-${++serial}`;
   const tree=applicationPot?cached:{...cached,config:{...cached.config,pot:config}};
-  const parsed=new DOMParser().parseFromString(render(tree,{hour:tree.hour,transparent:true,id,view}),'text/html');
+  const parsed=new DOMParser().parseFromString(render(tree,{hour:tree.hour,transparent:true,id,view,potScale}),'text/html');
   const svg=parsed.querySelector('svg');
   if(compact)svg.setAttribute('viewBox',`${tree.viewBox.x} ${tree.viewBox.y} ${tree.viewBox.width} ${tree.viewBox.height}`);
   svg.setAttribute('aria-label',`${tree.preset.name}，${applicationPot?'应用默认盆器':SHAPES.find(s=>s.id===config.shape).name+'，'+TONES.find(t=>t.id===config.tone).name}，${stage==='young'?'幼苗':'成树'}，${view==='skeleton'?'裸枝':view==='silhouette'?'单色剪影':'完整枝叶'}`);
@@ -49,23 +49,25 @@ $('preset-strip').innerHTML=POT_PRESETS.map(p=>`<button type="button" data-prese
 function paint(){
   const shape=SHAPES.find(s=>s.id===state.shape),tone=TONES.find(t=>t.id===state.tone),pattern=PATTERNS.find(p=>p.id===state.pattern);
   const preset=PRESETS.find(p=>p.id===state.tree),look=LOOKS.find(l=>l.id===state.look),background=BACKGROUNDS.find(b=>b.id===look.background);
-  $('composition').innerHTML=scene(state.tree,state,state.look,state.stage);
+  $('composition').innerHTML=scene(state.tree,state,state.look,state.stage,false,false,{potScale:state.potScale});
   const canvas=$('composition').parentElement;
   canvas.style.background=state.look==='original'?'#f1f2e9':background.color;
   canvas.style.color=state.look==='moon'?'#e0e8df':'#35483b';
   canvas.style.setProperty('--muted',state.look==='moon'?'#bdcbbd':'#6a7568');
   $('composition-name').textContent=`${preset.name} · ${tone.name}${shape.name}`;
-  $('composition-detail').textContent=`${pattern.name} / ${look.name} / ${state.stage==='young'?'初始化幼苗':'成熟形态'}`;
+  $('composition-detail').textContent=`${pattern.name} / ${look.name} / ${state.stage==='young'?'初始化幼苗':'成熟形态'} / 盆器 ${Math.round(state.potScale*100)}%`;
   $('tone-name').textContent=tone.name;
   $('tree-look').value=state.look;
   $('pairing-note').textContent=state.tree==='cascade'&&state.shape!=='tall'?'搭配提示：悬崖树形优先使用高筒，为下垂枝条留出空间。':`搭配建议：${notes[state.tree].pair}。建议不限制自由组合。`;
   document.querySelectorAll('[data-field]').forEach(b=>b.setAttribute('aria-pressed',String(state[b.dataset.field]===b.dataset.value)));
   document.querySelectorAll('[data-stage]').forEach(b=>b.setAttribute('aria-pressed',String(state.stage===b.dataset.stage)));
+  document.querySelectorAll('[data-pot-scale]').forEach(b=>b.setAttribute('aria-pressed',String(state.potScale===Number(b.dataset.potScale))));
   document.querySelectorAll('#preset-strip [data-preset]').forEach(b=>{const p=POT_PRESETS.find(p=>p.id===b.dataset.preset);b.setAttribute('aria-pressed',String(['shape','tone','pattern'].every(k=>p[k]===state[k])));});
 }
 document.querySelectorAll('[data-field]').forEach(b=>b.addEventListener('click',()=>{state[b.dataset.field]=b.dataset.value;paint();}));
 document.querySelectorAll('[data-stage]').forEach(b=>b.addEventListener('click',()=>{state.stage=b.dataset.stage;paint();}));
 $('tree-look').addEventListener('change',e=>{state.look=e.target.value;paint();});
+document.querySelectorAll('[data-pot-scale]').forEach(b=>b.addEventListener('click',()=>{state.potScale=Number(b.dataset.potScale);paint();}));
 
 const tabs=[...document.querySelectorAll('[role=tab]')];
 const populated=new Set();

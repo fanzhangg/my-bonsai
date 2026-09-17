@@ -7,7 +7,7 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const f=x=>Number(x).toFixed(2);
 const progress=(born,h,duration=20)=>clamp((h-born)/duration,0,1);
 // Enlarge the vessel around the soil anchor without changing the tree or camera.
-export const POT_SCALE=1.25;
+export const POT_SCALE=1.5;
 // Rounded but irregular outlines, derived from leaf-bearing twig volumes.
 function outline(c,rand){
   const pts=Array.from({length:24},(_,i)=>{const a=i*Math.PI/12,r=.94+rand(`${c.key}:${i}`,'edge')*.1;return canopyPoint(c,a,r);});
@@ -31,13 +31,13 @@ function basalPath(n,openingRadius){
   }
   return `M${left.join(' L')} L${right.reverse().join(' L')}Z`;
 }
-export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.viewBox,transparent=false}={}){
+export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.viewBox,transparent=false,potScale=POT_SCALE}={}){
   const {config,preset,root}=tree,rand=(k,p)=>sample(config.seed,`${preset.id}:render:${k}`,p);
   const deep=preset.pot==='deep',rect=preset.pot==='rect',w=deep?49:preset.id==='literati'?56:preset.pot==='shallow'?82:88,x=root.x,y=root.y,h=deep?105:preset.pot==='shallow'?23:31;
   const selectedPot=normalizePot(config.pot);
-  const potTransform=`translate(${x} ${y}) scale(${POT_SCALE}) translate(${-x} ${-y})`;
+  const potTransform=`translate(${x} ${y}) scale(${potScale}) translate(${-x} ${-y})`;
   const originalOpening=selectedPot?potOpening(selectedPot,x,y):{rx:w-6,cy:y-2,markup:`<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7"/>`};
-  const opening={rx:originalOpening.rx*POT_SCALE,cy:y+(originalOpening.cy-y)*POT_SCALE,
+  const opening={rx:originalOpening.rx*potScale,cy:y+(originalOpening.cy-y)*potScale,
     markup:originalOpening.markup.replace('/>',` transform="${potTransform}"/>`)};
   const appearance=normalizeAppearance(config.appearance),colors=colorsFor(appearance);
   const material=(name,color)=>transparent?`var(--bonsai-${name},${color})`:color;
