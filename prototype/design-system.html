@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"></head>
+<body>
+<header class="masthead"><a class="brand" href="/">一盆树<span>形态、色彩与界面设计系统</span></a><span class="draft">v0.2 · 待审核</span></header>
+<main>
+  <div class="intro"><div><p class="eyebrow">BONSAI / DESIGN LANGUAGE</p><h1>树有姿态，盆有形。</h1><p class="lede">一套安静的简笔语言，让树形、盆形、花纹与颜色自由相遇。</p></div><div class="scope"><span>07 <small>现有树形</small></span><span>08 <small>盆器提案</small></span></div></div>
+  <nav class="tabs" role="tablist" aria-label="设计系统章节">
+    <button id="tab-compose" role="tab" aria-controls="panel-compose" aria-selected="true" tabindex="0">01 搭配实验室</button>
+    <button id="tab-trees" role="tab" aria-controls="panel-trees" aria-selected="false" tabindex="-1">02 树形谱系</button>
+    <button id="tab-pots" role="tab" aria-controls="panel-pots" aria-selected="false" tabindex="-1">03 盆器家族</button>
+    <button id="tab-colors" role="tab" aria-controls="panel-colors" aria-selected="false" tabindex="-1">04 色彩与天气</button>
+    <button id="tab-system" role="tab" aria-controls="panel-system" aria-selected="false" tabindex="-1">05 基础与组件</button>
+  </nav>
+  <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
+    <div class="composer">
+      <div class="canvas-wrap"><div class="canvas-meta"><span>组合预览</span><div class="segmented" aria-label="生长阶段"><button data-stage="young" aria-pressed="false">幼苗</button><button data-stage="mature" aria-pressed="true">成树</button></div></div><div id="composition" class="composition"></div><div class="caption"><div><h2 id="composition-name"></h2><p id="composition-detail"></p></div><span class="stamp">同一棵树 · 固定样本</span></div></div>
+      <aside class="options" aria-label="组合选项">
+        <fieldset><legend>树形 <span>01</span></legend><div id="tree-choices" class="choices"></div></fieldset>
+        <fieldset><legend>盆形 <span>02</span></legend><div id="shape-choices" class="shape-choices"></div></fieldset>
+        <fieldset><legend>花纹 <span>03</span></legend><div id="pattern-choices" class="choices"></div></fieldset>
+        <fieldset><legend>盆色 <span id="tone-name"></span></legend><div id="tone-choices" class="swatches"></div></fieldset>
+        <div class="look-control"><label for="tree-look">树的视觉方案</label><select id="tree-look"></select></div>
+        <p id="pairing-note" class="pairing-note"></p>
+      </aside>
+    </div>
+    <div class="section-heading"><h2>八个起点</h2><span>选择一款，继续调整形状、花纹与颜色</span></div><div id="preset-strip" class="preset-strip"></div>
+    <div class="review-note"><strong>继续试色</strong><span>保留这组树与盆，比较不同天气和时刻。</span><button type="button" data-open-colors>查看场景配色 →</button></div>
+  </section>
+  <section id="panel-trees" role="tabpanel" aria-labelledby="tab-trees" hidden>
+    <div class="section-heading"><div><p class="eyebrow">TREE / SILHOUETTE</p><h2>七种姿态，同一套画法</h2></div><span>当前模拟器 · 原色 · 固定样本 · 成树</span></div>
+    <div id="tree-gallery" class="tree-gallery"></div>
+    <div class="principles"><article><span>01 / 枝干</span><h3>自然收尖</h3><p>保留弯曲骨架、分级枝序和根颈连接。</p></article><article><span>02 / 树冠</span><h3>聚散有序</h3><p>叶片成团，留出枝间空隙，轮廓有疏有密。</p></article><article><span>03 / 生长</span><h3>根部不动</h3><p>盆口与根部固定，幼苗到成树共用镜头。</p></article></div>
+  </section>
+  <section id="panel-pots" role="tabpanel" aria-labelledby="tab-pots" hidden>
+    <div class="section-heading"><div><p class="eyebrow">POT / FORM × PATTERN × COLOR</p><h2>轮廓是骨架，花纹是点缀</h2></div><span>八款提案 · 延续上一轮编号</span></div><div id="pot-gallery" class="pot-gallery"></div>
+    <div class="section-heading"><h2>花纹语汇</h2><span>以同一盆形和盆色比较</span></div><div id="pattern-gallery" class="pattern-gallery"></div>
+    <div class="anatomy"><div id="pot-anatomy"></div><div><p class="eyebrow">ONE COMPONENT / FOUR LAYERS</p><h2>一个盆器，四层构成</h2><ol><li><b>盆体</b><span>单色轮廓决定宽高与重心</span></li><li><b>花纹</b><span>约束在盆壁内，保持大块留白</span></li><li><b>盆沿</b><span>浅色边沿统一俯视角度</span></li><li><b>土面</b><span>深色底与一块苔色承接树根</span></li></ol></div></div>
+  </section>
+  <section id="panel-colors" role="tabpanel" aria-labelledby="tab-colors" hidden>
+    <div class="section-heading"><div><p class="eyebrow">COLOR / WEATHER / MATERIAL</p><h2>背景退后，枝叶显现。</h2></div><span>应用配色算法 · 当前搭配联动</span></div>
+    <div class="color-workspace"><div id="color-preview" class="color-scene color-hero" aria-label="当前场景配色预览"></div><aside class="color-options" aria-label="色彩场景选项">
+      <div class="color-controls"><label for="color-tree">树形<select id="color-tree"></select></label><label for="color-look">树的视觉方案<select id="color-look"></select></label><label for="color-weather">天气<select id="color-weather"><option value="clear">晴天</option><option value="cloudy">阴天</option><option value="rain">雨天</option><option value="snow">雪天</option><option value="fog">雾天</option><option value="wind">大风</option><option value="storm">雷雨</option></select></label><label for="color-stage">生长阶段<select id="color-stage"><option value="mature">成树</option><option value="young">幼苗</option></select></label><label class="color-wide" for="color-pot-mode">盆器方案<select id="color-pot-mode"><option value="design">当前设计盆器</option><option value="app">应用默认盆器</option></select></label><label class="color-wide" for="color-hour">当地时间 <output id="color-hour-label" for="color-hour">12:00</output><input id="color-hour" type="range" min="0" max="23.75" step=".25" value="12"></label></div>
+      <div class="color-current"><span id="color-current-pot"></span><button type="button" id="color-edit-pot">调整盆器 →</button></div><div id="color-metrics" class="color-metrics" aria-live="polite"></div><p class="color-note">插画对比度是视觉目标；渐变位置、透明叶团和细枝仍需结合画面判断。场景只试色，不请求定位。</p>
+    </aside></div>
+    <div class="section-heading"><h2>当前颜色构成</h2><span id="color-token-note">色值随场景更新</span></div><div id="color-swatches" class="color-swatch-groups"></div>
+    <div class="section-heading"><h2>从晨光到夜色</h2><span>固定当前树、盆与天气，仅改变时刻</span></div><div id="color-times" class="color-grid color-four"></div>
+    <div class="section-heading"><h2>六种植物性格</h2><span>固定当前树形、盆器、天气和时刻</span></div><div id="color-looks" class="color-grid color-three"></div>
+    <div class="principles"><article><span>背景</span><h3>低饱和，留出空间</h3><p>晨间淡紫灰，白昼浅青灰，落日淡杏色，夜间深蓝灰。天气只改变气氛。</p></article><article><span>材质</span><h3>分别适应背景</h3><p>树干与四档叶色沿用应用算法；新盆器保持选定色系，按背景调整明暗。</p></article><article><span>交互</span><h3>安静，也清楚</h3><p>主要操作采用苔绿与浅灰绿。图标保持实色，按钮文字与键盘焦点清晰可见。</p></article></div>
+  </section>
+  <section id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden>
+    <div class="section-heading"><div><p class="eyebrow">FOUNDATIONS / COMPONENTS</p><h2>少一点修饰，多一点留白</h2></div><span>现有语言 + 本轮规范提案</span></div>
+    <div class="foundation-grid"><article><h3>审核页基色 <small>固定浅色界面</small></h3><div id="ui-colors" class="token-colors"></div></article><article><h3>盆器原始色 <small>提案</small></h3><div id="pot-colors" class="token-colors"></div></article></div>
+    <div class="review-note color-crosslink"><strong>动态配色</strong><span>应用内的背景、材质和控件随天气与时刻变化；六套树色统一在场景中比较。</span><button type="button" data-open-colors>查看色彩与天气 →</button></div>
+    <div class="foundation-grid standards"><article><h3>字阶与间距</h3><div class="type-row"><b class="type-title">一盆树</b><code>标题 28 / 40</code></div><div class="type-row"><b class="type-section">选择一个盆器</b><code>章节 20 / 30</code></div><div class="type-row"><span>圆润轮廓，安静生长。</span><code>正文 14 / 22</code></div><div class="type-row"><small>辅助说明与编号</small><code>辅助 12 / 18</code></div><div class="space-scale"><span>4</span><span>8</span><span>12</span><span>16</span><span>24</span><span>32</span></div><p class="minor">苹方 / 微软雅黑 · 4px 间距基准 · 内容随窄屏换行</p></article>
+    <article><h3>交互状态</h3><div class="state-examples"><div><button class="primary" id="sample-claim">认领这棵树</button><small>主操作 / 圆角 999</small></div><div><button class="sample-option" aria-pressed="false" id="sample-option">选择圆腹</button><small>点击切换选中状态</small></div><div><button disabled>暂不可用</button><small>禁用 / 无交互</small></div><div><button class="focus-demo">键盘焦点</button><small>焦点 / 铜色外框</small></div></div><p id="component-status" class="minor" role="status">状态演示 · 不创建真实盆栽</p><p class="minor">点击区域 ≥ 44px · 选中同时使用描边、底色与文字标记。</p></article></div>
+    <div class="principles"><article><span>造型</span><h3>简洁的平涂</h3><p>以轮廓区分盆器；盆沿与盆体用相近色，不增加写实材质。</p></article><article><span>密度</span><h3>花纹适量</h3><p>线纹最多四笔，几何最多三枚；缩小后仍能读出盆形。</p></article><article><span>层级</span><h3>树是主角</h3><p>盆器作为视觉底座；正文清晰，边框轻，日常画面保持安静。</p></article></div>
+  </section>
+  <footer><span>一盆树 · Design review 0.2</span><span>现有树形与配色算法 / 新盆器提案 / 尚未接入初始化</span></footer>
+</main><script type="module" src="/design-system.mjs"></script>
+</body></html>
