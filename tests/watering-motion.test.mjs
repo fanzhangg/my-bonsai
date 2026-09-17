@@ -18,9 +18,9 @@ test('can faces inward and does not flicker when crossing the center deadband',(
 test('growth starts with water consumption and is bounded by each refill',()=>{
  const tank=createWaterTank();const first=spendWater(tank,100);
  assert.ok(first.growth>0);assert.equal(tank.remaining,WATER_CAPACITY-100);
- const rest=spendWater(tank,10000);assert.equal(first.growth+rest.growth,.1);
+ const rest=spendWater(tank,10000);assert.equal(first.growth+rest.growth,.2);
  assert.deepEqual(spendWater(tank,100),{used:0,growth:0});
- refillWaterTank(tank);assert.equal(tank.remaining,4000);assert.equal(spendWater(tank,4000).growth,.1);
+ refillWaterTank(tank);assert.equal(tank.remaining,8000);assert.equal(spendWater(tank,8000).growth,.2);
 });
 
 test('watering can start beside or slightly below the pot as well as above the tree',()=>{
@@ -36,8 +36,8 @@ test('stopping consumption stops growth and resuming uses only remaining water',
  const tank=createWaterTank();const first=spendWater(tank,1200);
  assert.deepEqual(spendWater(tank,0),{used:0,growth:0});
  assert.deepEqual(spendWater(tank,-10),{used:0,growth:0});
- assert.equal(tank.remaining,2800);
- assert.ok(Math.abs(first.growth+spendWater(tank,2800).growth-.1)<1e-12);
+ assert.equal(tank.remaining,6800);
+ assert.ok(Math.abs(first.growth+spendWater(tank,6800).growth-.2)<1e-12);
 });
 
 

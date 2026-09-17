@@ -6,9 +6,10 @@ export function nearPlanter(p,soil,top,factor){
 // Small center deadband avoids flipping back and forth as the hand trembles.
 export function waterFacing(x,center,current=1){return x<center-18?-1:x>center+18?1:current;}
 // Capacity is replenished only after the can returns to its resting position.
-export const WATER_CAPACITY=4000;
-// A full four-second pour advances growth by ten percentage points.
-export const WATER_GROWTH_PER_TANK=.1;
+export const WATER_CAPACITY=8000;
+// A full eight-second pour advances growth by twenty percentage points.
+export const WATER_GROWTH_PER_TANK=.2;
+export const WATER_RECOVERY_HOURS_PER_TANK=48;
 export function createWaterTank(){return {remaining:WATER_CAPACITY};}
 export function refillWaterTank(tank){Object.assign(tank,createWaterTank());}
 export function spendWater(tank,ms){

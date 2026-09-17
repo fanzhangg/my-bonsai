@@ -1,4 +1,4 @@
-import {WATER_CAPACITY,WATER_GROWTH_PER_TANK} from './watering-motion.mjs';
+import {WATER_CAPACITY,WATER_GROWTH_PER_TANK,WATER_RECOVERY_HOURS_PER_TANK} from './watering-motion.mjs';
 import {PRESETS,normalize} from './core/v1/canopy.mjs';
 import {LOOKS,lookFor} from './core/v1/appearance.mjs';
 import {grow,snapshot,HOUR} from './growth.mjs';
@@ -38,7 +38,7 @@ export function applyCheat(record,body,at){
  if(!Array.isArray(rawWater)||rawWater.length>256)fail(400,'无效浇水记录');
  const waterIds=new Set(),waterings=rawWater.map(w=>{
   if(!w||!uuid(w.id)||waterIds.has(w.id)||!Number.isFinite(w.used)||w.used<=0||w.used>WATER_CAPACITY+.01||!validHour(w.hour))fail(400,'无效浇水记录');
-  if(!Number.isFinite(w.recoveryHours??0)||(w.recoveryHours??0)<0||(w.recoveryHours??0)>Math.min(w.used,WATER_CAPACITY)/WATER_CAPACITY*24+1e-8)fail(400,'无效恢复生长记录');
+  if(!Number.isFinite(w.recoveryHours??0)||(w.recoveryHours??0)<0||(w.recoveryHours??0)>Math.min(w.used,WATER_CAPACITY)/WATER_CAPACITY*WATER_RECOVERY_HOURS_PER_TANK+1e-8)fail(400,'无效恢复生长记录');
   const previous=(record.waterings??[]).find(old=>old.id===w.id&&old.used===w.used);
   waterIds.add(w.id);return {id:w.id,used:w.used,recoveryHours:w.recoveryHours??0,at:createdAt+w.hour*HOUR,amount:previous?.amount??Math.min(w.used,WATER_CAPACITY)/WATER_CAPACITY*WATER_GROWTH_PER_TANK};
  });

@@ -1,3 +1,4 @@
+import {WATER_CAPACITY,WATER_RECOVERY_HOURS_PER_TANK} from './watering-motion.mjs';
 import {generate} from './morphology.mjs';
 import {generate as reference} from './core/v1/canopy.mjs';
 import {render} from './growing-render.mjs';
@@ -15,7 +16,7 @@ const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 export function profile(record){return {days:3+sample(record.config.seed,'lifetime','days')*3,initial:({broom:.5,literati:.55,cascade:.35}[record.config.preset]??.3)};}
 export function wateringProgress(record,at=Date.now()){return (record.waterings??[]).reduce((sum,w)=>sum+(w.at<=at?w.amount:0),0);}
 // A bare canopy gets visible new shoots while a leafy tree keeps its gentle pace.
-export function wateringRecovery(tree,used){return tree.clusters.some(c=>(c.leafAmount??1)>.08)?0:Math.min(4000,Math.max(0,used))/4000*24;}
+export function wateringRecovery(tree,used){return tree.clusters.some(c=>(c.leafAmount??1)>.08)?0:Math.min(WATER_CAPACITY,Math.max(0,used))/WATER_CAPACITY*WATER_RECOVERY_HOURS_PER_TANK;}
 export function snapshot(record,at=Date.now()){
  const {days,initial}=profile(record),p=clamp(initial+(at-record.createdAt)/(days*24*HOUR)*(1-initial)+wateringProgress(record,at));
  return grow(record,p,{at});

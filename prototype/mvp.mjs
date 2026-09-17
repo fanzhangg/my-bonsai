@@ -76,7 +76,7 @@ async function flushWater(){
 }
 const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$('watering-can'),water:$('watering-water'),status:$('watering-status'),renderTree:renderWaterTree,
  getHome:scene=>toolHome(scene,190),
- onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),4000)/4000;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
+ onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),WATER_CAPACITY)/WATER_CAPACITY;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
  onFinish:async used=>{
   if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:used/WATER_CAPACITY*WATER_GROWTH_PER_TANK,recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}
   waterQueue.push({id:crypto.randomUUID(),used,recoveryHours:used*recoveryRate});await flushWater();
