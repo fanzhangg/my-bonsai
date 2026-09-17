@@ -1,1 +1,4 @@
 #live-watering{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}#live-watering .watering-can{pointer-events:auto;width:92px;height:92px}.night #live-watering .watering-can{filter:brightness(.85)}
+
+#live-watering .watering-can svg{display:block;width:80px;height:80px;margin:6px}
+#live-watering .watering-can:not(.is-held):not(.is-pouring) .watering-vessel{transform:rotate(-14deg)}
