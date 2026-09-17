@@ -11,7 +11,7 @@ export function potColorTokens(scene,toneId){
  const body=readable(tone.body,ground,2);
  return {'bonsai-vessel-body':body,'bonsai-vessel-rim':readable(tone.rim,ground,2),'bonsai-vessel-pattern':readable(tone.ink,body,1.65)};
 }
-export function colorTokens(scene,appearance={},preset={},potDesign){
+export function colorTokens(scene,appearance={},preset={},potDesign,language){
  const a=normalizeAppearance(appearance),base=colorsFor(a),bg=scene.colors[1],ground=mix(bg,scene.colors[2],.45);
  const dark=luminance(bg)<.18;
  const foliage=a.foliage!=='native'?base.foliage:preset.kind==='broad'?['#42613d','#577647','#6d8952','#81995b']:preset.kind==='needle'?['#2e5144','#426653','#5b7a5c','#788d67']:base.foliage;
@@ -26,5 +26,9 @@ export function colorTokens(scene,appearance={},preset={},potDesign){
  tokens['bonsai-pot-top']=readable(pot[0],ground,2);tokens['bonsai-pot-bottom']=readable(pot[1],ground,2);
  tokens['bonsai-rim']=readable(preset.pot==='rect'?'#968574':'#8b8879',ground,2);
  const selectedPot=normalizePot(potDesign);if(selectedPot)Object.assign(tokens,potColorTokens(scene,selectedPot.tone));
+ // One bounded environment adjustment across all three fixed crown ramps.
+ // Keep each cluster's age/light tint and gradient instead of replacing it
+ // with the legacy four-color foliage palette.
+ if(language){tokens['bonsai-crown-brightness']=dark?1.24:scene.kind==='storm'?.94:1;tokens['bonsai-crown-saturation']=dark?.86:['rain','fog','snow'].includes(scene.kind)?.94:1;}
  return tokens;
 }

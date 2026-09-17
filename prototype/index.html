@@ -39,8 +39,9 @@
 <div id="welcome" hidden><button id="claim" class="primary">认领这棵树</button></div>
 
 <p id="status" role="status" hidden></p><button id="retry" hidden>重试</button>
-<section id="debug" hidden aria-label="作弊模式"><div class="debug-heading"><strong>作弊模式</strong><a id="exit">退出</a></div><p>调整后点击保存，树的属性、生长时间和剪枝会永久保留。更换树形或种子会清空剪枝。</p>
+<section id="debug" hidden aria-label="作弊模式"><div class="debug-heading"><strong>作弊模式</strong><a id="exit">退出</a></div><p>调整后点击保存，树的属性、生长时间和剪枝会永久保留。更换树形、种子或枝干参数会清空剪枝。</p>
 <label>树形<select id="preset"></select></label><label>外观<select id="look"></select></label>
+<div id="design-controls" hidden><label>冠型<select id="design-crown"></select></label><label>叶形<select id="design-leaf"></select></label><label>配色<select id="design-palette"></select></label><label>变化幅度<select id="design-variation"><option value="0.25">克制</option><option value="0.55">自然</option><option value="0.85">鲜明</option></select></label><label>枝量<select id="design-density"><option value="0.2">疏朗</option><option value="0.5">均衡</option><option value="0.8">丰茂</option></select></label></div>
 <label>种子<input id="seed" maxlength="64"></label><button id="random">随机样本</button>
 <label>认领后时间 <output id="age"></output><input id="time" type="range" min="0" max="168" step="0.5" value="0"></label>
 <div class="actions"><button data-hours="4">+4 小时</button><button data-hours="24">+1 天</button><button id="replay">重播</button><button id="reset">重新载入已保存状态</button></div>

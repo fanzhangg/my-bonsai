@@ -12,7 +12,8 @@ test('runtime weather switch is public, uncached, and disables the weather proxy
    const base=`http://127.0.0.1:${server.address().port}`;
    const config=await fetch(base+'/runtime-config.mjs');
    assert.equal(config.headers.get('cache-control'),'no-store');
-   assert.equal(await config.text(),`export const realtimeWeatherEnabled=${enabled};`);
+   const runtime=await config.text();assert(runtime.includes(`export const realtimeWeatherEnabled=${enabled};`));
+   assert(runtime.includes('export const newTreeVersion="bonsai-growth-3";'));
    if(!enabled){const result=await fetch(base+'/api/weather?lat=52.5&lon=13.4');assert.equal(result.status,503);assert.equal((await result.json()).error,'实时天气已关闭');}
   }finally{await new Promise(resolve=>server.close(resolve));}
  }

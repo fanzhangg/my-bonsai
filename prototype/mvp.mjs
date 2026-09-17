@@ -1,8 +1,12 @@
-import {snapshot,draw,HOUR,VERSION,wateringRecovery} from './growth.mjs';
+import {snapshot,draw,HOUR,VERSION,wateringRecovery,applicationFrame} from './growth.mjs';
 import {replayFrame,REPLAY_MS} from './playback.mjs';
 import {LOOKS,lookFor} from './core/v1/appearance.mjs';
 import {PRESETS,normalize} from './core/v1/canopy.mjs';
 import {configForClaim} from './claim.mjs';
+import * as runtime from '/runtime-config.mjs';
+import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './tree-versions.mjs';
+import {FORMS,CROWNS,LEAVES,PALETTES} from './core/v3/bonsai-language.mjs';
+import {normalizeDesign} from './core/v3/config.mjs';
 import {cheatRequest,MAX_CHEAT_HOURS} from './cheats.mjs';
 import {startWeather} from './weather.mjs';
 import {startWind} from './wind.mjs';
@@ -13,6 +17,7 @@ import {createPruning} from './pruning.mjs';
 import {toolHome} from './tool-home.mjs';
 import {createSharing} from './share.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),debug=params.has('cheat')||params.has('debug');
+const newTreeVersion=runtime.newTreeVersion??LEGACY_VERSION;
 const visitors=createVisitors({scene:$('insect-layer'),treeElement:$('stage'),layer:$('insect-layer')});
 const weather=startWeather({debug,onSceneChange:scene=>visitors.setMode(scene.night?'night':'day')});
 const wind=startWind($('stage'));
@@ -61,7 +66,7 @@ function waterSnapshot(){
 }
 function renderWaterTree(){
  const tree=waterSnapshot();if(!tree)return null;
- $('stage').innerHTML=draw(tree,{transparent:true,viewBox:{x:tree.root.x-300,y:tree.root.y-420,width:640,height:620}});
+ $('stage').innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree)});
  weather.setTree(tree);return tree;
 }
 async function flushWater(){
@@ -96,17 +101,17 @@ const current=()=>sandbox||record;
 const now=()=>sandbox?sandbox.createdAt+hours*HOUR:Date.now()+offset;
 function status(text=''){$('status').textContent=text;$('status').hidden=!text;}
 async function api(path,body){const r=await fetch('/api/trees'+path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});const data=await r.json();if(!r.ok)throw Object.assign(new Error(data.error),{httpStatus:r.status});return data;}
-function paint(tree=snapshot(current(),now())){if(pruning.busy)return;weather.setTree(tree);$('stage').innerHTML=draw(tree,{transparent:true,viewBox:{x:tree.root.x-300,y:tree.root.y-420,width:640,height:620}});pruning.refresh(tree);watering.refresh(tree);pruningAvailability();wind.refresh();visitors.refresh();visitors.setActive(true);if(debug){$('age').textContent=`${hours.toFixed(1)} 小时`;$('info').textContent=`${record.id||'未认领样本'}\n${VERSION}\n成熟需 ${tree.matureDays.toFixed(1)} 天 · 生长 ${(tree.progress*100).toFixed(1)}% · 枝段 ${tree.nodes.length} · 叶团 ${tree.clusters.filter(c=>tree.hour>c.born).length}\n${playing?'回放中':'静止预览'}`;}}
+function paint(tree=snapshot(current(),now())){if(pruning.busy)return;weather.setTree(tree);$('stage').innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree)});pruning.refresh(tree);watering.refresh(tree);pruningAvailability();wind.refresh();visitors.refresh();visitors.setActive(true);if(debug){$('age').textContent=`${hours.toFixed(1)} 小时`;$('info').textContent=`${record.id||'未认领样本'}\n${current().version??VERSION}\n成熟需 ${tree.matureDays.toFixed(1)} 天 · 生长 ${(tree.progress*100).toFixed(1)}% · 枝段 ${tree.nodes.length} · 叶团 ${tree.clusters.filter(c=>tree.hour>c.born).length}\n${playing?'回放中':'静止预览'}`;}}
 function stop(){clearTimeout(timer);playing=false;}
 function replay(){stop();const data=structuredClone(current()),end=now(),start=performance.now();if(matchMedia('(prefers-reduced-motion: reduce)').matches){paint();return;}playing=true;const frame=()=>{const p=Math.min(1,(performance.now()-start)/REPLAY_MS);paint(replayFrame(data,end,p));if(p<1)timer=setTimeout(frame,70);else{stop();paint();}};frame();}
-function debugFields(){$('preset').value=sandbox.config.preset;$('look').value=lookFor(sandbox.config.appearance)?.id||'original';$('seed').value=sandbox.config.seed;$('time').max=Math.max(168,Math.ceil(hours));$('time').value=hours;}
+function debugFields(){designFields();$('preset').value=sandbox.config.preset;$('look').value=lookFor(sandbox.config.appearance)?.id||'original';$('seed').value=sandbox.config.seed;$('time').max=Math.max(168,Math.ceil(hours));$('time').value=hours;}
 function resetSandbox(){stop();sandbox=structuredClone(record);hours=Math.max(0,(Date.now()+offset-record.createdAt)/HOUR);dirty=false;debugFields();paint();cheatStatus(treeId?'已载入保存的状态':'调整后的样本会随认领保存');}
 async function sync(){if(loading||playing||pruning.busy||watering.busy||waterQueue.length||(!treeId)||sandbox)return;loading=true;pruningAvailability();try{const data=await api('/'+treeId),initial=!record;record=data;offset=data.serverNow-Date.now();void recordVisit();$('share').hidden=false;$('retry').hidden=true;status();if(debug){resetSandbox();$('debug').hidden=false;}if(initial)replay();else paint();}catch(e){status(e.message||'暂时无法连接');$('retry').hidden=false;}finally{loading=false;cheatControls();pruningAvailability();}}
 $('retry').onclick=async()=>{try{await flushWater();status();$('retry').hidden=true;await sync();}catch(e){status(e.message||'暂时无法保存，请重试');}};
 let claimId=crypto.randomUUID();
 function showPreview(){
  stop();sandbox=undefined;offset=0;hours=0;dirty=false;
- record={version:VERSION,createdAt:Date.now(),config:configForClaim(claimId),cuts:[]};
+ record={version:newTreeVersion,createdAt:Date.now(),config:configForClaim(claimId,newTreeVersion),cuts:[]};
  $('welcome').hidden=false;$('regenerate').hidden=false;status();
  if(debug){resetSandbox();$('debug').hidden=false;}
  replay();
@@ -119,7 +124,7 @@ $('claim').onclick=async()=>{
  if(loading||pruning.busy||watering.busy)return;
  loading=true;cheatControls();pruningAvailability();status();
  try{
-  const data=await api('',{id:claimId,...(sandbox?{cheat:cheatRequest(sandbox,hours)}:{})});
+  const data=await api('',{id:claimId,version:record.version,...(sandbox?{cheat:cheatRequest(sandbox,hours)}:{})});
   treeId=data.id;record=data;offset=data.serverNow-Date.now();
   void recordVisit();
   history.pushState(null,'','/t/'+treeId+(debug?'?cheat=1':''));
@@ -136,7 +141,27 @@ $('claim').onclick=async()=>{
 window.addEventListener('popstate',()=>location.reload());
 sharing=createSharing({button:$('share'),getRecord:()=>record,onStatus:status});
 for(const p of PRESETS)$('preset').add(new Option(p.name,p.id));for(const l of LOOKS)$('look').add(new Option(l.name,l.id));
-function changeSample(){if(!sandbox)return;stop();const geometryChanged=sandbox.config.preset!==$('preset').value||sandbox.config.seed!==$('seed').value;const pot=sandbox.config.pot;sandbox.config=normalize({...sandbox.config,preset:$('preset').value,seed:$('seed').value,appearance:LOOKS.find(l=>l.id===$('look').value)});if(pot)sandbox.config.pot=pot;if(geometryChanged)sandbox.cuts=[];changed();paint();}
+function designFields(){
+ const modern=treeVersion(sandbox)===CURRENT_VERSION;$('design-controls').hidden=!modern;$('look').closest('label').hidden=modern;
+ if(!modern)return;
+ const c=sandbox.config,form=FORMS.find(f=>f.id===c.preset);
+ for(const [key,items]of [['crown',form.crowns.map(id=>[id,CROWNS[id].name])],['leaf',form.leaves.map(id=>[id,LEAVES[id]])],['palette',Object.entries(PALETTES).map(([id,p])=>[id,p.name])]]){
+  const el=$('design-'+key);el.replaceChildren(...items.map(([id,name])=>new Option(name,id)));el.value=c[key];
+ }
+ $('design-variation').value=c.variation;$('design-density').value=c.density;
+}
+function changeSample(){
+ if(!sandbox)return;stop();const before=sandbox.config,modern=treeVersion(sandbox)===CURRENT_VERSION;
+ const geometryChanged=before.preset!==$('preset').value||before.seed!==$('seed').value;
+ if(modern){
+  sandbox.config=normalizeDesign({...before,preset:$('preset').value,seed:$('seed').value,
+   crown:$('design-crown').value,leaf:$('design-leaf').value,palette:$('design-palette').value,
+   variation:Number($('design-variation').value),density:Number($('design-density').value)});
+ }else{const pot=before.pot;sandbox.config=normalize({...before,preset:$('preset').value,seed:$('seed').value,appearance:LOOKS.find(l=>l.id===$('look').value)});if(pot)sandbox.config.pot=pot;}
+ if(geometryChanged||(modern&&(before.variation!==sandbox.config.variation||before.density!==sandbox.config.density)))sandbox.cuts=[];
+ designFields();changed();paint();
+}
+for(const key of ['crown','leaf','palette','variation','density'])$('design-'+key).onchange=changeSample;
 $('preset').onchange=changeSample;$('look').onchange=changeSample;$('seed').onchange=changeSample;
 $('random').onclick=()=>{$('seed').value=crypto.randomUUID();changeSample();};
 $('time').oninput=()=>{stop();hours=Number($('time').value);changed();paint();};

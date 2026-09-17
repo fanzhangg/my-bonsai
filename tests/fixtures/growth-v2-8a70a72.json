@@ -1,0 +1,426 @@
+[
+  {
+    "record": {
+      "version": "bonsai-growth-2",
+      "createdAt": 100000,
+      "config": {
+        "preset": "juniper",
+        "seed": "compatibility-8a70a72"
+      },
+      "cuts": [
+        {
+          "id": "cut-0",
+          "seq": 1,
+          "branchId": "n7",
+          "at": 504100000
+        },
+        {
+          "id": "cut-1",
+          "seq": 2,
+          "branchId": "n81",
+          "at": 504100000
+        },
+        {
+          "id": "cut-2",
+          "seq": 3,
+          "branchId": "n159",
+          "at": 504100000
+        },
+        {
+          "id": "cut-3",
+          "seq": 4,
+          "branchId": "n237",
+          "at": 504100000
+        },
+        {
+          "id": "cut-4",
+          "seq": 5,
+          "branchId": "n317",
+          "at": 504100000
+        }
+      ]
+    },
+    "frames": [
+      {
+        "hour": 0,
+        "model": "7eec71d859202b8d2c4d0834f5578449680fda2c8bdc1680eeed9c2abf190eaf",
+        "svg": "58dc3fba600b4d1e85cf64d3af003a96e8add8767fe3402db193f185b6e750b0"
+      },
+      {
+        "hour": 120,
+        "model": "ad02c2bec6f93cd1f798febf7b9c6d349538d9bb7caff3a95936073a21713ed3",
+        "svg": "d8263d3ee10753fa8fb3c7bea75f1781b35f3066a367b69061e72e70274dda4f"
+      },
+      {
+        "hour": 140,
+        "model": "6383dc8787fe631f593383bea2b70bec695a053fdd6a12c8a42d43cf11031cc6",
+        "svg": "a21827b0c936cc38419eb2ce3bfcd30aa543f16eea0e368b56f20882733c9a12"
+      },
+      {
+        "hour": 200,
+        "model": "af65d819cdab1c3b00671ca46a5a2eb999b1e54a4b9068ce2f68334f41bf1991",
+        "svg": "85b9975a9c1cab562f2304c871c8678153611ea43f9c26bfbb56eaf7be6e2d95"
+      }
+    ]
+  },
+  {
+    "record": {
+      "version": "bonsai-growth-2",
+      "createdAt": 100000,
+      "config": {
+        "preset": "broom",
+        "seed": "compatibility-8a70a72"
+      },
+      "cuts": [
+        {
+          "id": "cut-0",
+          "seq": 1,
+          "branchId": "n3",
+          "at": 504100000
+        },
+        {
+          "id": "cut-1",
+          "seq": 2,
+          "branchId": "n100",
+          "at": 504100000
+        },
+        {
+          "id": "cut-2",
+          "seq": 3,
+          "branchId": "n226",
+          "at": 504100000
+        },
+        {
+          "id": "cut-3",
+          "seq": 4,
+          "branchId": "n331",
+          "at": 504100000
+        },
+        {
+          "id": "cut-4",
+          "seq": 5,
+          "branchId": "n451",
+          "at": 504100000
+        }
+      ]
+    },
+    "frames": [
+      {
+        "hour": 0,
+        "model": "3e6db7198b6f6ed0e0bde91cb22be490c92dab12e12296d295443b35ffe97680",
+        "svg": "7ff67e5ed72f00c37a3429c692505723619671f336496864345578624520df4c"
+      },
+      {
+        "hour": 120,
+        "model": "94e50c74418fe604006ac6978e95542c249e6eb86c271ab1afb18b5bf2390ae8",
+        "svg": "bbca562eab73637e78fb6334d96e64ba7045bd59a0089b7f5769b2ca722d9de4"
+      },
+      {
+        "hour": 140,
+        "model": "89b36c0d0e97259d0d15324ae7d0c9f67012d3ca229071c1eada8fd1100d2cac",
+        "svg": "6619a8375b650ab3ffab822e65d6ff005ff09a2736d7aafa9631e7bff8626426"
+      },
+      {
+        "hour": 200,
+        "model": "eb97a185561d5b310b49e3423c16b13687412a87ae28b708843adb110657f141",
+        "svg": "376a99abf60fa91c1147566fc0c5e8153715f744787e45db360d208bf5e6bc2e"
+      }
+    ]
+  },
+  {
+    "record": {
+      "version": "bonsai-growth-2",
+      "createdAt": 100000,
+      "config": {
+        "preset": "literati",
+        "seed": "compatibility-8a70a72"
+      },
+      "cuts": [
+        {
+          "id": "cut-0",
+          "seq": 1,
+          "branchId": "n7",
+          "at": 504100000
+        },
+        {
+          "id": "cut-1",
+          "seq": 2,
+          "branchId": "n20",
+          "at": 504100000
+        },
+        {
+          "id": "cut-2",
+          "seq": 3,
+          "branchId": "n34",
+          "at": 504100000
+        },
+        {
+          "id": "cut-3",
+          "seq": 4,
+          "branchId": "extra0",
+          "at": 504100000
+        }
+      ]
+    },
+    "frames": [
+      {
+        "hour": 0,
+        "model": "3888bbf94320021cbbb2f91d7eda1b66aa26dc63231c3a81196b60119fc8c938",
+        "svg": "0665e4b6e6c88a8fd76b607bf3f2c8dd52db5450f06f8fd6a9cc86b4d08cad9c"
+      },
+      {
+        "hour": 120,
+        "model": "29b7c14419326055c16499190d014f7e9d6b5889c2f91842dbfc402f3c5dc98a",
+        "svg": "80250c76fa224d1ff28735420e92d67bc84ee94f228fbc68bd255a96d890253a"
+      },
+      {
+        "hour": 140,
+        "model": "9b8713a968c225f349fed4190832d44eb73f10de8b6a7b4fa11174ad01f6b872",
+        "svg": "88a40066da7b3fa6c3a062b7fa549ff1e77e17c644d1dc46d0c7aa31dd16d3dd"
+      },
+      {
+        "hour": 200,
+        "model": "5f6ee5f8a9f003de59004fe75222bb41a4a1bf5ac4d6c5b90313be67ea6604ac",
+        "svg": "72b625655c658268e007b65fc4be131ca6a9c0b89443d3f9169377016686aabe"
+      }
+    ]
+  },
+  {
+    "record": {
+      "version": "bonsai-growth-2",
+      "createdAt": 100000,
+      "config": {
+        "preset": "pine",
+        "seed": "compatibility-8a70a72"
+      },
+      "cuts": [
+        {
+          "id": "cut-0",
+          "seq": 1,
+          "branchId": "n6",
+          "at": 504100000
+        },
+        {
+          "id": "cut-1",
+          "seq": 2,
+          "branchId": "n80",
+          "at": 504100000
+        },
+        {
+          "id": "cut-2",
+          "seq": 3,
+          "branchId": "n154",
+          "at": 504100000
+        },
+        {
+          "id": "cut-3",
+          "seq": 4,
+          "branchId": "n214",
+          "at": 504100000
+        },
+        {
+          "id": "cut-4",
+          "seq": 5,
+          "branchId": "n275",
+          "at": 504100000
+        }
+      ]
+    },
+    "frames": [
+      {
+        "hour": 0,
+        "model": "e61950b0597ca0970370ffbd871c75b4e6ca65177d536b0bb25871b775280943",
+        "svg": "624e5df7a9dc65878e9bfadedd6d51a9f954f9b13de2187a2679b9632e5de907"
+      },
+      {
+        "hour": 120,
+        "model": "9b77030eeecec6dd70efad2b940a29514c52d694813b3e694f01da3405cef1ca",
+        "svg": "2b025c1ef94de5e55edc3f2bbbfc87b707548688277a32564da661c695b97270"
+      },
+      {
+        "hour": 140,
+        "model": "1650e3e8d0e7628e0d52d75fb7a3a79a8bde1f8241d165ce90653bee8a7b3e1f",
+        "svg": "ec20796d63ba43249e83f2aa12d263851bda72d43692a7b735f7e036e65e55fc"
+      },
+      {
+        "hour": 200,
+        "model": "0ebfe1c789b8951018dee30700a22dc6cd4e87544ebf949f9acaede243b41d47",
+        "svg": "a382774d6e5abf678879cf437eff87c6386af65d0fdb673bf12a553b39561277"
+      }
+    ]
+  },
+  {
+    "record": {
+      "version": "bonsai-growth-2",
+      "createdAt": 100000,
+      "config": {
+        "preset": "slant",
+        "seed": "compatibility-8a70a72"
+      },
+      "cuts": [
+        {
+          "id": "cut-0",
+          "seq": 1,
+          "branchId": "n6",
+          "at": 504100000
+        },
+        {
+          "id": "cut-1",
+          "seq": 2,
+          "branchId": "n80",
+          "at": 504100000
+        },
+        {
+          "id": "cut-2",
+          "seq": 3,
+          "branchId": "n154",
+          "at": 504100000
+        },
+        {
+          "id": "cut-3",
+          "seq": 4,
+          "branchId": "n214",
+          "at": 504100000
+        },
+        {
+          "id": "cut-4",
+          "seq": 5,
+          "branchId": "n275",
+          "at": 504100000
+        }
+      ]
+    },
+    "frames": [
+      {
+        "hour": 0,
+        "model": "6976937531534c0e7975074c0b29d1fbc292b302eb3d06a935f2bc16b19ec094",
+        "svg": "54223f315866987b194afa4220b088393026fcbf622c4f7b43ab9d790cd44bc6"
+      },
+      {
+        "hour": 120,
+        "model": "b353a3e7b1af24f361b5e68f86f311d85115983869eb345a9a7ae9719b8b1c5c",
+        "svg": "4c554765a537b4f12f252af41486bdf7de4b8809c8605255c0d8b4ab8255ed54"
+      },
+      {
+        "hour": 140,
+        "model": "5c59a1be71402a7bfb313c32a6b0649eb88362d2279110c4f6d93e10fb84b9c3",
+        "svg": "a60b4976db0f510804026082dba12b1b01477c2878f5e35ef04b718af70f1492"
+      },
+      {
+        "hour": 200,
+        "model": "1139078c3a8a5de71a469905c44dcedebfcac91588c4881de7fba98f2a8ce0f0",
+        "svg": "5542fc165b2cdf6e4a3ffdb0336752ce0e6dc7b590fe115668bd4d65295b55c1"
+      }
+    ]
+  },
+  {
+    "record": {
+      "version": "bonsai-growth-2",
+      "createdAt": 100000,
+      "config": {
+        "preset": "cascade",
+        "seed": "compatibility-8a70a72"
+      },
+      "cuts": [
+        {
+          "id": "cut-0",
+          "seq": 1,
+          "branchId": "n8",
+          "at": 504100000
+        },
+        {
+          "id": "cut-1",
+          "seq": 2,
+          "branchId": "n80",
+          "at": 504100000
+        },
+        {
+          "id": "cut-2",
+          "seq": 3,
+          "branchId": "n150",
+          "at": 504100000
+        }
+      ]
+    },
+    "frames": [
+      {
+        "hour": 0,
+        "model": "4b9701500783f87863b7378b612a63c5c3bad40d547bc2e13594f2068b2c3be3",
+        "svg": "b0ab36e40175797e2f27e19c8afeb7f2234eef57d274a6e51c86bd640edc002d"
+      },
+      {
+        "hour": 120,
+        "model": "5d5f1c648e894989a4c9d5e79d34f9c7a24be0a0af4670b32fc3609d91ec458a",
+        "svg": "44772d91b9ff785b34de60a238d9eff8529301caab9313c4104ff53387f8c11c"
+      },
+      {
+        "hour": 140,
+        "model": "503d1de1b5fc7753bc50685faa712597185c02857f9e75c0af1e838839830d2f",
+        "svg": "e77bd2a7650510c6f621a92358207b62734313ed1ca0e7593371f196190d0f5a"
+      },
+      {
+        "hour": 200,
+        "model": "c9b458e117722660ba004c6db2b568abe9a4e12767bfeba336cf0a6a220bf04e",
+        "svg": "13aa67b216076d3751335236c418cca7e2f18a7e255bb0959aebc51e981c61b9"
+      }
+    ]
+  },
+  {
+    "record": {
+      "version": "bonsai-growth-2",
+      "createdAt": 100000,
+      "config": {
+        "preset": "windswept",
+        "seed": "compatibility-8a70a72"
+      },
+      "cuts": [
+        {
+          "id": "cut-0",
+          "seq": 1,
+          "branchId": "n6",
+          "at": 504100000
+        },
+        {
+          "id": "cut-1",
+          "seq": 2,
+          "branchId": "n57",
+          "at": 504100000
+        },
+        {
+          "id": "cut-2",
+          "seq": 3,
+          "branchId": "n114",
+          "at": 504100000
+        },
+        {
+          "id": "cut-3",
+          "seq": 4,
+          "branchId": "n173",
+          "at": 504100000
+        }
+      ]
+    },
+    "frames": [
+      {
+        "hour": 0,
+        "model": "1e075ac95ea718c7794fc9f0d8456da5f32ae66d6092b547d0b9210126e75ac0",
+        "svg": "7a6f71bc256a09cf449cdf1491cdd892d61f661d4bfbf700757d2d0546067c22"
+      },
+      {
+        "hour": 120,
+        "model": "fe342a1139f4561f5475cbbbb05b96578dbd86bbbca118078f081f1c7d3f3f14",
+        "svg": "182892f31fa07d179b913d7850cc81e00a1f3ad6e83c386a48b209ecb1112403"
+      },
+      {
+        "hour": 140,
+        "model": "6f21e71c9c33f72948ac9fce15ca18b8e3ea2fe2ce9ec6fc218aa82c06a51026",
+        "svg": "c5e0e1f6ad215b36e59b7d542c5529e6f0f497f7081a0ea95f077b4602070741"
+      },
+      {
+        "hour": 200,
+        "model": "68212d9e1ce37b801ea40d88c85415a05c1c7aa83468da2524b92d3da5c4371d",
+        "svg": "d465c36a4672c28e092cef1cd70c36f1b434e67484c04874a63843729a3eecdb"
+      }
+    ]
+  }
+]

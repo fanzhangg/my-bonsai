@@ -1,7 +1,7 @@
-import {FORMS,CROWNS,LEAVES,PALETTES,selection,generateLanguage,languageFrame} from './bonsai-language.mjs';
+import {FORMS,CROWNS,LEAVES,PALETTES,selection,generateLanguage,languageFrame} from './core/v3/bonsai-language.mjs';
 import {grow} from './growth.mjs';
-import {render} from './growing-render.mjs';
-import {individualOptions} from './bonsai-individual.mjs';
+import {render} from './core/v3/growing-render.mjs';
+import {individualOptions} from './core/v3/bonsai-individual.mjs';
 
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
