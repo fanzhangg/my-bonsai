@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"><link rel="stylesheet" href="/design-system-watering.css"><link rel="stylesheet" href="/design-system-ramification.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"><link rel="stylesheet" href="/design-system-watering.css"></head>
 <body>
 <header class="masthead"><a class="brand" href="/">一盆树<span>形态、色彩与界面设计系统</span></a><span class="draft">v0.2 · 待审核</span></header>
 <main>
@@ -15,7 +15,6 @@
     <button id="tab-visitors" role="tab" aria-controls="panel-visitors" aria-selected="false" tabindex="-1">07 小小访客</button>
     <button id="tab-pruning" role="tab" aria-controls="panel-pruning" aria-selected="false" tabindex="-1">08 剪枝</button>
     <button id="tab-watering" role="tab" aria-controls="panel-watering" aria-selected="false" tabindex="-1">09 浇水</button>
-    <button id="tab-ramification" role="tab" aria-controls="panel-ramification" aria-selected="false" tabindex="-1">10 枝序实验室</button>
   </nav>
   <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
     <div class="composer">
@@ -34,10 +33,8 @@
   </section>
   <section id="panel-trees" role="tabpanel" aria-labelledby="tab-trees" hidden>
     <div class="section-heading"><div><p class="eyebrow">TREE / SILHOUETTE</p><h2>七种姿态，各有筋骨</h2></div><span id="tree-review-status" aria-live="polite">新版形态 · 样本 01</span></div>
-    <div class="tree-review-controls"><label>形态版本<select id="tree-review-version"><option value="new">两级枝序提案</option><option value="current">现有算法对照</option><option value="old">早期算法对照</option></select></label><label>观察方式<select id="tree-review-view"><option value="foliage">完整枝叶</option><option value="skeleton">只看枝干</option><option value="silhouette">单色剪影</option></select></label><label>造型强调<select id="tree-review-character"><option value="0">克制</option><option value="1" selected>鲜明 · 推荐</option><option value="1.4">夸张</option></select></label><button id="tree-review-sample" type="button">换一组样本</button></div>
-    <p class="minor tree-review-note">先看轮廓，再看骨架。只需剪大枝、修小枝；更细的分枝与叶片自然跟随。每棵树可进入试剪，保留同一样本与造型参数。</p>
+    <div class="tree-review-controls"><label>形态版本<select id="tree-review-version"><option value="new">新版形态</option><option value="old">旧版对照</option></select></label><label>观察方式<select id="tree-review-view"><option value="foliage">完整枝叶</option><option value="skeleton">只看枝干</option><option value="silhouette">单色剪影</option></select></label><button id="tree-review-sample" type="button">换一组样本</button></div>
     <div id="tree-gallery" class="tree-gallery"></div>
-    <details class="ram-research"><summary>这轮树形继承了什么？依据是什么？</summary><p>沿用现有训练骨架、固定种子、枝龄与光照冠区、递归细枝、针叶／鳞叶／阔叶渲染。新增大枝、小枝两级操作；更细分枝由冠区目标引导，剪口以下的枝叶一起变化。这里审核外形与操作，正式认养模型尚未切换。</p><p>真实特征参考 <a href="https://mbgna.umich.edu/styles-bonsai" target="_blank" rel="noreferrer">密歇根大学植物园</a>、<a href="https://www.bonsaiempire.com/origin/bonsai-styles" target="_blank" rel="noreferrer">Bonsai Empire 造型图解</a>。算法研究包括 <a href="https://algorithmicbotany.org/papers/colonization.egwnp2007.html" target="_blank" rel="noreferrer">空间殖民</a>、<a href="https://algorithmicbotany.org/papers/selforg.sig2009.html" target="_blank" rel="noreferrer">芽与光照竞争</a>、<a href="https://arxiv.org/abs/2504.01619" target="_blank" rel="noreferrer">3DBonsai</a>；本轮借鉴结构思想，未复现完整论文算法。</p><p>当前为二维形态提案。造型强调属于艺术参数，萌芽属于简化演示；尚未模拟真实季节、能量平衡、蟠扎与三维枝条避碰。</p></details>
     <div class="principles"><article><span>01 / 枝干</span><h3>根有分量，梢有收分</h3><p>沿完整干线连续变细，粗枝承接细枝。黑松敦厚，文人松清瘦，真柏保留转折。</p></article><article><span>02 / 树冠</span><h3>先看轮廓，再看叶片</h3><p>真柏横展、榉树扇顶、风吹松拖梢。叶层有起伏、大小差与透光，保留枝间留白。</p></article><article><span>03 / 生长</span><h3>同一种树，也有变化</h3><p>样本改变干线倾向、粗度和叶层大小；同一种子保持稳定，幼苗到成树根部不动。</p></article></div>
   </section>
   <section id="panel-pots" role="tabpanel" aria-labelledby="tab-pots" hidden>
@@ -127,7 +124,6 @@
       </button>
     </div>
   </section>
-  <section id="panel-ramification" role="tabpanel" aria-labelledby="tab-ramification" hidden><div id="ramification-review"></div></section>
   <footer><span>一盆树 · Design review 0.2</span><span>现有树形与配色算法 / 八款盆器 / 已接入随机认养</span></footer>
 </main><script type="module" src="/design-system.mjs"></script>
 </body></html>
