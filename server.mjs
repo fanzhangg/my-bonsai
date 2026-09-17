@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {openStore} from './storage.mjs';
-import {VERSION,snapshot} from './prototype/growth.mjs';
+import {VERSION,snapshot,wateringRecovery} from './prototype/growth.mjs';
 import {WATER_CAPACITY} from './prototype/watering-motion.mjs';
 import {configForClaim} from './prototype/claim.mjs';
 import {applyCheat} from './prototype/cheats.mjs';
@@ -75,7 +75,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
             if(!old)fail(404,'找不到这盆树');
             const waterings=old.waterings??[],existing=waterings.find(w=>w.id===body.id);
             if(existing){if(existing.used!==body.used)fail(409,'浇水请求已使用');return old;}
-            const at=Date.now();return {...old,revision:(old.revision??0)+1,lastInteractedAt:at,waterings:[...waterings,{id:body.id,at,used:body.used,amount:Math.min(body.used,WATER_CAPACITY)/WATER_CAPACITY*.025}]};
+            const at=Date.now();return {...old,revision:(old.revision??0)+1,lastInteractedAt:at,waterings:[...waterings,{id:body.id,at,used:body.used,recoveryHours:wateringRecovery(snapshot(old,at),body.used),amount:Math.min(body.used,WATER_CAPACITY)/WATER_CAPACITY*.025}]};
           });
           return send(200,result(tree));
         }

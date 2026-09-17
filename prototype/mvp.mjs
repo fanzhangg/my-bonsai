@@ -1,4 +1,4 @@
-import {snapshot,draw,HOUR,VERSION} from './growth.mjs';
+import {snapshot,draw,HOUR,VERSION,wateringRecovery} from './growth.mjs';
 import {replayFrame,REPLAY_MS} from './playback.mjs';
 import {LOOKS,lookFor} from './core/v1/appearance.mjs';
 import {PRESETS,normalize} from './core/v1/canopy.mjs';
@@ -16,7 +16,7 @@ const weather=startWeather({debug,onSceneChange:scene=>visitors.setMode(scene.ni
 const wind=startWind($('stage'));
 let treeId=location.pathname.match(/^\/t\/([^/]+)$/)?.[1];
 let record,sandbox,offset=0,hours=0,playing=false,timer,loading=false,dirty=false;
-let pendingWater=0;const waterQueue=[];let waterSave=null;
+let pendingWater=0,pendingRecovery=0,recoveryRate=0;const waterQueue=[];let waterSave=null;
 let visitPending=true,visitInFlight=false;
 async function recordVisit(){
  if(!treeId||document.hidden||!visitPending||visitInFlight)return;
@@ -51,7 +51,7 @@ const pruning=createPruning({
 function waterSnapshot(){
  const data=sandbox||record;if(!data)return null;
  const at=sandbox?sandbox.createdAt+hours*HOUR:Date.now()+offset;
- return snapshot({...data,waterings:[...(data.waterings??[]),{at,amount:pendingWater/WATER_CAPACITY*.025}]},at);
+ return snapshot({...data,waterings:[...(data.waterings??[]),{at,amount:pendingWater/WATER_CAPACITY*.025,recoveryHours:pendingRecovery}]},at);
 }
 function renderWaterTree(){
  const tree=waterSnapshot();if(!tree)return null;
@@ -63,17 +63,17 @@ async function flushWater(){
  waterSave=(async()=>{
   while(waterQueue.length){const body=waterQueue[0];let data;
    try{data=await api('/'+treeId+'/waterings',body);}catch(error){if(error.httpStatus)throw error;data=await api('/'+treeId+'/waterings',body);}
-   record=data;offset=data.serverNow-Date.now();pendingWater=Math.max(0,pendingWater-body.used);waterQueue.shift();
+   record=data;offset=data.serverNow-Date.now();pendingWater=Math.max(0,pendingWater-body.used);pendingRecovery=Math.max(0,pendingRecovery-(body.recoveryHours??0));waterQueue.shift();
   }
  })();
  try{await waterSave;}finally{waterSave=null;}
 }
 const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$('watering-can'),water:$('watering-water'),status:$('watering-status'),renderTree:renderWaterTree,
  getHome:scene=>({x:Math.max(54,scene.clientWidth-170),y:scene.clientHeight-70}),
- onDose:used=>{pendingWater+=used;},
+ onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),4000)/4000;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
  onFinish:async used=>{
-  if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:used/WATER_CAPACITY*.025,used});pendingWater=Math.max(0,pendingWater-used);changed();return;}
-  waterQueue.push({id:crypto.randomUUID(),used});await flushWater();
+  if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:used/WATER_CAPACITY*.025,recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}
+  waterQueue.push({id:crypto.randomUUID(),used,recoveryHours:used*recoveryRate});await flushWater();
  },
  onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);pruning.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);if(!busy&&record)paint(waterSnapshot());},
  onError:error=>{status(error.message||'浇水暂时无法保存，请重试');$('retry').hidden=false;}

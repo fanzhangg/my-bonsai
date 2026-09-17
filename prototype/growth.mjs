@@ -14,6 +14,8 @@ const clamp=x=>Math.max(0,Math.min(1,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 export function profile(record){return {days:3+sample(record.config.seed,'lifetime','days')*3,initial:({broom:.5,literati:.55,cascade:.35}[record.config.preset]??.3)};}
 export function wateringProgress(record,at=Date.now()){return (record.waterings??[]).reduce((sum,w)=>sum+(w.at<=at?w.amount:0),0);}
+// A bare canopy gets visible new shoots while a leafy tree keeps its gentle pace.
+export function wateringRecovery(tree,used){return tree.clusters.some(c=>(c.leafAmount??1)>.08)?0:Math.min(4000,Math.max(0,used))/4000*24;}
 export function snapshot(record,at=Date.now()){
  const {days,initial}=profile(record),p=clamp(initial+(at-record.createdAt)/(days*24*HOUR)*(1-initial)+wateringProgress(record,at));
  return grow(record,p,{at});
@@ -40,10 +42,14 @@ export function grow(record,p,{morphology=true,at=Infinity}={}){
  tree.hour=clock;tree.progress=p;tree.matureDays=profile(record).days;tree.seedOpacity=1-smooth(p/.035);tree.scars=[];
  // Resolve descendants against the complete scaffold, including unborn twigs.
  // Filtering after growth keeps all surviving wood and the camera unchanged.
- const {removed,shoots}=regrowthPlan([...original.values()],record.cuts??[],record.config.seed,at);
+ // Rebase cuts onto the same biological clock: past watering never speeds a later cut.
+ const recovery=time=>(record.waterings??[]).reduce((sum,w)=>sum+(w.at<=at&&w.at<time?(w.recoveryHours??0)*HOUR:0),0);
+ const recoveryAt=at+recovery(Infinity);
+ const recoveryCuts=(record.cuts??[]).map(c=>({...c,at:c.at+recovery(c.at)}));
+ const {removed,shoots}=regrowthPlan([...original.values()],recoveryCuts,record.config.seed,recoveryAt);
  tree.nodes=tree.nodes.filter(n=>!removed.has(n.id));
  tree.clusters=tree.clusters.filter(c=>!removed.has(c.node));
- appendRegrowth(tree,{shoots,original,clusters,attachments,mapped,scale,thickness,seed:record.config.seed,at});
+ appendRegrowth(tree,{shoots,original,clusters,attachments,mapped,scale,thickness,seed:record.config.seed,at:recoveryAt});
  return tree;
 }
 export function draw(tree,{transparent=false,viewBox=tree.viewBox,id='growing-tree'}={}){
