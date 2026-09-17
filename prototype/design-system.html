@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"><link rel="stylesheet" href="/design-system-watering.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"><link rel="stylesheet" href="/design-system-watering.css"><link rel="stylesheet" href="/design-system-ramification.css"></head>
 <body>
 <header class="masthead"><a class="brand" href="/">一盆树<span>形态、色彩与界面设计系统</span></a><span class="draft">v0.2 · 待审核</span></header>
 <main>
@@ -15,6 +15,7 @@
     <button id="tab-visitors" role="tab" aria-controls="panel-visitors" aria-selected="false" tabindex="-1">07 小小访客</button>
     <button id="tab-pruning" role="tab" aria-controls="panel-pruning" aria-selected="false" tabindex="-1">08 剪枝</button>
     <button id="tab-watering" role="tab" aria-controls="panel-watering" aria-selected="false" tabindex="-1">09 浇水</button>
+    <button id="tab-ramification" role="tab" aria-controls="panel-ramification" aria-selected="false" tabindex="-1">10 枝序实验室</button>
   </nav>
   <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
     <div class="composer">
@@ -124,6 +125,7 @@
       </button>
     </div>
   </section>
+  <section id="panel-ramification" role="tabpanel" aria-labelledby="tab-ramification" hidden><div id="ramification-review"></div></section>
   <footer><span>一盆树 · Design review 0.2</span><span>现有树形与配色算法 / 八款盆器 / 已接入随机认养</span></footer>
 </main><script type="module" src="/design-system.mjs"></script>
 </body></html>

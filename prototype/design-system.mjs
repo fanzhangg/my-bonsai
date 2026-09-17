@@ -8,6 +8,7 @@ import {createVisitorReview} from './design-system-visitors.mjs';
 import {createWateringReview} from './design-system-watering.mjs';
 import {createPruningReview} from './design-system-pruning.mjs';
 import {MORPHOLOGY} from './morphology.mjs';
+import {createRamificationReview} from './design-system-ramification.mjs';
 
 const $=id=>document.getElementById(id);
 const state={tree:'juniper',shape:'oval',tone:'sand',pattern:'plain',look:'original',stage:'mature'};
@@ -120,5 +121,6 @@ document.querySelectorAll('[data-open-colors]').forEach(button=>button.addEventL
 const visitorReview=createVisitorReview({getState:()=>state,renderTree:()=>scene(state.tree,state,state.look,state.stage)});
 const pruningReview=createPruningReview();
 const wateringReview=createWateringReview();
+createRamificationReview();
 window.addEventListener('hashchange',()=>showPanel(location.hash.slice(1),false));
 paint();showPanel(location.hash.slice(1)||'compose',false);
