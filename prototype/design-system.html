@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"></head>
 <body>
 <header class="masthead"><a class="brand" href="/">一盆树<span>形态、色彩与界面设计系统</span></a><span class="draft">v0.2 · 待审核</span></header>
 <main>
@@ -13,6 +13,7 @@
     <button id="tab-system" role="tab" aria-controls="panel-system" aria-selected="false" tabindex="-1">05 基础与组件</button>
     <button id="tab-motion" role="tab" aria-controls="panel-motion" aria-selected="false" tabindex="-1">06 动效设计</button>
     <button id="tab-visitors" role="tab" aria-controls="panel-visitors" aria-selected="false" tabindex="-1">07 小小访客</button>
+    <button id="tab-pruning" role="tab" aria-controls="panel-pruning" aria-selected="false" tabindex="-1">08 剪枝</button>
   </nav>
   <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
     <div class="composer">
@@ -81,6 +82,25 @@
       </aside>
     </div>
     <div class="principles"><article><span>01 / 相遇</span><h3>小小的，不抢戏</h3><p>淡杏、米白、灰蓝三种小剪影，用轻微轮廓变化区分。无翅纹和描边，沿弧线轻飞；停留 6–8 秒时侧身合翅，身体贴近叶面。白天最多 3 只蝴蝶，夜晚最多 5 点萤光，数量随来访变化。触摸范围保持 48px。</p></article><article><span>02 / 回应</span><h3>一点，就飞远</h3><p>点击、轻触或按 Enter / 空格，小访客从当前位置向外飞走，约 1.1 秒沿弧线飞远，同时缩小、淡出。只回应被点到的那一只。</p></article><article><span>03 / 回来</span><h3>留一点等待</h3><p>小访客会在停留 14–35 秒后自行离开。间隔 4–16 秒，随机的新访客沿弧线从左、右或上方飞入，用 3–5 秒由小到大、由淡到清晰地靠近树冠。暂停或离开章节时停止计时。</p></article></div>
+  </section>
+  <section id="panel-pruning" role="tabpanel" aria-labelledby="tab-pruning" hidden>
+    <div id="pruning-scene" class="pruning-scene">
+      <div id="pruning-tree" class="pruning-tree"></div>
+      <p id="pruning-message" class="pruning-sr-only" role="status" aria-live="polite">拿起剪刀，慢慢靠近一根旁支。</p>
+      <button id="pruning-scissors" class="pruning-scissors" type="button" aria-label="拖动剪刀剪下旁支；也可按空格拿起，用方向键选择，再按空格剪下" aria-describedby="pruning-message">
+        <svg viewBox="-54 -54 108 108" aria-hidden="true" fill="currentColor">
+          <g class="scissor-half scissor-a">
+            <path d="M0 -43 Q-10 -30 -6 -5 L17 22 L21 18 L5 -3 Z" fill="#a4afa7"/>
+            <path d="M13 17 C20 12 30 19 32 29 C35 41 29 48 21 45 C13 43 8 32 9 24 C9 21 11 19 13 17 Z M17 23 C13 25 16 36 22 39 C27 42 29 36 27 30 C25 23 21 20 17 23 Z" fill-rule="evenodd"/>
+          </g>
+          <g class="scissor-half scissor-b">
+            <path d="M0 -43 Q10 -30 6 -5 L-17 22 L-21 18 L-5 -3 Z" fill="#c5cdc3"/>
+            <path d="M-13 17 C-20 12 -30 19 -32 29 C-35 41 -29 48 -21 45 C-13 43 -8 32 -9 24 C-9 21 -11 19 -13 17 Z M-17 23 C-13 25 -16 36 -22 39 C-27 42 -29 36 -27 30 C-25 23 -21 20 -17 23 Z" fill-rule="evenodd"/>
+          </g>
+          <circle r="4" fill="#b49a70"/>
+        </svg>
+      </button>
+    </div>
   </section>
   <footer><span>一盆树 · Design review 0.2</span><span>现有树形与配色算法 / 八款盆器 / 已接入随机认养</span></footer>
 </main><script type="module" src="/design-system.mjs"></script>
