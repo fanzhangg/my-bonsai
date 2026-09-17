@@ -9,13 +9,19 @@ import {coordinates,weatherAt} from './weather-service.mjs';
 const root=path.resolve(fileURLToPath(new URL('./prototype/',import.meta.url)));
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
-export function createServer(store){
+export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_WEATHER_ENABLED!=='false'}={}){
   return http.createServer(async(req,res)=>{
     const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
     try{
       const url=new URL(req.url,'http://localhost');
+      if(url.pathname==='/runtime-config.mjs'){
+        if(req.method!=='GET')fail(405,'不支持的操作');
+        res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+        return res.end(`export const realtimeWeatherEnabled=${Boolean(realtimeWeatherEnabled)};`);
+      }
       if(url.pathname==='/healthz'){await store.health();return send(200,{ok:true});}
       if(url.pathname==='/api/weather'){
+        if(!realtimeWeatherEnabled)fail(503,'实时天气已关闭');
         if(req.method!=='GET')fail(405,'不支持的操作');
         let c;try{c=coordinates(url.searchParams.get('lat'),url.searchParams.get('lon'));}catch{fail(400,'无效位置');}
         try{return send(200,await weatherAt(c.lat,c.lon));}catch{fail(503,'天气暂不可用');}

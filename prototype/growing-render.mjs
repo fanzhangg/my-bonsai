@@ -29,10 +29,12 @@ function basalPath(n){
 export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.viewBox,transparent=false}={}){
   const {config,preset,root}=tree,rand=(k,p)=>sample(config.seed,`${preset.id}:render:${k}`,p);
   const appearance=normalizeAppearance(config.appearance),colors=colorsFor(appearance);
+  const material=(name,color)=>transparent?`var(--bonsai-${name},${color})`:color;
   const shape=appearance.shape==='auto'?(preset.kind==='broad'?'oval':preset.kind):appearance.shape;
   const broad=shape!=='scale'&&shape!=='needle',needle=shape==='needle',silhouette=view==='silhouette';
-  const silhouetteColor=appearance.background==='night'?'#d6dfd7':'#334c3e',woodColor=silhouette?silhouetteColor:colors.bark;
-  const palette=appearance.foliage!=='native'?colors.foliage:preset.kind==='broad'?['#42613d','#577647','#6d8952','#81995b']:preset.kind==='needle'?['#2e5144','#426653','#5b7a5c','#788d67']:colors.foliage;
+  const silhouetteColor=appearance.background==='night'?'#d6dfd7':'#334c3e',woodColor=silhouette?silhouetteColor:material('bark',colors.bark);
+  const basePalette=appearance.foliage!=='native'?colors.foliage:preset.kind==='broad'?['#42613d','#577647','#6d8952','#81995b']:preset.kind==='needle'?['#2e5144','#426653','#5b7a5c','#788d67']:colors.foliage;
+  const palette=basePalette.map((c,i)=>material('leaf-'+i,c));
   function wood(n){const g=n.role==='twig'?progress(n.born,hour,n.duration??12):1;if(!g)return '';
     const end=pointOn(n,g),scale=.4+.6*g,startRadius=n.width*scale/2,endRadius=(n.width+(n.tipWidth-n.width)*g)*scale/2;
     // Shared round caps overlap the flat tube ends, sealing antialiasing seams
@@ -69,9 +71,10 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   const front=tree.pads.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).map(padMarkup).join('');
   const trunks=tree.nodes.filter(n=>n.role==='trunk'||n.role==='bough').map(wood).join('');
   const deep=preset.pot==='deep',rect=preset.pot==='rect',w=deep?49:preset.id==='literati'?56:preset.pot==='shallow'?82:88,x=root.x,y=root.y,h=deep?105:preset.pot==='shallow'?23:31;
-  const potColor=rect?['#957c66','#635344']:deep?['#747c83','#444c56']:preset.pot==='oval-blue'?['#8a9b9a','#516867']:['#879087','#515e57'];
-  const rim=rect?`<rect x="${x-w}" y="${y-9}" width="${w*2}" height="18" rx="5" fill="#968574"/>`:`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="11" fill="#8b8879"/>`;
-  const pot=`<path d="M${x-w} ${y} L${x-w*(deep?.83:.78)} ${y+h} Q${x} ${y+h+12} ${x+w*(deep?.83:.78)} ${y+h} L${x+w} ${y}Z" fill="url(#${id}-pot)"/>${rim}<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7" fill="#505141"/><ellipse cx="${x}" cy="${y-2}" rx="${w*.72}" ry="5" fill="#76815e"/>`;
+  const basePotColor=rect?['#957c66','#635344']:deep?['#747c83','#444c56']:preset.pot==='oval-blue'?['#8a9b9a','#516867']:['#879087','#515e57'];
+  const potColor=basePotColor.map((c,i)=>material(i?'pot-bottom':'pot-top',c));
+  const rim=rect?`<rect x="${x-w}" y="${y-9}" width="${w*2}" height="18" rx="5" fill="${material('rim','#968574')}"/>`:`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="11" fill="${material('rim','#8b8879')}"/>`;
+  const pot=`<path d="M${x-w} ${y} L${x-w*(deep?.83:.78)} ${y+h} Q${x} ${y+h+12} ${x+w*(deep?.83:.78)} ${y+h} L${x+w} ${y}Z" fill="url(#${id}-pot)"/>${rim}<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7" fill="${material('soil','#505141')}"/><ellipse cx="${x}" cy="${y-2}" rx="${w*.72}" ry="5" fill="${material('moss','#76815e')}"/>`;
   const base=tree.nodes.find(n=>n.role==='trunk'&&!n.parent),neck=pointOn(base,.17),radius=base.width/2;
   const roots=[-2.85,-.25,2.5,.7,1.7].map((angle,i)=>{
     const reach=radius*(2.1+rand(`root${i}`,'reach')*.65)+5;
@@ -82,7 +85,7 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
     return `<path d="${taperedPath(root)}"/>`;
   }).join('');
   // The soil hides the lower edge of the flare and the tapering root tips.
-  const soilContact=`<path d="M${f(x-radius*1.58)} ${f(y-1.7)} Q${f(x-radius*.72)} ${f(y-.3)} ${f(x)} ${f(y-.9)} T${f(x+radius*1.58)} ${f(y-1.1)} L${f(x+radius*1.65)} ${f(y+3.6)} Q${f(x)} ${f(y+5)} ${f(x-radius*1.65)} ${f(y+3.6)}Z" fill="#76815e"/>`;
+  const soilContact=`<path d="M${f(x-radius*1.58)} ${f(y-1.7)} Q${f(x-radius*.72)} ${f(y-.3)} ${f(x)} ${f(y-.9)} T${f(x+radius*1.58)} ${f(y-1.1)} L${f(x+radius*1.65)} ${f(y+3.6)} Q${f(x)} ${f(y+5)} ${f(x-radius*1.65)} ${f(y+3.6)}Z" fill="${material('moss','#76815e')}"/>`;
   const b=viewBox;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.width} ${b.height}" style="background:${transparent?'transparent':colors.background}" role="img" aria-label="${preset.name}，${view==='skeleton'?'裸枝':silhouette?'单色轮廓':'完整枝叶'}"><defs><linearGradient id="${id}-pot" x2="0" y2="1"><stop stop-color="${potColor[0]}"/><stop offset="1" stop-color="${potColor[1]}"/></linearGradient></defs>${transparent?'':`<rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" fill="${colors.background}"/>`}${pot}<g fill="${woodColor}">${roots}</g>${back}${trunks}${front}${soilContact}</svg>`;
 }

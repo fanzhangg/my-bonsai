@@ -3,6 +3,20 @@ import assert from 'node:assert/strict';
 import {coordinates,weatherAt} from '../weather-service.mjs';
 import {sceneFor,weatherKind,localHour,WEATHER_MAX_AGE} from '../prototype/weather-model.mjs';
 import {snapshot,draw} from '../prototype/growth.mjs';
+import {createServer} from '../server.mjs';
+test('runtime weather switch is public, uncached, and disables the weather proxy',async()=>{
+ for(const enabled of [false,true]){
+  const server=createServer({}, {realtimeWeatherEnabled:enabled});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try{
+   const base=`http://127.0.0.1:${server.address().port}`;
+   const config=await fetch(base+'/runtime-config.mjs');
+   assert.equal(config.headers.get('cache-control'),'no-store');
+   assert.equal(await config.text(),`export const realtimeWeatherEnabled=${enabled};`);
+   if(!enabled){const result=await fetch(base+'/api/weather?lat=52.5&lon=13.4');assert.equal(result.status,503);assert.equal((await result.json()).error,'实时天气已关闭');}
+  }finally{await new Promise(resolve=>server.close(resolve));}
+ }
+});
 test('weather codes distinguish rain, snow, fog, storm and wind',()=>{
  for(const c of [51,57,61,67,82])assert.equal(weatherKind(c),'rain');for(const c of [71,77,86])assert.equal(weatherKind(c),'snow');assert.equal(weatherKind(95),'storm');assert.equal(weatherKind(45),'fog');assert.equal(weatherKind(0,30),'wind');assert.equal(weatherKind(3),'cloudy');
 });

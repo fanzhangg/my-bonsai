@@ -1,7 +1,7 @@
 @property --sky-top{syntax:'<color>';inherits:true;initial-value:#b8ced0}
 @property --sky-middle{syntax:'<color>';inherits:true;initial-value:#dbe2d6}
 @property --sky-bottom{syntax:'<color>';inherits:true;initial-value:#eee9d8}
-:root{--tree-light:saturate(.9);--ink:#354d49;background:var(--sky-bottom);transition:--sky-top 2s,--sky-middle 2s,--sky-bottom 2s}
+:root{--ink:#354d49;background:var(--sky-bottom);transition:--sky-top 2s,--sky-middle 2s,--sky-bottom 2s}
 body{isolation:isolate;color:var(--ink);transition:color 1s}
 #weather-sky,#weather-haze,#weather-effects{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 #weather-sky{z-index:-3;background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-middle) 58%,var(--sky-bottom) 100%)}
@@ -9,13 +9,20 @@ body{isolation:isolate;color:var(--ink);transition:color 1s}
 body[data-weather=fog] #weather-haze{opacity:.8;animation:haze 22s ease-in-out infinite alternate}
 body[data-weather=cloudy] #weather-haze{opacity:.45;animation:haze 35s ease-in-out infinite alternate}
 #weather-effects{z-index:-1}
-#stage svg{filter:var(--tree-light);transition:filter 2s}
-.night{color:var(--ink)}.night #stage svg{filter:var(--tree-light) drop-shadow(0 0 1px #dde6d529)}
-.primary{background:#365a4d;color:#f0f3e8;box-shadow:0 4px 20px #243d3012}.night .primary{background:#becfc0;color:#263c35}
-.copy{background:#f3f5eb15}.copy:hover{background:#edf1e828}
 #debug{background:#eef3e310;backdrop-filter:blur(8px)}#debug hr{border:0;border-top:1px solid #78908050;margin:22px 0}
 #weather-credit{position:fixed;bottom:max(9px,env(safe-area-inset-bottom));right:14px;color:var(--ink);font-size:10px;opacity:.5;text-decoration:none;z-index:3;padding:6px}
-body.night button:focus-visible,body.night a:focus-visible{outline-color:#e3ca9e}
 @keyframes haze{from{transform:translateX(-3%)}to{transform:translateX(3%)}}
 .weather-paused #weather-haze{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){:root,body,#stage svg,#weather-haze{transition:none!important}#weather-haze{animation:none!important}#weather-effects{display:none}}
+
+/* Semantic palette shared by the home and adopted tree scenes. */
+.primary,.night .primary{background:var(--action);color:var(--action-ink);box-shadow:none}
+.primary:hover{background:color-mix(in srgb,var(--action),var(--action-ink) 8%)}
+.copy{color:var(--ink);opacity:1;background:transparent}.copy:hover{background:color-mix(in srgb,var(--surface),transparent 35%)}
+#debug{color:var(--panel-ink);background:var(--surface);border-color:var(--border)}
+#debug p,#debug pre{opacity:1}#debug hr{border-color:var(--border)}
+#debug select,#debug input{background:var(--surface);color:var(--panel-ink);border-color:var(--border)}
+#debug input[type=range]{accent-color:var(--action)}
+#weather-credit{color:var(--muted);opacity:1}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,body.night button:focus-visible,body.night a:focus-visible{outline-color:var(--focus)}
+body.night[data-weather=fog] #weather-haze,body.night[data-weather=cloudy] #weather-haze{opacity:.12}
