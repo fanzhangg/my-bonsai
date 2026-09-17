@@ -23,11 +23,12 @@
 <div id="welcome" hidden><button id="claim" class="primary">认领这棵树</button></div>
 
 <p id="status" role="status" hidden></p><button id="retry" hidden>重试</button>
-<section id="debug" hidden aria-label="调试模式"><div class="debug-heading"><strong>Debug</strong><a id="exit">退出</a></div><p>本地预览，不改变已保存的树。</p>
+<section id="debug" hidden aria-label="作弊模式"><div class="debug-heading"><strong>作弊模式</strong><a id="exit">退出</a></div><p>调整后点击保存，树的属性、生长时间和剪枝会永久保留。更换树形或种子会清空剪枝。</p>
 <label>树形<select id="preset"></select></label><label>外观<select id="look"></select></label>
 <label>种子<input id="seed" maxlength="64"></label><button id="random">随机样本</button>
 <label>认领后时间 <output id="age"></output><input id="time" type="range" min="0" max="168" step="0.5" value="0"></label>
-<div class="actions"><button data-hours="4">+4 小时</button><button data-hours="24">+1 天</button><button id="replay">重播</button><button id="reset">恢复真实状态</button></div><pre id="info"></pre>
-<div id="weather-controls" hidden><hr><label>天气<select id="weather-kind"><option value="live">实时天气</option><option value="clear">晴天</option><option value="cloudy">阴天</option><option value="rain">雨天</option><option value="snow">雪天</option><option value="fog">雾天</option><option value="wind">大风</option><option value="storm">雷雨</option></select></label><label>当地时刻 <output id="weather-hour-value">实时</output><input id="weather-hour" type="range" min="0" max="23.9" step="0.1" value="12"></label><button id="weather-live">恢复实时天气</button><pre id="weather-info"></pre></div></section>
+<div class="actions"><button data-hours="4">+4 小时</button><button data-hours="24">+1 天</button><button id="replay">重播</button><button id="reset">重新载入已保存状态</button></div>
+<p id="cheat-status" role="status" aria-live="polite"></p><button id="save-cheat" class="primary">保存到这棵树</button><pre id="info"></pre>
+<div id="weather-controls" hidden><hr><p>天气和当地时刻仅供预览，不随树保存。</p><label>天气<select id="weather-kind"><option value="live">实时天气</option><option value="clear">晴天</option><option value="cloudy">阴天</option><option value="rain">雨天</option><option value="snow">雪天</option><option value="fog">雾天</option><option value="wind">大风</option><option value="storm">雷雨</option></select></label><label>当地时刻 <output id="weather-hour-value">实时</output><input id="weather-hour" type="range" min="0" max="23.9" step="0.1" value="12"></label><button id="weather-live">恢复实时天气</button><pre id="weather-info"></pre></div></section>
 <a id="weather-credit" href="https://open-meteo.com/" target="_blank" rel="noreferrer" hidden aria-label="天气数据来自 Open-Meteo">Open-Meteo</a>
 </main><script type="module" src="/mvp.mjs"></script></body></html>
