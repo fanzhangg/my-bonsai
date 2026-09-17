@@ -1,6 +1,6 @@
 import {PRESETS,normalize} from './core/v1/canopy.mjs';
 import {LOOKS,lookFor} from './core/v1/appearance.mjs';
-import {grow,HOUR} from './growth.mjs';
+import {grow,snapshot,HOUR} from './growth.mjs';
 
 export const MAX_CHEAT_HOURS=24*365*100;
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
@@ -26,9 +26,16 @@ export function applyCheat(record,body,at){
  const createdAt=at-body.hours*HOUR;
  const branches=new Set(grow({config,cuts:[]},1).nodes.filter(n=>n.role==='primary').map(n=>n.id));
  const ids=new Set(),cuts=body.cuts.map((cut,i)=>{
-  if(!cut||!uuid(cut.id)||ids.has(cut.id)||!branches.has(cut.branchId)||!validHour(cut.hour))fail(400,'无效剪枝记录');
+  if(!cut||!uuid(cut.id)||ids.has(cut.id)||typeof cut.branchId!=='string'||cut.branchId.length>100||!validHour(cut.hour))fail(400,'无效剪枝记录');
   ids.add(cut.id);
   return {id:cut.id,seq:i+1,branchId:cut.branchId,at:createdAt+cut.hour*HOUR};
  });
+ // Regrown branches are created by earlier cuts, so validate their identities
+ // against that history (including future cuts kept by a rewound preview).
+ const history={config,createdAt,cuts:[]};
+ for(const cut of [...cuts].sort((a,b)=>a.at-b.at||a.seq-b.seq)){
+  if(!branches.has(cut.branchId)&&!snapshot(history,cut.at).nodes.some(n=>n.id===cut.branchId&&n.role==='primary'&&n.growth>0))fail(400,'无效剪枝记录');
+  history.cuts.push(cut);
+ }
  return {...record,config,createdAt,cuts,revision:(record.revision??0)+1};
 }

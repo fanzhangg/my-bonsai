@@ -3,7 +3,7 @@ import {generate as reference} from './core/v1/canopy.mjs';
 import {render} from './growing-render.mjs';
 import {sample,pointOn} from './core/v1/model.mjs';
 import {normalizePot} from './pots.mjs';
-import {branchFamily} from './pruning-model.mjs';
+import {regrowthPlan,appendRegrowth} from './regrowth.mjs';
 
 export const HOUR=3600000;
 export const VERSION='bonsai-growth-2';
@@ -18,7 +18,7 @@ export function snapshot(record,at=Date.now()){
  return grow(record,p,{at});
 }
 export function grow(record,p,{morphology=true,at=Infinity}={}){
- p=clamp(p);const tree=(morphology?generate:reference)(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),schedule=new Map(),attachments=new Map();
+ p=clamp(p);const tree=(morphology?generate:reference)(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),clusters=tree.clusters,schedule=new Map(),attachments=new Map();
  const pot=normalizePot(record.config.pot);if(pot)tree.config.pot=pot;
  tree.viewBox={x:tree.root.x-FRAME.width/2,y:tree.root.y-FRAME.aboveSoil,width:FRAME.width,height:FRAME.height};
  function timing(n){if(schedule.has(n.id))return schedule.get(n.id);const parent=original.get(n.parent);let attach=1;
@@ -39,12 +39,10 @@ export function grow(record,p,{morphology=true,at=Infinity}={}){
  tree.hour=clock;tree.progress=p;tree.matureDays=profile(record).days;tree.seedOpacity=1-smooth(p/.035);tree.scars=[];
  // Resolve descendants against the complete scaffold, including unborn twigs.
  // Filtering after growth keeps all surviving wood and the camera unchanged.
- const removed=new Set();
- for(const cut of record.cuts??[])if(cut.at<=at&&original.get(cut.branchId)?.role==='primary'){
-   for(const id of branchFamily([...original.values()],cut.branchId))removed.add(id);
- }
+ const {removed,shoots}=regrowthPlan([...original.values()],record.cuts??[],record.config.seed,at);
  tree.nodes=tree.nodes.filter(n=>!removed.has(n.id));
  tree.clusters=tree.clusters.filter(c=>!removed.has(c.node));
+ appendRegrowth(tree,{shoots,original,clusters,attachments,mapped,scale,thickness,seed:record.config.seed,at});
  return tree;
 }
 export function draw(tree,{transparent=false,viewBox=tree.viewBox}={}){
