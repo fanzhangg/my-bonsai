@@ -41,10 +41,10 @@ test('watering recovers after app interruption and ignores held-key repeat',t=>{
 
 test('tool homes preserve spacing and clear portrait and landscape safe areas',t=>{
  setup(t);const insets={top:0,right:44,bottom:21,left:44};
- Object.defineProperty(globalThis,'getComputedStyle',{value:()=>({getPropertyValue:name=>String(insets[name.slice(8)])+'px'}),configurable:true});
- const scene={clientWidth:844,clientHeight:390};
- const scissors=toolHome(scene,64),can=toolHome(scene,170);
- assert.equal(scissors.x-can.x,106);assert.ok(scissors.x+46<=scene.clientWidth-insets.right);assert.ok(scissors.y+46<=scene.clientHeight-insets.bottom);
- scene.clientWidth=320;scene.clientHeight=568;insets.left=0;insets.right=0;insets.bottom=34;
- assert.ok(toolHome(scene,170).x-46>=0);assert.ok(toolHome(scene,64).y+46<=534);
+ Object.defineProperty(globalThis,'getComputedStyle',{value:()=>({getPropertyValue:name=>name==='--tool-hit-size'?'112px':name==='--tool-rest-bottom'?'104px':String(insets[name.slice(8)])+'px'}),configurable:true});
+ for(const [width,height] of [[844,390],[320,568],[390,844]]){
+  const scene={clientWidth:width,clientHeight:height},scissors=toolHome(scene,64),can=toolHome(scene,190);
+  assert.ok(can.x-56>=insets.left);assert.ok(can.x+56<=scissors.x-56);
+  assert.ok(scissors.x+56<=width-insets.right);assert.ok(scissors.y+56<=height-insets.bottom-40);
+ }
 });

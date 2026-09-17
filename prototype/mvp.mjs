@@ -71,7 +71,7 @@ async function flushWater(){
  try{await waterSave;}finally{waterSave=null;}
 }
 const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$('watering-can'),water:$('watering-water'),status:$('watering-status'),renderTree:renderWaterTree,
- getHome:scene=>toolHome(scene,170),
+ getHome:scene=>toolHome(scene,190),
  onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),4000)/4000;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
  onFinish:async used=>{
   if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:used/WATER_CAPACITY*.025,recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}

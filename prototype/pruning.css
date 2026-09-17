@@ -13,8 +13,8 @@
 @media(prefers-reduced-motion:reduce){.pruning-points,.pruning-point,.pruning-point::after{transition:none}}
 @media(prefers-reduced-motion:reduce){.scissor-half{transition:none}.is-held .scissor-half{animation:none}.is-held .scissor-a{transform:rotate(-20deg)}.is-held .scissor-b{transform:rotate(20deg)}.is-snipping .scissor-half{transform:rotate(0deg)}}
 
-#live-pruning{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}#live-pruning .pruning-scissors{pointer-events:auto}.night #live-pruning .pruning-scissors{color:#8fa78c}
+#live-pruning{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}#live-pruning .pruning-scissors{pointer-events:auto;display:grid;place-items:center;width:var(--tool-hit-size,92px);height:var(--tool-hit-size,92px)}.night #live-pruning .pruning-scissors{color:#8fa78c}
 
 /* Match the watering can's visible footprint while keeping the grab area generous. */
-#live-pruning .pruning-scissors svg{width:84px;height:84px;margin:4px;transform:rotate(-18deg);transform-origin:center;transition:transform .22s ease}
+#live-pruning .pruning-scissors svg{width:84px;height:84px;margin:0;transform:rotate(-18deg);transform-origin:center;transition:transform .22s ease}
 @media(prefers-reduced-motion:reduce){#live-pruning .pruning-scissors svg{transition:none}}

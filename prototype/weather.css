@@ -6,7 +6,7 @@ body{isolation:isolate;color:var(--ink);transition:color 1s}
 #weather-sky{z-index:-3;background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-middle) 58%,var(--sky-bottom) 100%)}
 #weather-effects{z-index:-1}
 #debug{background:#eef3e310;backdrop-filter:blur(8px)}#debug hr{border:0;border-top:1px solid #78908050;margin:22px 0}
-#weather-credit{position:fixed;bottom:max(9px,env(safe-area-inset-bottom));right:14px;color:var(--ink);font-size:10px;opacity:.5;text-decoration:none;z-index:3;padding:6px}
+#weather-credit{position:fixed;bottom:max(9px,env(safe-area-inset-bottom));left:max(14px,env(safe-area-inset-left));color:var(--ink);font-size:10px;opacity:.5;text-decoration:none;z-index:3;padding:6px}
 
 /* Semantic palette shared by the home and adopted tree scenes. */
 .primary,.night .primary{background:var(--action);color:var(--action-ink);box-shadow:none}

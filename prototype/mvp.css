@@ -24,7 +24,8 @@ main{position:relative;width:100%;max-width:none;min-height:100svh;padding:0;dis
 #insect-layer.visitor-still .visitor-bug{pointer-events:none}
 .debug-mode #insect-layer{position:absolute;height:75svh;bottom:auto}
 body:has(#live-pruning.is-dragging) #stage{touch-action:none}
-#live-pruning,#live-watering{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#live-pruning,#live-watering{--tool-hit-size:112px;--tool-rest-bottom:104px;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#live-pruning button,#live-watering button{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;appearance:none}
 
 /* Keep mobile scenes inside the viewport; debug forms still need scrolling. */
 @media (max-width:600px), (hover:none) and (pointer:coarse){
