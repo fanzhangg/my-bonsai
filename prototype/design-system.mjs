@@ -2,7 +2,7 @@ import {PRESETS,normalize} from './core/v1/canopy.mjs';
 import {LOOKS,BACKGROUNDS} from './core/v1/appearance.mjs';
 import {grow,profile,VERSION} from './growth.mjs';
 import {render} from './growing-render.mjs';
-import {TONES,SHAPES,PATTERNS,POT_PRESETS,potMarkup,potSvg} from './design-system-pots.mjs';
+import {TONES,SHAPES,PATTERNS,POT_PRESETS,potSvg} from './design-system-pots.mjs';
 import {createColorReview} from './colors.mjs';
 import {createVisitorReview} from './design-system-visitors.mjs';
 import {createPruningReview} from './design-system-pruning.mjs';
@@ -30,15 +30,10 @@ function scene(treeId,config,lookId='original',stage='mature',compact=false,appl
     const tree=grow(record,stage==='young'?profile(record).initial:1,{morphology});
     cache.set(key,tree);
   }
-  const tree=cache.get(key),id=`design-tree-${++serial}`;
+  const cached=cache.get(key),id=`design-tree-${++serial}`;
+  const tree=applicationPot?cached:{...cached,config:{...cached.config,pot:config}};
   const parsed=new DOMParser().parseFromString(render(tree,{hour:tree.hour,transparent:true,id,view}),'text/html');
-  const svg=parsed.querySelector('svg'),wood=svg.querySelector('[data-wind-tree]');
-  // Replace only the review instance's pot. The actual tree and soil contact stay intact.
-  if(!applicationPot){
-    for(const child of [...svg.children]){if(child===wood)break;if(child.tagName!=='defs')child.remove();}
-    const pot=new DOMParser().parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${potMarkup(config,tree.root.x,tree.root.y,`${id}-clip`)}</svg>`,'image/svg+xml');
-    svg.insertBefore(svg.ownerDocument.importNode(pot.documentElement.firstElementChild,true),wood);
-  }
+  const svg=parsed.querySelector('svg');
   if(compact)svg.setAttribute('viewBox',`${tree.viewBox.x} ${tree.viewBox.y} ${tree.viewBox.width} ${tree.viewBox.height}`);
   svg.setAttribute('aria-label',`${tree.preset.name}，${applicationPot?'应用默认盆器':SHAPES.find(s=>s.id===config.shape).name+'，'+TONES.find(t=>t.id===config.tone).name}，${stage==='young'?'幼苗':'成树'}，${view==='skeleton'?'裸枝':view==='silhouette'?'单色剪影':'完整枝叶'}`);
   return new XMLSerializer().serializeToString(svg);

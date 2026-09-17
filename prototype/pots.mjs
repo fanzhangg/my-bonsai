@@ -41,6 +41,13 @@ export function normalizePot(pot){
   if(!SHAPES.some(s=>s.id===pot.shape)||!TONES.some(t=>t.id===pot.tone)||!PATTERNS.some(p=>p.id===pot.pattern))return undefined;
   return {shape:pot.shape,tone:pot.tone,pattern:pot.pattern};
 }
+// The rendered soil and the root occlusion must use the same inner opening.
+export function potOpening({shape='oval'}={},x=0,y=0){
+  const s=SHAPES.find(s=>s.id===shape)||SHAPES[0],w=s.width/2;
+  const angular=['rect','hex'].includes(s.id);
+  return {rx:w-(angular?8:7),cy:y-1,
+    markup:angular?`<path d="M${x-w+8} ${y-1} L${x-w*.76} ${y-7} H${x+w*.76} L${x+w-8} ${y-1} L${x+w*.77} ${y+5} H${x-w*.77}Z"/>`:`<ellipse cx="${x}" cy="${y-1}" rx="${w-7}" ry="5.8"/>`};
+}
 export function potMarkup({shape='oval',tone='sand',pattern='plain'}={},x=0,y=0,id='planter',{dynamic=true}={}){
   const s=SHAPES.find(s=>s.id===shape)||SHAPES[0],base=TONES.find(t=>t.id===tone)||TONES[0];
   const material=(name,color)=>dynamic?`var(--bonsai-${name},${color})`:color;
@@ -54,8 +61,9 @@ export function potMarkup({shape='oval',tone='sand',pattern='plain'}={},x=0,y=0,
   else if(s.id==='hex')body=`M${-w} 0 L${-w*.9} ${h*.82} L${-w*.55} ${h} H${w*.55} L${w*.9} ${h*.82} L${w} 0Z`;
   else if(s.id==='petal')body=`M${-w} 0 C${-w*.94} ${h*.78} ${-w*.57} ${h} 0 ${h} S${w*.94} ${h*.78} ${w} 0 L${w} -4 Q${w*.82} -15 ${w*.65} -4 Q${w*.4} -17 ${w*.2} -5 Q0 -17 ${-w*.2} -5 Q${-w*.4} -17 ${-w*.65} -4 Q${-w*.82} -15 ${-w} -4Z`;
   else body=`M${-w} 0 V${h*.37} Q${-w} ${h} ${-w*.6} ${h} H${w*.6} Q${w} ${h} ${w} ${h*.37} V0Z`;
-  if(['rect','hex'].includes(s.id))lip=`<path d="M${-w} 0 L${-w*.78} -11 H${w*.78} L${w} 0 L${w*.8} 9 H${-w*.8}Z" fill="${t.rim}"/><path d="M${-w+8} -1 L${-w*.76} -7 H${w*.76} L${w-8} -1 L${w*.77} 5 H${-w*.77}Z" fill="#505141"/>`;
-  else lip=`<ellipse rx="${w}" ry="9" fill="${t.rim}"/><ellipse cy="-1" rx="${w-7}" ry="5.8" fill="#505141"/>`;
+  if(['rect','hex'].includes(s.id))lip=`<path d="M${-w} 0 L${-w*.78} -11 H${w*.78} L${w} 0 L${w*.8} 9 H${-w*.8}Z" fill="${t.rim}"/>`;
+  else lip=`<ellipse rx="${w}" ry="9" fill="${t.rim}"/>`;
+  lip+=`<g fill="${material('soil','#505141')}">${potOpening({shape:s.id}).markup}</g>`;
   const cx=w*.5,mid=h*.47;
   let decor='';
   if(pattern==='vertical')decor=[-.58,-.2,.2,.58].map(a=>`<path d="M${w*a} 14 L${w*a*.88} ${h-11}"/>`).join('');
@@ -63,7 +71,7 @@ export function potMarkup({shape='oval',tone='sand',pattern='plain'}={},x=0,y=0,
   if(pattern==='mountain')decor=`<path d="M${-cx} ${mid+9} l${w*.2} -12 l${w*.2} 12 m${-w*.14} -4 l${w*.22} -15 l${w*.3} 19 M${w*.25} ${mid-6} q-6 -5 0 -7 q4 -8 10 -2 q9 -1 9 4 q0 5 -19 5Z"/>`;
   if(pattern==='geometric')decor=`<path d="M${-cx-5} ${mid-6} a8 8 0 0 1 0 16Z M${cx+5} ${mid-6} a8 8 0 0 0 0 16Z" fill="${t.ink}" stroke="none"/><rect x="-7" y="${mid-6}" width="14" height="14" fill="${t.ink}" stroke="none"/>`;
   const seam=s.id==='petal'?`<path d="M-27 14 Q-23 36 -12 49 M27 14 Q23 36 12 49" fill="none" stroke="${t.rim}" stroke-width="2"/>`:'';
-  return `<g data-review-pot="${s.id}" data-pot-shape="${s.id}" data-pot-tone="${base.id}" data-pot-pattern="${pattern}" transform="translate(${x} ${y})"><defs><clipPath id="${id}"><path d="${body}"/></clipPath></defs><path d="${body}" fill="${t.body}"/><g clip-path="url(#${id})" fill="none" stroke="${t.ink}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${decor}</g>${seam}${lip.replaceAll('fill="#505141"',`fill="${material('soil','#505141')}"`)}<ellipse cy="-1" rx="${w*.68}" ry="3.5" fill="${material('moss','#76815e')}"/></g>`;
+  return `<g data-review-pot="${s.id}" data-pot-shape="${s.id}" data-pot-tone="${base.id}" data-pot-pattern="${pattern}" transform="translate(${x} ${y})"><defs><clipPath id="${id}"><path d="${body}"/></clipPath></defs><path d="${body}" fill="${t.body}"/><g clip-path="url(#${id})" fill="none" stroke="${t.ink}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${decor}</g>${seam}${lip}<ellipse cy="-1" rx="${w*.68}" ry="3.5" fill="${material('moss','#76815e')}"/></g>`;
 }
 export function potSvg(config,id='pot-thumbnail'){
   return `<svg viewBox="-115 -27 230 150" role="img" aria-label="${SHAPES.find(s=>s.id===config.shape)?.name||'盆器'}">${potMarkup(config,0,0,id)}</svg>`;

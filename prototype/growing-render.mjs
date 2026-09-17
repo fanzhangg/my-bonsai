@@ -1,7 +1,7 @@
 import {sample,pointOn} from './core/v1/model.mjs';
 import {taperedPath} from './core/v1/style-render.mjs';
 import {normalizeAppearance,colorsFor} from './core/v1/appearance.mjs';
-import {normalizePot,potMarkup} from './pots.mjs';
+import {normalizePot,potMarkup,potOpening} from './pots.mjs';
 import {canopyPoint} from './morphology.mjs';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const f=x=>Number(x).toFixed(2);
@@ -14,13 +14,14 @@ function outline(c,rand){
 }
 // The first trunk segment widens smoothly into a horizontal soil contact.
 // Blend out the slanted tube end so it cannot protrude below the soil surface.
-function basalPath(n){
+function basalPath(n,openingRadius){
   const left=[],right=[];
   for(let i=0;i<=40;i++){
     const t=i/40,p=pointOn(n,t),a=pointOn(n,Math.max(0,t-.002)),b=pointOn(n,Math.min(1,t+.002));
     const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy)||1;
     const u=clamp(t/.46,0,1),blend=u*u*(3-2*u);
-    const radius=(n.width+(n.tipWidth-n.width)*t)/2*(1+.48*(1-blend));
+    const naturalRadius=(n.width+(n.tipWidth-n.width)*t)/2;
+    const radius=naturalRadius*blend+Math.min(naturalRadius*1.48,openingRadius*.68)*(1-blend);
     const nx=(1-blend)+(-dy/length)*blend,ny=(dx/length)*blend;
     const y=p.y-2*(1-blend);
     left.push(`${f(p.x+nx*radius)},${f(y+ny*radius)}`);
@@ -30,6 +31,9 @@ function basalPath(n){
 }
 export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.viewBox,transparent=false}={}){
   const {config,preset,root}=tree,rand=(k,p)=>sample(config.seed,`${preset.id}:render:${k}`,p);
+  const deep=preset.pot==='deep',rect=preset.pot==='rect',w=deep?49:preset.id==='literati'?56:preset.pot==='shallow'?82:88,x=root.x,y=root.y,h=deep?105:preset.pot==='shallow'?23:31;
+  const selectedPot=normalizePot(config.pot);
+  const opening=selectedPot?potOpening(selectedPot,x,y):{rx:w-6,cy:y-2,markup:`<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7"/>`};
   const appearance=normalizeAppearance(config.appearance),colors=colorsFor(appearance);
   const material=(name,color)=>transparent?`var(--bonsai-${name},${color})`:color;
   const shape=appearance.shape==='auto'?(preset.kind==='broad'?'oval':preset.kind):appearance.shape;
@@ -44,7 +48,8 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
     // and filling the wedge between branches with different tangent directions.
     // Match wood colors across the junction rather than drawing a centerline.
     const joint=n.parent?`<circle cx="${f(n.x)}" cy="${f(n.y)}" r="${f(startRadius)}"/>`:'';
-    return `<g data-wind-wood="${nodeIndex.get(n.id)}" data-wind-parent="${nodeIndex.get(n.parent)??-1}" data-wind-role="${n.role}" data-wind-width="${f(n.width)}" data-wind-x="${f(n.x)}" data-wind-y="${f(n.y)}" fill="${woodColor}"><path d="${n.role==='trunk'&&!n.parent?basalPath(n):taperedPath(n,g)}"/>${joint}<circle cx="${f(end.x)}" cy="${f(end.y)}" r="${f(endRadius)}"/></g>`;
+    const basal=n.role==='trunk'&&!n.parent;
+    return `<g data-wind-wood="${nodeIndex.get(n.id)}" data-wind-parent="${nodeIndex.get(n.parent)??-1}" data-wind-role="${n.role}" data-wind-width="${f(n.width)}" data-wind-x="${f(n.x)}" data-wind-y="${f(n.y)}" fill="${woodColor}"${basal?` clip-path="url(#${id}-root-opening)"`:''}><path d="${basal?basalPath(n,opening.rx):taperedPath(n,g)}"/>${joint}<circle cx="${f(end.x)}" cy="${f(end.y)}" r="${f(endRadius)}"/></g>`;
   }
   function foliage(c){const g=progress(c.born,hour,c.duration??20);if(!g)return '';
     const base=outline(c,rand);
@@ -74,23 +79,25 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   const back=tree.pads.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).map(padMarkup).join('');
   const front=tree.pads.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).map(padMarkup).join('');
   const trunks=tree.nodes.filter(n=>n.role==='trunk'||n.role==='bough').map(wood).join('');
-  const deep=preset.pot==='deep',rect=preset.pot==='rect',w=deep?49:preset.id==='literati'?56:preset.pot==='shallow'?82:88,x=root.x,y=root.y,h=deep?105:preset.pot==='shallow'?23:31;
   const basePotColor=rect?['#957c66','#635344']:deep?['#747c83','#444c56']:preset.pot==='oval-blue'?['#8a9b9a','#516867']:['#879087','#515e57'];
   const potColor=basePotColor.map((c,i)=>material(i?'pot-bottom':'pot-top',c));
   const rim=rect?`<rect x="${x-w}" y="${y-9}" width="${w*2}" height="18" rx="5" fill="${material('rim','#968574')}"/>`:`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="11" fill="${material('rim','#8b8879')}"/>`;
-  const selectedPot=normalizePot(config.pot);
   const pot=selectedPot?potMarkup(selectedPot,x,y,`${id}-vessel-clip`,{dynamic:transparent}):`<path d="M${x-w} ${y} L${x-w*(deep?.83:.78)} ${y+h} Q${x} ${y+h+12} ${x+w*(deep?.83:.78)} ${y+h} L${x+w} ${y}Z" fill="url(#${id}-pot)"/>${rim}<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7" fill="${material('soil','#505141')}"/><ellipse cx="${x}" cy="${y-2}" rx="${w*.72}" ry="5" fill="${material('moss','#76815e')}"/>`;
   const base=tree.nodes.find(n=>n.role==='trunk'&&!n.parent),neck=pointOn(base,.17),radius=base.width/2;
   const roots=[-2.85,-.25,2.5,.7,1.7].map((angle,i)=>{
-    const reach=radius*(2.1+rand(`root${i}`,'reach')*.65)+5;
-    const tx=x+Math.cos(angle)*reach,ty=y-2+Math.sin(angle)*3.4;
+    const reach=Math.min(radius*(2.1+rand(`root${i}`,'reach')*.65)+5,opening.rx*.84);
+    const tx=x+Math.cos(angle)*reach,ty=opening.cy+Math.sin(angle)*2.4;
     const sx=neck.x+Math.cos(angle)*radius*.32,sy=neck.y+3;
     const root={x:sx,y:sy,ex:tx,ey:ty,cx1:sx+(tx-sx)*.23,cy1:sy+(ty-sy)*.8,
       cx2:tx-(tx-sx)*.25,cy2:ty-1.2,width:radius*(i<2?.48:.38),tipWidth:.12};
     return `<path d="${taperedPath(root)}"/>`;
   }).join('');
-  // The soil hides the lower edge of the flare and the tapering root tips.
-  const soilContact=`<path d="M${f(x-radius*1.58)} ${f(y-1.7)} Q${f(x-radius*.72)} ${f(y-.3)} ${f(x)} ${f(y-.9)} T${f(x+radius*1.58)} ${f(y-1.1)} L${f(x+radius*1.65)} ${f(y+3.6)} Q${f(x)} ${f(y+5)} ${f(x-radius*1.65)} ${f(y+3.6)}Z" fill="${material('moss','#76815e')}"/>`;
+  // Keep the moss contact inside the soil, leaving the front rim visible.
+  const contact=Math.min(radius*1.65,opening.rx*.74);
+  const soilContact=`<path data-root-contact clip-path="url(#${id}-soil-opening)" d="M${f(x-contact)} ${f(y-1.7)} Q${f(x-contact*.44)} ${f(y-.3)} ${f(x)} ${f(y-.9)} T${f(x+contact)} ${f(y-1.1)} L${f(x+contact)} ${f(y+2)} Q${f(x)} ${f(y+3)} ${f(x-contact)} ${f(y+2)}Z" fill="${material('moss','#76815e')}"/>`;
   const b=viewBox;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.width} ${b.height}" style="background:${transparent?'transparent':colors.background}" role="img" aria-label="${preset.name}，${view==='skeleton'?'裸枝':silhouette?'单色轮廓':'完整枝叶'}"><defs><linearGradient id="${id}-pot" x2="0" y2="1"><stop stop-color="${potColor[0]}"/><stop offset="1" stop-color="${potColor[1]}"/></linearGradient></defs>${transparent?'':`<rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" fill="${colors.background}"/>`}<g data-weather-ground>${pot}</g><g data-wind-tree data-wind-root="${f(root.y)}" data-wind-base-width="${f(base.width)}"><g fill="${woodColor}">${roots}</g>${back}${trunks}${front}</g>${soilContact}</svg>`;
+  // Only the basal segment and exposed roots enter this opening. Cascading
+  // branches remain free to hang in front of or below the pot.
+  const rootClip=`<clipPath id="${id}-root-opening"><rect x="${b.x}" y="${b.y}" width="${b.width}" height="${Math.max(0,opening.cy-b.y)}"/>${opening.markup}</clipPath><clipPath id="${id}-soil-opening">${opening.markup}</clipPath>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.width} ${b.height}" style="background:${transparent?'transparent':colors.background}" role="img" aria-label="${preset.name}，${view==='skeleton'?'裸枝':silhouette?'单色轮廓':'完整枝叶'}"><defs>${rootClip}<linearGradient id="${id}-pot" x2="0" y2="1"><stop stop-color="${potColor[0]}"/><stop offset="1" stop-color="${potColor[1]}"/></linearGradient></defs>${transparent?'':`<rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" fill="${colors.background}"/>`}<g data-weather-ground>${pot}</g><g data-wind-tree data-wind-root="${f(root.y)}" data-wind-base-width="${f(base.width)}"><g data-exposed-roots clip-path="url(#${id}-root-opening)" fill="${woodColor}">${roots}</g>${back}${trunks}${front}</g>${soilContact}</svg>`;
 }
