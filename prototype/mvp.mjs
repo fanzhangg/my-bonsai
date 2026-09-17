@@ -17,6 +17,7 @@ const visitors=createVisitors({scene:$('insect-layer'),treeElement:$('stage'),la
 const weather=startWeather({debug,onSceneChange:scene=>visitors.setMode(scene.night?'night':'day')});
 const wind=startWind($('stage'));
 let treeId=location.pathname.match(/^\/t\/([^/]+)$/)?.[1];
+let sharing;
 let record,sandbox,offset=0,hours=0,playing=false,timer,loading=false,dirty=false;
 let pendingWater=0,pendingRecovery=0,recoveryRate=0;const waterQueue=[];let waterSave=null;
 let visitPending=true,visitInFlight=false;
@@ -32,6 +33,7 @@ function cheatControls(busy=pruning.busy||watering.busy){
  $('claim').disabled=busy||loading;
  $('regenerate').disabled=busy||loading;
  $('share').disabled=busy||loading;
+ if(!busy&&!loading)void sharing?.prepare();
 }
 function cheatStatus(text){$('cheat-status').textContent=text;cheatControls();}
 function changed(){dirty=true;cheatStatus(treeId?'有未保存的修改':'认领时会保存当前样本');}
@@ -132,7 +134,7 @@ $('claim').onclick=async()=>{
 };
 // Back/forward opens the corresponding page with its normal initialization.
 window.addEventListener('popstate',()=>location.reload());
-createSharing({button:$('share'),getRecord:()=>record});
+sharing=createSharing({button:$('share'),getRecord:()=>record,onStatus:status});
 for(const p of PRESETS)$('preset').add(new Option(p.name,p.id));for(const l of LOOKS)$('look').add(new Option(l.name,l.id));
 function changeSample(){if(!sandbox)return;stop();const geometryChanged=sandbox.config.preset!==$('preset').value||sandbox.config.seed!==$('seed').value;const pot=sandbox.config.pot;sandbox.config=normalize({...sandbox.config,preset:$('preset').value,seed:$('seed').value,appearance:LOOKS.find(l=>l.id===$('look').value)});if(pot)sandbox.config.pot=pot;if(geometryChanged)sandbox.cuts=[];changed();paint();}
 $('preset').onchange=changeSample;$('look').onchange=changeSample;$('seed').onchange=changeSample;
