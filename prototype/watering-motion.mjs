@@ -10,6 +10,10 @@ export const WATER_CAPACITY=4000;
 // A full four-second pour advances growth by five percentage points.
 export const WATER_GROWTH_PER_TANK=.05;
 export const WATER_RECOVERY_HOURS_PER_TANK=12;
+export const WATERING_RULES={capacity:WATER_CAPACITY,growthPerTank:WATER_GROWTH_PER_TANK,recoveryHoursPerTank:WATER_RECOVERY_HOURS_PER_TANK};
+// The server advertises its loaded rules, so a newer browser bundle cannot
+// preview a larger dose than the running server will persist.
+export function wateringAmount(used,rules=WATERING_RULES){return Math.min(rules.capacity,Math.max(0,used))/rules.capacity*rules.growthPerTank;}
 export function createWaterTank(){return {remaining:WATER_CAPACITY};}
 export function refillWaterTank(tank){Object.assign(tank,createWaterTank());}
 export function spendWater(tank,ms){

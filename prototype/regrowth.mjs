@@ -48,7 +48,7 @@ export function appendRegrowth(tree,{shoots,original,clusters,attachments,mapped
       if(grown.has(n.id))return grown.get(n.id);
       const primary=n.id===source.id,parent=primary?mapped.get(n.parent):extend(original.get(n.parent));
       const born=primary?0:timing.get(n.parent).end,duration=primary?12+random(seed,shoot.generation,'duration')*6:6;
-      timing.set(n.id,{end:born+duration});
+      timing.set(n.id,{born,duration,end:born+duration});
       const growth=Math.min(smooth((age-born)/duration),parent.growth);
       const attachment=primary?Math.max(.08,Math.min(.96,attachments.get(n.id)+(random(seed,shoot.generation,'attachment')-.5)*.12)):attachments.get(n.id);
       const anchor=pointOn(parent,attachment);
@@ -61,11 +61,11 @@ export function appendRegrowth(tree,{shoots,original,clusters,attachments,mapped
     for(const n of nodes)if(family.has(n.id))extend(n);
     for(const c of clusters){
       if(!family.has(c.node))continue;
-      const n=grown.get(c.node),leafAmount=smooth((age-timing.get(c.node).end)/12)*n.growth;
+      const n=grown.get(c.node),s=timing.get(c.node),leafAmount=smooth((age-s.born)/(s.duration+12))*n.growth;
       if(!leafAmount)continue;
       const old=original.get(c.node),offset=vector(c.x-old.ex,c.y-old.ey);
-      tree.clusters.push({...c,key:shootId(shoot.generation,c.key),node:n.id,x:n.ex+offset.x,y:n.ey+offset.y,
-        rx:c.rx*scale*size,ry:c.ry*scale*size,born:-100,leafAmount});
+      tree.clusters.push({...c,key:shootId(shoot.generation,c.key),node:n.id,x:n.ex+offset.x*n.growth,y:n.ey+offset.y*n.growth,
+        rx:c.rx*scale*size*n.growth,ry:c.ry*scale*size*n.growth,born:-100,leafAmount});
     }
   }
 }

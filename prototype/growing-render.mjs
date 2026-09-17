@@ -58,17 +58,17 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   }
   function foliage(c){const g=progress(c.born,hour,c.duration??20);if(!g)return '';
     const base=outline(c,rand);
-    if(silhouette)return `<path d="${base}" fill="${silhouetteColor}"/>`;
+    if(silhouette&&!c.starterLeaves)return `<path d="${base}" fill="${silhouetteColor}"/>`;
     const detail=[],density=clamp(config.coverage*(c.foliageDensity??1),.3,1);
     // Coherent core volume; porous boundaries receive individually visible leaves.
     if(density>=.6 && (c.leafAmount??1)>.35)detail.push(`<path d="${base}" fill="${palette[c.z<0?0:1]}" opacity="${f((.68+(density-.6)*.7)*(c.leafAmount??1))}"/>`);
     const count=Math.round((broad?37:needle?40:48)*density*(c.leafBudget??1));
-    for(let j=0;j<Math.ceil(count*(c.leafAmount??1));j++){
+    for(let j=0;j<(c.starterLeaves??Math.ceil(count*(c.leafAmount??1)));j++){
       const k=`${c.key}:${j}`,a=rand(k,'a')*Math.PI*2,r=Math.sqrt(rand(k,'r'));
-      const {x,y}=canopyPoint(c,a,r);
+      const {x,y}=c.starterLeaves?{x:c.x+(j===0?-3:3),y:c.y-2}:canopyPoint(c,a,r);
       // Lighting follows the cluster surface rather than independent bright speckles.
-      const light=clamp(Math.floor((1-(y-c.y)/c.ry)*1.4+(rand(k,'tone')-.5)*1.2),0,3),color=palette[light];
-      const size=(broad?5.2:needle?6:4.7)*config.leafScale*(.78+rand(k,'size')*.4);
+      const light=clamp(Math.floor((1-(y-c.y)/c.ry)*1.4+(rand(k,'tone')-.5)*1.2),0,3),color=silhouette?silhouetteColor:palette[light];
+      const size=(broad?5.2:needle?6:4.7)*config.leafScale*(c.detailScale??1)*(.78+rand(k,'size')*.4);
       const angle=(rand(k,'angle')-.5)*(broad?130:65);
       if(needle){const tilt=(x-c.x)/c.rx*.65+(preset.lean??0);
         for(let q=-1;q<=1;q++){const a=tilt+q*.22;detail.push(`<path d="M${f(x)} ${f(y)} l${f(Math.sin(a)*size*1.6)} ${f(-Math.cos(a)*size*1.6)}" fill="none" stroke="${color}" stroke-width="1.45" stroke-linecap="round"/>`);}
@@ -78,9 +78,10 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
       }else detail.push(`<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(size)}" ry="${f(size*(shape==='round'?.91:broad?.64:.57))}" fill="${color}" transform="rotate(${f(angle)} ${f(x)} ${f(y)})"/>`);
     }
     const anchor=tree.nodes.find(n=>n.id===c.node);
-    return `<g data-wind-node="${nodeIndex.get(c.node)??-1}" data-wind-leaf="${f(rand(c.key,'wind')*Math.PI*2)}" data-wind-x="${f(anchor?.ex??c.x)}" data-wind-y="${f(anchor?.ey??c.y)}"><g transform="translate(${f(c.x)} ${f(c.y)}) scale(${f(.4+.6*g)}) translate(${f(-c.x)} ${f(-c.y)})" opacity="${f(g)}">${detail.join('')}</g></g>`;
+    return `<g data-wind-node="${nodeIndex.get(c.node)??-1}" data-wind-leaf="${f(rand(c.key,'wind')*Math.PI*2)}" data-wind-x="${f(anchor?.ex??c.x)}" data-wind-y="${f(anchor?.ey??c.y)}"${c.starterLeaves?' data-starter-leaves="2"':''}><g transform="translate(${f(c.x)} ${f(c.y)}) scale(${f(.4+.6*g)}) translate(${f(-c.x)} ${f(-c.y)})" opacity="${f(g*(c.opacity??1))}">${detail.join('')}</g></g>`;
   }
-  function padMarkup(p){return tree.nodes.filter(n=>n.pad===p.id).map(wood).join('')+(view==='skeleton'?'':tree.clusters.filter(c=>c.pad===p.id).sort((a,b)=>a.z-b.z).map(foliage).join(''));}
+  const foliageClusters=[...tree.clusters,...(tree.buds??[])];
+  function padMarkup(p){return tree.nodes.filter(n=>n.pad===p.id).map(wood).join('')+(view==='skeleton'?'':foliageClusters.filter(c=>c.pad===p.id).sort((a,b)=>a.z-b.z).map(foliage).join(''));}
   const back=tree.pads.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).map(padMarkup).join('');
   const front=tree.pads.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).map(padMarkup).join('');
   const trunks=tree.nodes.filter(n=>n.role==='trunk'||n.role==='bough').map(wood).join('');

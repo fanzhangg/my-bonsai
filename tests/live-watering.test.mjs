@@ -10,6 +10,7 @@ import {snapshot,wateringRecovery} from '../prototype/growth.mjs';
 import {PRESETS} from '../prototype/core/v1/canopy.mjs';
 import {replayFrame} from '../prototype/playback.mjs';
 import {applyCheat,cheatRequest} from '../prototype/cheats.mjs';
+import {WATERING_RULES,wateringAmount} from '../prototype/watering-motion.mjs';
 test('partial and full watering persist, replay consistently, and retries never duplicate growth',async()=>{
  const dir=await mkdtemp(path.join(tmpdir(),'bonsai-watering-')),file=path.join(dir,'trees.json');
  const store=await openStore({url:'',file}),server=createServer(store,{realtimeWeatherEnabled:false});
@@ -18,10 +19,14 @@ test('partial and full watering persist, replay consistently, and retries never 
  const post=async(p,body)=>{const r=await fetch(base+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:r.status,data:await r.json()};};
  try{
   const id=randomUUID(),{data:before}=await post('',{id});
+  assert.deepEqual(before.wateringRules,WATERING_RULES);
   for(const used of [-1,0,4001,'100',null])assert.equal((await post('/'+id+'/waterings',{id:randomUUID(),used})).status,400);
   const operation={id:randomUUID(),used:1200};
   const results=await Promise.all([post('/'+id+'/waterings',operation),post('/'+id+'/waterings',operation)]);
   assert.ok(results.every(r=>r.status===200&&r.data.waterings.length===1));
+  const first=results[0].data,water=first.waterings[0];
+  const preview={...before,waterings:[{at:water.at,amount:wateringAmount(operation.used,before.wateringRules),recoveryHours:wateringRecovery(snapshot(before,water.at),operation.used,before.wateringRules)}]};
+  assert.deepEqual(snapshot(preview,first.serverNow),snapshot(first,first.serverNow),'saving a previewed dose must not retract growth');
   assert.equal((await post('/'+id+'/waterings',{...operation,used:4000})).status,409);
   const {data:after,status}=await post('/'+id+'/waterings',{id:randomUUID(),used:4000});assert.equal(status,200);
   assert.equal(after.waterings.length,2);
@@ -58,4 +63,12 @@ test('watering a bare mature tree visibly extends new shoots without restoring c
   assert.equal(wateringRecovery(mature,4000),0);
   assert.deepEqual(replayFrame(watered,at+1,1),full);
  }
+});
+
+test('watering previews use advertised server rules even when local defaults differ',()=>{
+ const olderServer={capacity:4000,growthPerTank:.025,recoveryHoursPerTank:24};
+ assert.equal(wateringAmount(4000,olderServer),.025);
+ assert.equal(wateringAmount(1200,olderServer),.0075);
+ assert.equal(wateringRecovery({clusters:[]},4000,olderServer),24);
+ assert.equal(wateringAmount(4000),.05);
 });

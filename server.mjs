@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {openStore} from './storage.mjs';
 import {VERSION,snapshot,wateringRecovery} from './prototype/growth.mjs';
-import {WATER_CAPACITY,WATER_GROWTH_PER_TANK} from './prototype/watering-motion.mjs';
+import {WATER_CAPACITY,WATERING_RULES,wateringAmount} from './prototype/watering-motion.mjs';
 import {configForClaim} from './prototype/claim.mjs';
 import {applyCheat} from './prototype/cheats.mjs';
 import {coordinates,weatherAt} from './weather-service.mjs';
@@ -54,7 +54,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
           if(!req.headers['content-type']?.startsWith('application/json'))fail(415,'需要 JSON');
           let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>8192)fail(413,'请求过大');chunks.push(chunk);}try{body=JSON.parse(Buffer.concat(chunks).toString());}catch{fail(400,'无效请求');}if(!body||Array.isArray(body)||typeof body!=='object')fail(400,'无效请求');
         }
-        const result=tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],revision:tree.revision??0,serverNow:Date.now()});
+        const result=tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],wateringRules:WATERING_RULES,revision:tree.revision??0,serverNow:Date.now()});
         if(req.method==='GET'&&id&&!action){const tree=await store.get(id);if(!tree)fail(404,'找不到这盆树，请检查链接');return send(200,result(tree));}
         if(req.method!=='POST')fail(405,'不支持的操作');
         if(action==='visits'){
@@ -77,7 +77,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
             if(!old)fail(404,'找不到这盆树');
             const waterings=old.waterings??[],existing=waterings.find(w=>w.id===body.id);
             if(existing){if(existing.used!==body.used)fail(409,'浇水请求已使用');return old;}
-            const at=Date.now();return {...old,revision:(old.revision??0)+1,lastInteractedAt:at,waterings:[...waterings,{id:body.id,at,used:body.used,recoveryHours:wateringRecovery(snapshot(old,at),body.used),amount:Math.min(body.used,WATER_CAPACITY)/WATER_CAPACITY*WATER_GROWTH_PER_TANK}]};
+            const at=Date.now();return {...old,revision:(old.revision??0)+1,lastInteractedAt:at,waterings:[...waterings,{id:body.id,at,used:body.used,recoveryHours:wateringRecovery(snapshot(old,at),body.used),amount:wateringAmount(body.used)}]};
           });
           return send(200,result(tree));
         }

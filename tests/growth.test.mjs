@@ -26,3 +26,38 @@ test('pot stays centered at the same screen position for every style, seed and g
   }
  }
 });
+
+test('leaves unfold on extending twigs and stay attached throughout growth',()=>{
+ for(const preset of PRESETS){
+  const record={config:{preset:preset.id,seed:'together'}},mature=grow(record,1),final=new Map(mature.clusters.map(c=>[c.key,c]));
+  let overlapping=false;
+  for(let step=1;step<=100;step++){
+   const p=step/100,tree=grow(record,p),nodes=new Map(tree.nodes.map(n=>[n.id,n])),scale=(.55+.45*p*p*(3-2*p))*p**1.5;
+   for(const c of tree.clusters){
+    const n=nodes.get(c.node),target=final.get(c.key),tip=mature.nodes.find(n=>n.id===c.node);
+    assert(n&&n.growth>0);assert(c.leafAmount>0&&c.leafAmount<=p**3);
+    if(n.growth<1)overlapping=true;
+    assert(Math.abs(c.rx-target.rx*scale*n.growth)<1e-8);
+    assert(Math.abs(c.x-n.ex-(target.x-tip.ex)*scale*n.growth)<1e-8);
+    assert(Math.abs(c.y-n.ey-(target.y-tip.ey)*scale*n.growth)<1e-8);
+   }
+  }
+  assert(overlapping,`${preset.id} must leaf out before its supporting twigs finish`);
+  assert(mature.clusters.every(c=>c.leafAmount===1));
+ }
+});
+
+test('starter leaves mark young branch tips before crowns exist and yield to real foliage',()=>{
+ for(const {id:preset} of PRESETS){
+  const record={config:{preset,seed:'early-leaves'}},early=snapshot({...record,createdAt:0},0);
+  assert.equal(early.clusters.length,0);
+  assert(early.buds.length>0,`${preset} starts with leaf hints`);
+  assert.equal(grow(record,0).buds.length,0);
+  for(const b of early.buds){const branch=early.nodes.find(n=>n.id===b.node);assert.equal(branch.role,'primary');assert.equal(b.x,branch.ex);assert.equal(b.y,branch.ey);assert.equal(b.starterLeaves,2);assert(b.opacity>0&&b.opacity<=1);}
+  assert(draw(early).includes('data-starter-leaves="2"'));
+  assert(!/NaN|Infinity/.test(draw(early)));
+  const cut=early.nodes.find(n=>n.id===early.buds[0].node);
+  assert(!grow({...record,cuts:[{branchId:cut.id,at:0}]},early.progress,{at:0}).buds.some(b=>b.node===cut.id));
+  assert.equal(grow(record,1).buds.length,0);
+ }
+});

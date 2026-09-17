@@ -4,7 +4,7 @@ import {randomUUID} from 'node:crypto';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {snapshot,draw,HOUR,VERSION} from '../prototype/growth.mjs';
+import {snapshot,grow,draw,HOUR,VERSION} from '../prototype/growth.mjs';
 import {PRESETS} from '../prototype/core/v1/canopy.mjs';
 import {pointOn} from '../prototype/core/v1/model.mjs';
 import {branchFamily} from '../prototype/pruning-model.mjs';
@@ -59,6 +59,8 @@ test('new shoots extend and leaf out gradually with stable identities; future cu
   const record=recordFor();cut(record,primaries(snapshot(record,cutAt)),cutAt);
   const early=snapshot(record,cutAt+8*HOUR),shoot=primaries(early)[0],later=snapshot(record,cutAt+12*HOUR).nodes.find(n=>n.id===shoot.id);
   assert.ok(shoot.growth>0&&shoot.growth<1);assert.ok(later.growth>shoot.growth);
+  const budding=snapshot(record,cutAt+12*HOUR);
+  assert(budding.buds.some(b=>b.node===shoot.id&&b.starterLeaves===2),'new shoots show leaf hints before terminal foliage');
   assert.ok(Math.hypot(later.ex-later.x,later.ey-later.y)>Math.hypot(shoot.ex-shoot.x,shoot.ey-shoot.y));
   const mature=snapshot(record,cutAt+120*HOUR);cut(record,[primaries(mature)[0]],cutAt+120*HOUR);
   assert.deepEqual(snapshot(record,cutAt+8*HOUR),early);
@@ -81,6 +83,29 @@ test('new generations remain prunable and repeatedly recover with distinct, dete
     cut(record,branches,at);assert.equal(primaries(snapshot(record,at)).length,0);
   }
   assert.notDeepEqual(shapes[0],shapes[1]);assert.notDeepEqual(shapes[1],shapes[2]);
+});
+
+test('regenerated foliage appears while its supporting twig is still extending',()=>{
+ for(const {id:preset} of PRESETS){
+  const record=recordFor(preset);cut(record,primaries(snapshot(record,cutAt)),cutAt);
+  let overlapping=false;
+  for(let hour=8;hour<=60;hour++){
+   const tree=snapshot(record,cutAt+hour*HOUR),nodes=new Map(tree.nodes.map(n=>[n.id,n]));
+   for(const c of tree.clusters){const n=nodes.get(c.node);assert(n&&n.growth>0);if(n.regrown&&n.growth<1&&c.leafAmount>0)overlapping=true;}
+  }
+  assert(overlapping,`${preset} regrowth must leaf out during extension`);
+ }
+});
+
+test('even fully regenerated crowns respect the whole plant maturity cap',()=>{
+ const record=recordFor(),before=snapshot(record,cutAt);cut(record,primaries(before),cutAt);
+ const mature=grow(record,1,{at:cutAt+120*HOUR});
+ for(const p of [.4,.6,.8]){
+  const young=grow(record,p,{at:cutAt+120*HOUR});
+  assert(young.clusters.some(c=>young.nodes.find(n=>n.id===c.node)?.regrown));
+  assert(young.clusters.every(c=>c.leafAmount<=p**3));
+ }
+ assert(mature.clusters.every(c=>c.leafAmount===1));
 });
 
 test('cheat saves preserve regenerated cuts and reject unborn or fabricated regenerated branches',()=>{

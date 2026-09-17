@@ -8,7 +8,7 @@ import {startWeather} from './weather.mjs';
 import {startWind} from './wind.mjs';
 import {createVisitors} from './visitors.mjs';
 import {createWatering} from './watering.mjs';
-import {WATER_CAPACITY,WATER_GROWTH_PER_TANK} from './watering-motion.mjs';
+import {WATER_CAPACITY,wateringAmount} from './watering-motion.mjs';
 import {createPruning} from './pruning.mjs';
 import {toolHome} from './tool-home.mjs';
 import {createSharing} from './share.mjs';
@@ -57,7 +57,7 @@ const pruning=createPruning({
 function waterSnapshot(){
  const data=sandbox||record;if(!data)return null;
  const at=sandbox?sandbox.createdAt+hours*HOUR:Date.now()+offset;
- return snapshot({...data,waterings:[...(data.waterings??[]),{at,amount:pendingWater/WATER_CAPACITY*WATER_GROWTH_PER_TANK,recoveryHours:pendingRecovery}]},at);
+ return snapshot({...data,waterings:[...(data.waterings??[]),{at,amount:pendingWater/WATER_CAPACITY*wateringAmount(WATER_CAPACITY,data.wateringRules),recoveryHours:pendingRecovery}]},at);
 }
 function renderWaterTree(){
  const tree=waterSnapshot();if(!tree)return null;
@@ -76,9 +76,9 @@ async function flushWater(){
 }
 const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$('watering-can'),water:$('watering-water'),status:$('watering-status'),renderTree:renderWaterTree,
  getHome:scene=>toolHome(scene,190),
- onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),WATER_CAPACITY)/WATER_CAPACITY;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
+ onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),WATER_CAPACITY,(sandbox||record).wateringRules)/WATER_CAPACITY;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
  onFinish:async used=>{
-  if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:used/WATER_CAPACITY*WATER_GROWTH_PER_TANK,recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}
+  if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:wateringAmount(used,sandbox.wateringRules),recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}
   waterQueue.push({id:crypto.randomUUID(),used,recoveryHours:used*recoveryRate});await flushWater();
  },
  onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);pruning.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);if(!busy&&record)paint(waterSnapshot());},
