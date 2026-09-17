@@ -54,6 +54,7 @@ export function pruneRamification(tree,id,mode='remove'){
   const plan=cutPlan(tree,id,mode);if(!plan)return tree;
   const next=structuredClone(tree);
   next.nodes=next.nodes.filter(n=>!plan.removed.has(n.id)).map(n=>n.id===id?shorten(n,plan.t):n.parent===id?{...n,attach:n.attach/plan.t}:n);
+  if(next.clusters)next.clusters=next.clusters.filter(c=>!plan.removed.has(c.node)&&!(plan.t&&c.node===id));
   return next;
 }
 export function flushRamification(tree){
@@ -62,12 +63,19 @@ export function flushRamification(tree){
     if(!n.pending)continue;n.pending=false;
     const hasLeaves=next.nodes.some(q=>q.leaves&&family(next,n.id).has(q.id));
     // Conservative juniper rule: do not promise buds on a bare branch.
-    if(next.species==='juniper'&&!hasLeaves)continue;
+    if(next.species!=='elm'&&!hasLeaves)continue;
     for(let k=0;k<2;k++){
       const attach=.76+k*.17,start=pointOn(n,attach),side=k?1:-1;
-      const end={x:start.x+side*18,y:start.y-28};
+      const wind=next.preset?.id==='windswept';
+      const end={x:start.x+(wind?20+k*8:side*18),y:start.y-(wind?12:28)};
       const shoot=branch(`N${++next.serial}`,n.id,n.order+1,start,end,Math.min(2,n.tipWidth*.6),attach);
-      Object.assign(shoot,{leaves:true,fresh:true});next.nodes.push(shoot);
+      const pad=n.pad??n.regrowthPad,z=n.z??next.pads?.find(p=>p.id===pad)?.z??1;
+      Object.assign(shoot,{leaves:true,fresh:true,role:'twig',pad,z,key:shoot.id,born:-100,duration:12});next.nodes.push(shoot);
+      if(next.clusters){
+        const reference=next.clusters.find(c=>c.pad===pad)??next.clusters[0];
+        next.clusters.push({...reference,node:shoot.id,key:shoot.id,pad,z,x:shoot.ex,y:shoot.ey,
+          rx:12,ry:8,born:-100,leafAmount:1,leafBudget:.4});
+      }
     }
   }
   return next;
