@@ -1,4 +1,4 @@
-.visitor-bug{position:absolute;top:0;left:0;width:48px;height:48px;min-height:48px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;pointer-events:auto;background:transparent!important;touch-action:manipulation;transition:none;will-change:transform,opacity}
+.visitor-bug{position:absolute;top:0;left:0;width:48px;height:48px;min-height:48px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;pointer-events:auto;background:transparent!important;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:none;will-change:transform,opacity}
 .visitor-bug:disabled{pointer-events:none}.visitor-bug:focus-visible{outline:2px solid var(--focus,#bd875c);outline-offset:0;background:#ffffff20!important}
 .visitor-butterfly>svg{width:calc(var(--butterfly-size,21px)*1.65);height:calc(var(--butterfly-size,21px)*1.65);overflow:visible}
 .visitor-butterfly>svg,.visitor-firefly{scale:var(--visitor-distance-scale,1)}
