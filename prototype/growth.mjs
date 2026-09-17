@@ -21,14 +21,14 @@ export function snapshot(record,at=Date.now()){
  const {days,initial}=profile(record),p=clamp(initial+(at-record.createdAt)/(days*24*HOUR)*(1-initial)+wateringProgress(record,at));
  return grow(record,p,{at});
 }
-export function grow(record,p,{morphology=true,at=Infinity}={}){
- p=clamp(p);const tree=(morphology?generate:reference)(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),clusters=tree.clusters,schedule=new Map(),attachments=new Map();
+export function grow(record,p,{morphology=true,at=Infinity,generator}={}){
+ p=clamp(p);const tree=(generator??(morphology?generate:reference))(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),clusters=tree.clusters,schedule=new Map(),attachments=new Map();
  const pot=normalizePot(record.config.pot);if(pot)tree.config.pot=pot;
  tree.viewBox={x:tree.root.x-FRAME.width/2,y:tree.root.y-FRAME.aboveSoil,width:FRAME.width,height:FRAME.height};
  function timing(n){if(schedule.has(n.id))return schedule.get(n.id);const parent=original.get(n.parent);let attach=1;
    if(parent){let best=Infinity;for(let i=0;i<=100;i++){const t=i/100,q=pointOn(parent,t),distance=Math.hypot(q.x-n.x,q.y-n.y);if(distance<best){best=distance;attach=t;}}}
    attachments.set(n.id,attach);const ps=parent?timing(parent):null;
-   const value={born:ps?ps.born+ps.duration+(n.role==='trunk'?.08:.12):0,duration:n.role==='trunk'?1:n.role==='twig'?.55:.9};schedule.set(n.id,value);return value;
+   const value={born:ps?ps.born+ps.duration+(n.role==='trunk'?.08:.12)+(n.growthDelay??0):0,duration:(n.role==='trunk'?1:n.role==='twig'?.55:.9)*(n.growthTempo??1)};schedule.set(n.id,value);return value;
  }
  tree.nodes.forEach(timing);const end=Math.max(...tree.clusters.map(c=>{const s=schedule.get(c.node);return s.born+s.duration+1.6;}));
  const clock=p*end,scale=.55+.45*smooth(p),thickness=(.04+.96*p**1.3)*smooth(p/.018),mapped=new Map();

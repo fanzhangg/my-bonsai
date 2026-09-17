@@ -134,6 +134,15 @@ export function generate(config,{lightDirection}={}){
 export function canopyPoint(c,angle,radius=1){
   const s=c.contour;
   if(!s)return {x:c.x+Math.cos(angle)*c.rx*radius,y:c.y+Math.sin(angle)*c.ry*radius};
+  if(s.cloud){
+    const u=Math.cos(angle),v=Math.sin(angle);
+    const lobes=1+s.rough*(.7*Math.sin(3*angle+s.phase)+.3*Math.sin(5*angle-s.phase));
+    const x=u*c.rx*radius*(1+s.skew*v);
+    // Each small branch has a softly scalloped underside and an asymmetric
+    // cloud above it. No major-branch-wide clipping plane flattens the crowns.
+    const y=(v<0?-Math.pow(-v,.78)*c.ry*lobes:c.ry*Math.pow(v,.65)*(.3+.075*Math.sin(3*angle+s.phase)))*radius;
+    return {x:c.x+x,y:c.y+y+x*s.slope};
+  }
   const wave=1+s.rough*(.55*Math.sin(3*angle+s.phase)+.3*Math.sin(5*angle-s.phase)+.15*Math.cos(9*angle+s.phase));
   const u=Math.cos(angle),v=Math.sin(angle);
   const x=u*c.rx*wave*radius*(1+s.skew*v);

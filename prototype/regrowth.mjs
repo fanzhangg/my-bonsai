@@ -65,7 +65,8 @@ export function appendRegrowth(tree,{shoots,original,clusters,attachments,mapped
       if(!leafAmount)continue;
       const old=original.get(c.node),offset=vector(c.x-old.ex,c.y-old.ey);
       tree.clusters.push({...c,key:shootId(shoot.generation,c.key),node:n.id,x:n.ex+offset.x*n.growth,y:n.ey+offset.y*n.growth,
-        rx:c.rx*scale*size*n.growth,ry:c.ry*scale*size*n.growth,born:-100,leafAmount});
+        rx:c.rx*scale*size*n.growth,ry:c.ry*scale*size*n.growth,born:-100,leafAmount,
+        ...(c.crownAge!==undefined?{crownAge:Math.max(0,Math.min(1,(age-timing.get(c.node).end)/96))}:{})});
     }
   }
 }

@@ -8,6 +8,7 @@ import {createVisitorReview} from './design-system-visitors.mjs';
 import {createWateringReview} from './design-system-watering.mjs';
 import {createPruningReview} from './design-system-pruning.mjs';
 import {MORPHOLOGY} from './morphology.mjs';
+import {createBranchReview} from './design-system-branches.mjs';
 
 const $=id=>document.getElementById(id);
 const state={tree:'juniper',shape:'oval',tone:'sand',pattern:'plain',look:'original',stage:'mature',potScale:POT_SCALE};
@@ -74,7 +75,7 @@ const populated=new Set();
 function showPanel(name,updateHash=true){
   if(!tabs.some(tab=>tab.id===`tab-${name}`))name='compose';
   tabs.forEach(tab=>{const active=tab.id===`tab-${name}`;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;$(tab.getAttribute('aria-controls')).hidden=!active;});
-  if(!populated.has(name)){if(name==='trees')buildTrees();if(name==='pots')buildPots();if(name==='system')buildSystem();populated.add(name);}
+  if(!populated.has(name)){if(name==='trees')buildTrees();if(name==='branches')createBranchReview($('panel-branches'));if(name==='pots')buildPots();if(name==='system')buildSystem();populated.add(name);}
   if(name==='colors')colorReview.render();
   visitorReview.setActive(name==='visitors');
   pruningReview.setActive(name==='pruning');

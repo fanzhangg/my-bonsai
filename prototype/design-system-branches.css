@@ -1,0 +1,11 @@
+.branch-intro,.branch-footnote{font-size:13px;line-height:1.8;color:var(--muted);margin:12px 0 20px;max-width:780px}
+.branch-pair{border:1px solid var(--line);border-radius:20px;margin:24px 0;overflow:hidden;background:#f1f2e9}
+.branch-pair-title{padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper)}
+.branch-pair-title span,.branch-count,.branch-status{font-size:12px;color:var(--muted)}
+.branch-panes{display:grid;grid-template-columns:1fr 1fr}.branch-pane{min-width:0;padding:18px 12px 12px}.branch-pane+article{border-left:1px solid var(--line)}
+.branch-pane h4{font-size:13px;font-weight:500;margin:0 12px}.branch-pane h4 small{font-size:10px;margin-left:8px;color:var(--muted)}
+.branch-art{height:440px;display:grid;place-items:center}.branch-art svg{display:block;width:100%;height:100%}.branch-count{margin:4px 12px}
+.branch-actions{display:flex;flex-wrap:wrap;gap:8px;padding:16px 24px 8px;background:var(--paper)}.branch-status{padding:8px 24px 20px;background:var(--paper)}
+.branch-cut-list{display:flex;flex-wrap:wrap;gap:8px;padding:12px 24px;background:var(--paper)}.branch-cut-list button{min-height:44px;border-color:#c4a583}
+.branch-marker{cursor:pointer;outline:none}.branch-marker circle{fill:#f8f6ee;stroke:#9b6b44;stroke-width:1.6}.branch-marker circle.branch-hit{fill:transparent;stroke:none}.branch-marker text{font:14px sans-serif;fill:#714b30;pointer-events:none}.branch-marker:hover circle:not(.branch-hit),.branch-marker:focus-visible circle:not(.branch-hit){fill:#f0c9a5;stroke-width:3}
+@media(max-width:720px){.branch-panes{grid-template-columns:1fr}.branch-pane+article{border-left:0;border-top:1px solid var(--line)}.branch-art{height:auto;aspect-ratio:1}.branch-pair-title{align-items:start;flex-direction:column;padding:16px}.branch-actions{padding:14px 12px 4px}.branch-actions button{flex:1 1 42%;font-size:12px;padding:8px}.branch-status{padding:10px 14px 16px}.branch-pane{padding:16px 0 8px}#branch-comparisons[data-layout=candidate] .branch-current,#branch-comparisons[data-layout=current] .branch-candidate{display:none}.branch-pair{margin:20px 0}}

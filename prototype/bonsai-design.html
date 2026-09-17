@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 盆栽设计语言</title><link rel="stylesheet" href="/bonsai-design.css"></head>
+<body>
+<header><a class="brand" href="/">一盆树<span>盆栽设计语言</span></a><a class="back" href="/design-system.html#branches">返回设计审核 ↗</a></header>
+<main>
+  <section class="intro"><p class="eyebrow">FORM / FOLIAGE / COLOR</p><h1>以枝为骨，以叶成景。</h1><p>有分寸的夸张，有秩序的自然。让每一盆树，都有自己的姿态。</p></section>
+  <section class="explorer" aria-label="盆栽设计预览">
+    <div class="specimen"><div class="viewbar"><span id="specimen-number">01 / 曲</span><div class="views" role="group" aria-label="观察方式"><button data-view="foliage" aria-pressed="true">枝叶</button><button data-view="skeleton" aria-pressed="false">枝干</button><button data-view="silhouette" aria-pressed="false">剪影</button></div></div><div id="tree-art" class="tree-art" aria-live="off"></div><div class="specimen-caption"><div><h2 id="specimen-name"></h2><p id="specimen-note"></p></div><button id="new-seed" class="quiet">换一株 ↻</button></div></div>
+    <aside aria-label="设计选项">
+      <fieldset><legend><span>01</span> 树的姿态</legend><div id="form-options" class="form-options"></div><p id="form-note" class="field-note"></p></fieldset>
+      <fieldset><legend><span>02</span> 叶与冠</legend><div class="select-row"><label>冠型<select id="crown"></select></label><label>叶形<select id="leaf"></select></label></div><p id="crown-note" class="field-note"></p></fieldset>
+      <fieldset><legend><span>03</span> 固定层次色组</legend><div id="palette-options" class="palette-options"></div><div id="depth-colors" class="depth-colors"></div><p class="field-note">后冠深，前冠浅；同一色组内，以柔和明暗塑造体积。</p></fieldset>
+      <fieldset><legend><span>04</span> 个体变化</legend><div class="select-row"><label>变化幅度<select id="variation"><option value="0.25">克制</option><option value="0.55" selected>自然</option><option value="0.85">鲜明</option></select></label><label>枝量<select id="density"><option value="0.2">疏朗</option><option value="0.5" selected>均衡</option><option value="0.8">丰茂</option></select></label></div><p class="field-note">每株独立生成。换色保留树形，页面链接可留住这一株。</p></fieldset>
+      <div class="growth-control"><label for="maturity">生长进度 <output id="maturity-label">100%</output></label><input id="maturity" type="range" min="5" max="100" step="1" value="100"><div class="range-caption"><span>初生</span><span>成树</span></div></div>
+    </aside>
+  </section>
+  <section class="principles" aria-labelledby="principles-title"><div class="principles-heading"><p class="eyebrow">HOW IT GROWS</p><h2 id="principles-title">同一套准则，不同的风骨。</h2></div><div class="principle-grid">
+    <article><span class="number">01 / 枝干</span><h3>先有线条，再有繁茂。</h3><p>主干逐段伸长、增粗，转折决定整树的动势。侧枝沿母枝弧线舒展；顶部新枝更短、更疏，下方老枝撑起重量。</p></article>
+    <article><span class="number">02 / 树冠</span><h3>从小枝生长，向大形聚合。</h3><p>叶团依附细枝，彼此叠合成连续轮廓。真柏舒展成云片，榉树聚成圆顶，文人松保留小冠与大留白。</p></article>
+    <article><span class="number">03 / 色彩</span><h3>先分前后，再画体积。</h3><p>每套配色固定后、中、前三组色阶，组内由暗到亮。新老叶与整体受光只做小幅修色，保留柔和、清楚的层次。</p></article>
+  </div><p class="closing">种子决定主干曲线、出枝位置与数量；树形约束比例和留白。枝芽按各自节奏伸展，修剪后的幸存枝干保持原位。</p></section>
+</main>
+<footer><span>一盆树 · 生成设计系统</span><span>视觉原型 · 尚未接入认养</span></footer>
+<noscript>请启用 JavaScript 查看盆栽生成预览。</noscript><script type="module" src="/bonsai-design.mjs"></script>
+</body></html>
