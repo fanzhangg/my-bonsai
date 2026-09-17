@@ -10,6 +10,7 @@ import {createVisitors} from './visitors.mjs';
 import {createWatering} from './watering.mjs';
 import {WATER_CAPACITY} from './watering-motion.mjs';
 import {createPruning} from './pruning.mjs';
+import {toolHome} from './tool-home.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),debug=params.has('cheat')||params.has('debug');
 const visitors=createVisitors({scene:$('insect-layer'),treeElement:$('stage'),layer:$('insect-layer')});
 const weather=startWeather({debug,onSceneChange:scene=>visitors.setMode(scene.night?'night':'day')});
@@ -70,7 +71,7 @@ async function flushWater(){
  try{await waterSave;}finally{waterSave=null;}
 }
 const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$('watering-can'),water:$('watering-water'),status:$('watering-status'),renderTree:renderWaterTree,
- getHome:scene=>({x:Math.max(54,scene.clientWidth-170),y:scene.clientHeight-70}),
+ getHome:scene=>toolHome(scene,170),
  onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),4000)/4000;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
  onFinish:async used=>{
   if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:used/WATER_CAPACITY*.025,recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}

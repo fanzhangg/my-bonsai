@@ -1,4 +1,5 @@
 import {waterPoint,waterImpact,nearPlanter,waterFacing,createWaterTank,spendWater,refillWaterTank,WATER_CAPACITY} from './watering-motion.mjs';
+import {toolHome} from './tool-home.mjs';
 
 export function createWatering({scene,holder,can,water,status,initialProgress=.55,renderTree,onDose=()=>{},onFinish=async()=>{},onBusyChange=()=>{},onError=()=>{},getHome}){
  const ns='http://www.w3.org/2000/svg',vessel=can.querySelector('.watering-vessel');
@@ -15,7 +16,7 @@ export function createWatering({scene,holder,can,water,status,initialProgress=.5
   try{await onFinish(used);}catch(error){onError(error);}finally{saving=false;notify();}
  }
  function place(p){position=p;can.style.left=p.x+'px';can.style.top=p.y+'px';if(svg&&active){direction=waterFacing(p.x,geometry().soil.x,direction);can.querySelector('svg').style.transform='scaleX('+direction+')';}}
- function home(){return getHome?getHome(scene):{x:scene.clientWidth-66,y:scene.clientHeight-70};}
+ function home(){return getHome?getHome(scene):toolHome(scene);}
  function screen(x,y){const q=new DOMPoint(x,y).matrixTransform(svg.getScreenCTM()),r=scene.getBoundingClientRect();return {x:q.x-r.x,y:q.y-r.y};}
  function geometry(){return {soil:screen(tree.root.x,tree.root.y-3),top:screen(tree.root.x,svg.querySelector('[data-wind-tree]').getBBox().y),factor:svg.getScreenCTM().a};}
  function element(tag,attrs){const el=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);water.append(el);return el;}
@@ -112,12 +113,13 @@ export function createWatering({scene,holder,can,water,status,initialProgress=.5
   if(!held||e.pointerId!==pointer)return;const r=scene.getBoundingClientRect();place({x:e.clientX-r.x,y:e.clientY-r.y-(e.pointerType==='touch'?48:0)});check();
  }
  function release(){if(!held)return;held=false;pointer=null;can.classList.remove('is-held','is-pouring','is-draining');water.dataset.phase='idle';water.dataset.flowing='false';void finish();returnHome();}
- can.addEventListener('pointerdown',e=>{if(e.button!==0||!begin())return;e.preventDefault();pointer=e.pointerId;can.setPointerCapture(pointer);});
+ can.addEventListener('pointerdown',e=>{if(e.isPrimary===false||e.button!==0||!begin())return;e.preventDefault();pointer=e.pointerId;can.setPointerCapture(pointer);});
  can.addEventListener('pointermove',move);
  can.addEventListener('pointerup',e=>{if(e.pointerId!==pointer)return;move(e);release();});
- can.addEventListener('pointercancel',release);can.addEventListener('lostpointercapture',release);
+ const cancelPointer=e=>{if(e.pointerId===pointer)release();};
+ can.addEventListener('pointercancel',cancelPointer);can.addEventListener('lostpointercapture',cancelPointer);
  can.addEventListener('keydown',e=>{
-  if(e.key===' '||e.key==='Enter'){e.preventDefault();if(held)release();else begin();}
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();if(e.repeat)return;if(held)release();else begin();}
   if(e.key.startsWith('Arrow')&&held){e.preventDefault();const step=e.shiftKey?48:24;place({x:position.x+(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0),y:position.y+(e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0)});check();}
   if(e.key==='Escape')release();
  });

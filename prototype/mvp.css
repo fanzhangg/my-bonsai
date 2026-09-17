@@ -1,6 +1,8 @@
 :root{font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:#35483b;background:#faf9f3}*{box-sizing:border-box}body{margin:0}main{max-width:800px;margin:auto;padding:24px 24px calc(24px + env(safe-area-inset-bottom))}header{display:flex;align-items:center;justify-content:space-between;height:48px}header a{font:22px serif;letter-spacing:3px;text-decoration:none}a{color:inherit}button,input,select{font:inherit;font-size:14px;min-height:44px;border:1px solid #78908050;border-radius:12px;padding:10px 16px;color:inherit;background:transparent}button{cursor:pointer}button:disabled{opacity:.5}button:hover{background:#81908018}.primary{background:#355d47;color:#fff;border:0;padding:14px 36px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #bd875c;outline-offset:3px}[hidden]{display:none!important}#stage{height:min(73svh,650px);min-height:300px}#stage svg{width:100%;height:100%}#welcome{display:flex;align-items:center;flex-direction:column;gap:20px}#return{font-size:13px;opacity:.65}#status{font-size:13px;text-align:center;overflow-wrap:anywhere}#retry{display:block;margin:12px auto}#debug{max-width:480px;margin:24px auto;border:1px dashed #78908080;padding:18px;border-radius:16px;font-size:12px}.debug-heading{display:flex;justify-content:space-between}#debug p{opacity:.7}#debug label{display:block;margin:12px 0}#debug select,#debug input{display:block;width:100%;margin-top:6px;background:#ffffff50;color:#35483b}#debug input[type=range]{padding:0;accent-color:#648567}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{flex:1;white-space:nowrap;font-size:12px;padding:8px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.8;opacity:.7}.night{color:#dfe8df}.night .primary{background:#b8cdb8;color:#263d31}@media(max-width:600px){main{padding:18px 18px calc(24px + env(safe-area-inset-bottom))}#stage{height:70svh}header button{font-size:12px}}
 
 /* Normal experience: one centered canvas and one action, no page chrome. */
+body{-webkit-user-select:none;user-select:none}
+input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
 main{position:relative;width:100%;max-width:none;min-height:100svh;padding:0;display:grid;place-items:center}
 #stage{width:min(calc(100vw - 16px),1040px);height:100svh;min-height:0;display:grid;place-items:center}
 #stage svg{display:block;width:100%;height:100%;max-height:1040px}
@@ -19,4 +21,15 @@ main{position:relative;width:100%;max-width:none;min-height:100svh;padding:0;dis
 .debug-mode main{display:block}.debug-mode #stage{margin:auto;height:75svh}.debug-mode #welcome{position:static;transform:none;padding:10px}.debug-mode #debug{margin:20px auto 40px;width:calc(100% - 36px)}
 #insect-layer{position:fixed;inset:0;z-index:1;overflow:hidden;pointer-events:none}
 #insect-layer:focus{outline:none}
+#insect-layer.visitor-still .visitor-bug{pointer-events:none}
 .debug-mode #insect-layer{position:absolute;height:75svh;bottom:auto}
+body:has(#live-pruning.is-dragging) #stage{touch-action:none}
+#live-pruning,#live-watering{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+/* Keep mobile scenes inside the viewport; debug forms still need scrolling. */
+@media (max-width:600px), (hover:none) and (pointer:coarse){
+  html:has(> body:not(.debug-mode)){height:100%;overflow:hidden;overscroll-behavior:none}
+  body:not(.debug-mode){position:fixed;inset:0;height:100svh;height:100dvh;overflow:hidden;overscroll-behavior:none;touch-action:pinch-zoom}
+  body:not(.debug-mode) main{height:100%;min-height:0}
+  body:not(.debug-mode) #stage{height:100%}
+}

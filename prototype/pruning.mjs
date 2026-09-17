@@ -1,4 +1,5 @@
 import {branchFamily,pruningPoints,pruningTarget} from './pruning-model.mjs';
+import {toolHome} from './tool-home.mjs';
 
 export function createPruning({scene,treeElement,tool,message,onCommit=async()=>{},onBusyChange=()=>{},onSettled=()=>{},onError=()=>{}}){
   let tree=null,svg=null;const ns='http://www.w3.org/2000/svg';
@@ -13,7 +14,7 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
   const instruction=()=>choices.length?(keyboard?'用方向键选择提示点，空格剪下 · Esc 取消':clickMode?'靠近提示点，点击剪下 · Esc 取消':'拖向提示点，松手剪下 · 也可点击拿起'):'暂时没有可剪的旁支 · Esc 取消';
   const elements=ids=>[...svg.querySelectorAll('[data-wind-wood],[data-wind-node]')].filter(el=>ids.has(tree.nodes[Number(el.getAttribute(el.hasAttribute('data-wind-wood')?'data-wind-wood':'data-wind-node'))]?.id));
   function position(x,y){tool.style.left=`${x}px`;tool.style.top=`${y}px`;}
-  function home(){return {x:scene.clientWidth-64,y:scene.clientHeight-70};}
+  function home(){return toolHome(scene,64);}
   function screen(p){const q=new DOMPoint(p.x,p.y).matrixTransform(svg.getScreenCTM()),r=scene.getBoundingClientRect();return {x:q.x-r.x,y:q.y-r.y};}
   function clear(){svg?.querySelectorAll('.pruning-selected').forEach(el=>el.classList.remove('pruning-selected'));markers.querySelectorAll('.is-selected').forEach(el=>el.classList.remove('is-selected'));tool.classList.remove('is-snapped');scene.classList.remove('has-pruning-target');target=null;}
   function select(next){
@@ -48,7 +49,7 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
   async function returnHome(){
     const h=home(),from={x:parseFloat(tool.style.left),y:parseFloat(tool.style.top)};
     await animate(tool,[{left:`${from.x}px`,top:`${from.y}px`},{left:`${h.x}px`,top:`${h.y}px`}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)'});
-    position(h.x,h.y);
+    const destination=home();position(destination.x,destination.y);
   }
   async function finish(commit){
     if(!held)return;
@@ -82,16 +83,16 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
     onBusyChange(false);onSettled();
   }
   tool.addEventListener('pointerdown',e=>{
-    if(e.button!==0||held||!begin())return;e.preventDefault();
+    if(e.isPrimary===false||e.button!==0||held||!begin())return;e.preventDefault();
     pointer=e.pointerId;gesture={x:e.clientX,y:e.clientY,dragged:false,pickup:true};tool.setPointerCapture(pointer);
   });
   window.addEventListener('pointerdown',e=>{
-    if(!held||keyboard||pointer!==null||e.button!==0)return;
+    if(e.isPrimary===false||!held||keyboard||pointer!==null||e.button!==0)return;
     if(e.target.closest('button,a,input,select,textarea')&&!tool.contains(e.target)){finish(false);return;}
     e.preventDefault();pointer=e.pointerId;gesture={pickup:false};tool.setPointerCapture(pointer);move(e);
   });
   window.addEventListener('pointermove',e=>{
-    if(!held||keyboard||(pointer!==null&&e.pointerId!==pointer))return;
+    if(e.isPrimary===false||!held||keyboard||(pointer!==null&&e.pointerId!==pointer))return;
     if(gesture?.pickup&&!gesture.dragged){gesture.dragged=Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>6;if(!gesture.dragged)return;}
     move(e);
   });
@@ -101,8 +102,8 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
     if(gesture?.pickup&&!gesture.dragged){pointer=null;gesture=null;clickMode=true;message.textContent=instruction();return;}
     move(e);finish(true);
   });
-  tool.addEventListener('pointercancel',()=>finish(false));
-  tool.addEventListener('lostpointercapture',()=>{if(held&&!keyboard&&pointer!==null)finish(false);});
+  tool.addEventListener('pointercancel',e=>{if(e.pointerId===pointer)finish(false);});
+  tool.addEventListener('lostpointercapture',e=>{if(held&&!keyboard&&e.pointerId===pointer)finish(false);});
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&held){e.preventDefault();finish(false);}});
   tool.addEventListener('keydown',e=>{
     if(e.key===' '||e.key==='Enter'){e.preventDefault();if(e.repeat)return;if(held&&keyboard)finish(true);else if(begin()){keyboard=true;keyboardIndex=-1;message.textContent=instruction();}return;}

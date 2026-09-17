@@ -31,7 +31,7 @@ function fire(el,type,details={}){const event=new Event(type,{cancelable:true});
 const settled=()=>new Promise(resolve=>setImmediate(resolve));
 function setup(t,{fail=false}={}){
   const win=new Element(),doc=new Element();doc.createElement=tag=>new Element(tag);doc.createElementNS=(_,tag)=>new Element(tag);
-  const globals={window:win,document:doc,matchMedia:()=>({matches:true}),getComputedStyle:()=>({transform:'none'}),ResizeObserver:class{observe(){}},DOMPoint:class{constructor(x,y){this.x=x;this.y=y;}matrixTransform(){return this;}}};
+  const globals={window:win,document:doc,matchMedia:()=>({matches:true}),getComputedStyle:()=>({transform:'none',getPropertyValue:()=> '0px'}),ResizeObserver:class{observe(){}},DOMPoint:class{constructor(x,y){this.x=x;this.y=y;}matrixTransform(){return this;}}};
   for(const [key,value]of Object.entries(globals)){const previous=Object.getOwnPropertyDescriptor(globalThis,key);Object.defineProperty(globalThis,key,{value,configurable:true});t.after(()=>previous?Object.defineProperty(globalThis,key,previous):delete globalThis[key]);}
   const scene=new Element(),treeElement=new Element(),svg=new Element('svg'),tool=new Element('button'),message=new Element('p');
   scene.append(tool);scene.append(message);treeElement.append(svg);
@@ -68,12 +68,42 @@ test('touch click pickup followed by tapping a marker selects its exact location
 });
 test('Escape, interrupted drag and blank release clear points and never commit',async t=>{
   const h=setup(t);
-  for(const cancel of [()=>fire(h.win,'keydown',{key:'Escape'}),()=>fire(h.win,'blur'),()=>fire(h.win,'scroll'),()=>fire(h.tool,'pointercancel')]){
+  for(const cancel of [()=>fire(h.win,'keydown',{key:'Escape'}),()=>fire(h.win,'blur'),()=>fire(h.win,'scroll')]){
     h.pickup();fire(h.win,'pointermove',h.point());cancel();await settled();
     assert.equal(h.markers.children.length,0);assert.equal(h.pruning.busy,false);assert.equal(h.tool.classList.contains('is-snapped'),false);assert.equal(h.wood.classList.contains('pruning-selected'),false);
   }
+  fire(h.tool,'pointerdown',{pointerType:'touch'});fire(h.tool,'pointercancel');await settled();
+  assert.equal(h.pruning.busy,false);
   fire(h.tool,'pointerdown');fire(h.win,'pointerup',{clientX:700,clientY:400});await settled();
   assert.deepEqual(h.commits,[]);assert.equal(h.pruning.busy,false);
+});
+
+test('secondary touches cannot pick up, move, cancel or drop the primary scissors gesture',async t=>{
+  const h=setup(t),secondary={pointerId:2,pointerType:'touch',isPrimary:false};
+  fire(h.tool,'pointerdown',secondary);assert.equal(h.pruning.busy,false);
+  fire(h.tool,'pointerdown',{pointerType:'touch'});
+  const point=h.point(),aim={...point,clientY:point.clientY+54,pointerType:'touch'};
+  fire(h.win,'pointermove',aim);assert.ok(h.tool.classList.contains('is-snapped'));
+  fire(h.win,'pointermove',{...secondary,clientX:10,clientY:10});
+  fire(h.tool,'pointercancel',secondary);fire(h.tool,'lostpointercapture',secondary);fire(h.win,'pointerup',secondary);
+  assert.equal(h.pruning.busy,true);assert.ok(h.tool.classList.contains('is-snapped'));
+  fire(h.win,'pointerup',aim);await settled();assert.deepEqual(h.commits,['side']);
+});
+
+test('a secondary touch cannot claim the next tap after scissors pickup',async t=>{
+  const h=setup(t);h.pickup('touch');const point=h.point();
+  fire(h.win,'pointerdown',{...point,pointerId:2,pointerType:'touch',isPrimary:false});
+  fire(h.win,'pointerup',{...point,pointerId:2,pointerType:'touch',isPrimary:false});
+  assert.equal(h.tool.classList.contains('is-snapped'),false);assert.deepEqual(h.commits,[]);
+  fire(h.win,'pointerdown',{...point,pointerType:'touch'});fire(h.win,'pointerup',{...point,pointerType:'touch'});await settled();
+  assert.deepEqual(h.commits,['side']);
+});
+
+test('scissors return to the current viewport if it changes during the return animation',async t=>{
+  const h=setup(t);h.pickup();
+  h.tool.animate=()=>{h.scene.clientWidth=844;h.scene.clientHeight=390;return {finished:Promise.resolve()};};
+  fire(h.win,'keydown',{key:'Escape'});await settled();
+  assert.equal(h.tool.style.left,'780px');assert.equal(h.tool.style.top,'320px');assert.equal(h.pruning.busy,false);
 });
 test('keyboard selection shares markers; key repeat does not cut and a failed save preserves the branch',async t=>{
   const h=setup(t,{fail:true});fire(h.tool,'keydown',{key:' '});fire(h.tool,'keydown',{key:'ArrowRight'});
