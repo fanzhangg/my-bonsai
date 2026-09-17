@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#adc9dc"><title>动效实时预览</title><link rel="stylesheet" href="/weather.css"><link rel="stylesheet" href="/motion-preview.css"></head>
+<body><div id="weather-sky" aria-hidden="true"></div><div id="weather-haze" aria-hidden="true"></div><canvas id="weather-effects" aria-hidden="true"></canvas>
+<main><div class="motion-art"><span class="live-label">实时动效 / 固定样本</span><div id="stage" aria-label="盆栽动效"></div></div>
+<aside id="debug"><h2>动效实验室</h2><p>切换天气，观察枝叶与空气的节奏。</p>
+<label>树形<select id="motion-tree"></select></label><label>生长阶段<select id="motion-age"><option value="mature">成树</option><option value="young">幼苗</option></select></label>
+<div id="weather-controls"><label>天气<select id="weather-kind"><option value="clear">晴天</option><option value="cloudy">阴天</option><option value="rain">雨天</option><option value="snow">雪天</option><option value="fog">雾天</option><option value="wind">大风</option><option value="storm">雷雨</option></select></label>
+<label>当地时刻 <output id="weather-hour-value">12.0 时</output><input id="weather-hour" type="range" min="0" max="23.9" step="0.1" value="12"></label><button id="weather-live" hidden>实时天气</button><pre id="weather-info" hidden></pre></div>
+<p id="motion-description" role="status"></p><p class="note">预览不请求定位，也不修改已认领的盆栽。若系统开启减少动态效果，将展示静态场景。</p>
+</aside></main><a id="weather-credit" hidden href="https://open-meteo.com/">Open-Meteo</a><script type="module" src="/motion-preview.mjs"></script></body></html>

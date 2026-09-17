@@ -1,25 +1,51 @@
+import {startStars} from './stars.mjs';
 import {sceneFor,WEATHER_MAX_AGE} from './weather-model.mjs';
+import {createParticles,particlePose} from './weather-particles.mjs';
 import {colorTokens} from './color-system.mjs';
 import {realtimeWeatherEnabled} from '/runtime-config.mjs';
 const $=id=>document.getElementById(id),CACHE='bonsai-weather-v1';
-export function startWeather({debug=false}={}){
+export function startWeather({debug=false,preview=false}={}){
+ startStars();
  let treeAppearance={},treePreset={},treePot,treeKey;
- let data=null,override={},geoState=realtimeWeatherEnabled?'正在获取位置':'实时天气已关闭',busy=false,lastAttempt=0,scene,raf=0,previous=0,particles=[],width=0,height=0;
+ let data=null,override=preview?{kind:'clear',hour:12}:{},geoState=realtimeWeatherEnabled?'正在获取位置':'实时天气已关闭',busy=false,lastAttempt=0,scene,raf=0,previous=0,elapsed=0,particles=[],width=0,height=0;
  const canvas=$('weather-effects'),ctx=canvas.getContext('2d'),motion=matchMedia('(prefers-reduced-motion: reduce)');
- if(realtimeWeatherEnabled)try{const cached=JSON.parse(sessionStorage.getItem(CACHE));if(cached&&Date.now()-cached.fetchedAt<WEATHER_MAX_AGE)data=cached;}catch{}
+ if(realtimeWeatherEnabled&&!preview)try{const cached=JSON.parse(sessionStorage.getItem(CACHE));if(cached&&Date.now()-cached.fetchedAt<WEATHER_MAX_AGE)data=cached;}catch{}
  function resize(){width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=width*dpr;canvas.height=height*dpr;ctx?.setTransform(dpr,0,0,dpr,0,0);}
- function resetParticles(){const n=scene.kind==='snow'?38:scene.kind==='storm'?65:scene.kind==='rain'?45:scene.kind==='wind'?14:0;particles=Array.from({length:n},()=>({x:Math.random()*width,y:Math.random()*height,size:1+Math.random()*2,phase:Math.random()*6.28,speed:.6+Math.random()*.8}));}
- function animate(time){raf=0;if(document.hidden||motion.matches||!particles.length||!ctx)return;const dt=Math.min((time-previous)/1000,.05);previous=time;ctx.clearRect(0,0,width,height);ctx.lineWidth=scene.kind==='snow'?1:1.1;
-  for(const p of particles){const snow=scene.kind==='snow',wind=scene.kind==='wind';p.y+=dt*(snow?24:wind?5:390)*p.speed;p.x+=dt*(snow?Math.sin(time/1800+p.phase)*10:wind?70:-65)*p.speed;if(p.y>height+30){p.y=-30;p.x=Math.random()*width;}if(p.x>width+80)p.x=-80;if(p.x< -80)p.x=width+80;
-   ctx.beginPath();if(snow){ctx.fillStyle=scene.night?'#eff4f399':'#fffdfbcc';ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}else{ctx.strokeStyle=wind?'#f1f5ee28':scene.night?'#d2e2e544':'#577c8a40';ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+(wind?45:-3),p.y+(wind?0:13*p.speed));ctx.stroke();}}
-  raf=requestAnimationFrame(animate);
+ function groundLevel(){
+  const pot=$('stage')?.querySelector('[data-weather-ground]');
+  return Math.max(60,Math.min(height,pot?.getBoundingClientRect().bottom??height*.8));
+ }
+ function resetParticles(){particles=createParticles(scene.kind,width,groundLevel());elapsed=0;}
+ function animate(time){
+  raf=0;if(document.hidden||motion.matches||!particles.length||!ctx)return;
+  elapsed+=Math.max(0,(time-previous)/1000);previous=time;ctx.clearRect(0,0,width,height);
+  const snow=scene.kind==='snow',wind=scene.kind==='wind',storm=scene.kind==='storm',ground=groundLevel();
+  for(const particle of particles){
+   const p=particlePose(particle,elapsed,scene.kind,width,ground);
+   ctx.globalAlpha=p.alpha;ctx.beginPath();
+   if(snow){
+    ctx.fillStyle=scene.night?'#d9dddd80':'#d5dada80';
+    ctx.strokeStyle=scene.night?'#b6bcbc20':'#8b94942b';ctx.lineWidth=.6;
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.stroke();
+   }else if(wind){
+    ctx.lineWidth=1.1*particle.depth;ctx.lineCap='round';
+    ctx.strokeStyle=scene.night?'#b6bdbd4d':'#7d87873d';
+    const length=65*particle.depth;
+    ctx.moveTo(p.x,p.y);ctx.bezierCurveTo(p.x+length*.35,p.y-8,p.x+length*.7,p.y+7,p.x+length,p.y-3);ctx.stroke();
+   }else{
+    ctx.lineWidth=(storm?1.1:.85)*particle.depth;ctx.lineCap='round';
+    ctx.strokeStyle=scene.night?'#b7bebe59':'#7b85854d';
+    ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+p.length*p.vx/p.vy,p.y+p.length);ctx.stroke();
+   }
+  }
+  ctx.globalAlpha=1;raf=requestAnimationFrame(animate);
  }
  function run(){document.body.classList.toggle('weather-paused',document.hidden);if(raf)cancelAnimationFrame(raf);raf=0;ctx?.clearRect(0,0,width,height);if(!document.hidden&&!motion.matches&&particles.length){previous=performance.now();raf=requestAnimationFrame(animate);}}
  function apply(){const next=sceneFor(data,Date.now(),override),changed=next.kind!==scene?.kind;scene=next;const style=document.documentElement.style;['top','middle','bottom'].forEach((key,i)=>style.setProperty('--sky-'+key,scene.colors[i]));Object.entries(colorTokens(scene,treeAppearance,treePreset,treePot)).forEach(([key,value])=>style.setProperty('--'+key,value));document.body.classList.toggle('night',scene.night);document.body.dataset.weather=scene.kind;document.querySelector('meta[name="theme-color"]').content=scene.colors[0];$('weather-credit').hidden=!scene.live;
   if(debug)$('weather-info').textContent=`${override.kind&&override.kind!=='live'||Number.isFinite(override.hour)?'调试预览 · ':''}${geoState}\n${scene.live?(data.stale?'天气缓存 · ':'Open-Meteo · ')+data.timezone:'设备时间 · 天气未知'} · ${Math.floor(scene.hour).toString().padStart(2,'0')}:${Math.floor(scene.hour%1*60).toString().padStart(2,'0')}\n${scene.kind}${scene.live?' · 更新于 '+new Date(data.fetchedAt).toLocaleTimeString():''}`;
   if(changed){resetParticles();run();}
  }
- async function locate(force=false){if(!realtimeWeatherEnabled||busy||document.hidden||(!force&&Date.now()-lastAttempt<10*60*1000))return;busy=true;lastAttempt=Date.now();
+ async function locate(force=false){if(preview||!realtimeWeatherEnabled||busy||document.hidden||(!force&&Date.now()-lastAttempt<10*60*1000))return;busy=true;lastAttempt=Date.now();
   try{if(!navigator.geolocation)throw new Error('此浏览器不支持定位');
    const permission=await navigator.permissions?.query({name:'geolocation'}).catch(()=>null);if(permission?.state==='denied')throw new Error('未获定位授权');
    const position=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,maximumAge:5*60*1000,timeout:9000}));

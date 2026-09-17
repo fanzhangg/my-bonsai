@@ -1,19 +1,12 @@
-@property --sky-top{syntax:'<color>';inherits:true;initial-value:#adc9dc}
+@property --sky-top{syntax:'<color>';inherits:true;initial-value:#a3bed1}
 @property --sky-middle{syntax:'<color>';inherits:true;initial-value:#d2e1e7}
-@property --sky-bottom{syntax:'<color>';inherits:true;initial-value:#e9eee5}
+@property --sky-bottom{syntax:'<color>';inherits:true;initial-value:#eeeadd}
 :root{--ink:#354d49;background:var(--sky-bottom);transition:--sky-top 2s,--sky-middle 2s,--sky-bottom 2s}
 body{isolation:isolate;color:var(--ink);transition:color 1s}
-#weather-sky,#weather-haze,#weather-effects{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 #weather-sky{z-index:-3;background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-middle) 58%,var(--sky-bottom) 100%)}
-#weather-haze{z-index:-2;opacity:0;background:radial-gradient(ellipse at 20% 60%,#f0f3e960,transparent 65%),radial-gradient(ellipse at 90% 35%,#e2e8e660,transparent 60%);transition:opacity 2s}
-body[data-weather=fog] #weather-haze{opacity:.8;animation:haze 22s ease-in-out infinite alternate}
-body[data-weather=cloudy] #weather-haze{opacity:.45;animation:haze 35s ease-in-out infinite alternate}
 #weather-effects{z-index:-1}
 #debug{background:#eef3e310;backdrop-filter:blur(8px)}#debug hr{border:0;border-top:1px solid #78908050;margin:22px 0}
 #weather-credit{position:fixed;bottom:max(9px,env(safe-area-inset-bottom));right:14px;color:var(--ink);font-size:10px;opacity:.5;text-decoration:none;z-index:3;padding:6px}
-@keyframes haze{from{transform:translateX(-3%)}to{transform:translateX(3%)}}
-.weather-paused #weather-haze{animation-play-state:paused}
-@media(prefers-reduced-motion:reduce){:root,body,#stage svg,#weather-haze{transition:none!important}#weather-haze{animation:none!important}#weather-effects{display:none}}
 
 /* Semantic palette shared by the home and adopted tree scenes. */
 .primary,.night .primary{background:var(--action);color:var(--action-ink);box-shadow:none}
@@ -25,4 +18,18 @@ body[data-weather=cloudy] #weather-haze{opacity:.45;animation:haze 35s ease-in-o
 #debug input[type=range]{accent-color:var(--action)}
 #weather-credit{color:var(--muted);opacity:1}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,body.night button:focus-visible,body.night a:focus-visible{outline-color:var(--focus)}
-body.night[data-weather=fog] #weather-haze,body.night[data-weather=cloudy] #weather-haze{opacity:.12}
+
+
+#weather-sky,#weather-effects{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#weather-haze{display:none}
+@media(prefers-reduced-motion:reduce){:root,body,#stage svg{transition:none!important}#weather-effects{display:none}}
+
+/* Clear nights: quiet pinpoints, without halos or beams. */
+#weather-stars{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 2s ease}
+body.night[data-weather=clear] #weather-stars{opacity:1}
+#weather-stars i{position:absolute;display:block;width:var(--star-size);height:var(--star-size);border-radius:50%;background:#dce3e5;opacity:var(--star-opacity);animation:star-twinkle var(--star-duration) ease-in-out var(--star-delay) infinite alternate;animation-play-state:paused}
+body.night[data-weather=clear] #weather-stars i{animation-play-state:running}
+@keyframes star-twinkle{from{opacity:calc(var(--star-opacity)*.55)}to{opacity:var(--star-opacity)}}
+body.weather-paused #weather-stars i{animation-play-state:paused}
+@media(max-width:600px){#weather-stars i:nth-child(3n){display:none}}
+@media(prefers-reduced-motion:reduce){#weather-stars{transition:none}#weather-stars i{animation:none}}

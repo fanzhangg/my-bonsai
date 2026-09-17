@@ -11,6 +11,7 @@
     <button id="tab-pots" role="tab" aria-controls="panel-pots" aria-selected="false" tabindex="-1">03 盆器家族</button>
     <button id="tab-colors" role="tab" aria-controls="panel-colors" aria-selected="false" tabindex="-1">04 色彩与天气</button>
     <button id="tab-system" role="tab" aria-controls="panel-system" aria-selected="false" tabindex="-1">05 基础与组件</button>
+    <button id="tab-motion" role="tab" aria-controls="panel-motion" aria-selected="false" tabindex="-1">06 动效设计</button>
   </nav>
   <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
     <div class="composer">
@@ -55,6 +56,11 @@
     <div class="foundation-grid standards"><article><h3>字阶与间距</h3><div class="type-row"><b class="type-title">一盆树</b><code>标题 28 / 40</code></div><div class="type-row"><b class="type-section">选择一个盆器</b><code>章节 20 / 30</code></div><div class="type-row"><span>圆润轮廓，安静生长。</span><code>正文 14 / 22</code></div><div class="type-row"><small>辅助说明与编号</small><code>辅助 12 / 18</code></div><div class="space-scale"><span>4</span><span>8</span><span>12</span><span>16</span><span>24</span><span>32</span></div><p class="minor">苹方 / 微软雅黑 · 4px 间距基准 · 内容随窄屏换行</p></article>
     <article><h3>交互状态</h3><div class="state-examples"><div><button class="primary" id="sample-claim">认领这棵树</button><small>主操作 / 圆角 999</small></div><div><button class="sample-option" aria-pressed="false" id="sample-option">选择圆腹</button><small>点击切换选中状态</small></div><div><button disabled>暂不可用</button><small>禁用 / 无交互</small></div><div><button class="focus-demo">键盘焦点</button><small>焦点 / 铜色外框</small></div></div><p id="component-status" class="minor" role="status">状态演示 · 不创建真实盆栽</p><p class="minor">点击区域 ≥ 44px · 选中同时使用描边、底色与文字标记。</p></article></div>
     <div class="principles"><article><span>造型</span><h3>简洁的平涂</h3><p>以轮廓区分盆器；盆沿与盆体用相近色，不增加写实材质。</p></article><article><span>密度</span><h3>花纹适量</h3><p>线纹最多四笔，几何最多三枚；缩小后仍能读出盆形。</p></article><article><span>层级</span><h3>树是主角</h3><p>盆器作为视觉底座；正文清晰，边框轻，日常画面保持安静。</p></article></div>
+  </section>
+  <section id="panel-motion" role="tabpanel" aria-labelledby="tab-motion" hidden>
+    <div class="section-heading"><div><p class="eyebrow">MOTION / WIND / WEATHER</p><h2>树干稳住，枝叶随风。</h2></div><span>应用同款动效 · 独立预览</span></div>
+    <iframe id="motion-preview" class="motion-preview" title="盆栽与天气动效实时预览"></iframe>
+    <div class="principles"><article><span>01 / 植物</span><h3>稳定骨架，柔软枝梢</h3><p>主干与粗枝固定，细枝从连接点轻摆。叶团跟随枝梢，再叠加错拍颤动。</p></article><article><span>02 / 天气</span><h3>轻淡的天气气氛</h3><p>天气由背景渐变与半透明灰色粒子表现。雨雪飘落，风线掠过，不叠加光晕、光束或云雾光效。</p></article><article><span>03 / 节奏</span><h3>连贯而有分寸</h3><p>枝叶约 4.7 秒一个主摆周期，天气切换平滑过渡。遵循系统减少动态效果设置，离开此章节停止预览。</p></article></div>
   </section>
   <footer><span>一盆树 · Design review 0.2</span><span>现有树形与配色算法 / 八款盆器 / 已接入随机认养</span></footer>
 </main><script type="module" src="/design-system.mjs"></script>

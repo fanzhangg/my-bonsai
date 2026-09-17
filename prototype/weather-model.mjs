@@ -10,7 +10,7 @@ export function weatherKind(code,wind=0){
 export function localHour(at,timezone){
  try{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:timezone,hourCycle:'h23',hour:'2-digit',minute:'2-digit',second:'2-digit'}).formatToParts(at);const get=t=>Number(parts.find(p=>p.type===t)?.value||0);return get('hour')+get('minute')/60+get('second')/3600;}catch{return new Date(at).getHours()+new Date(at).getMinutes()/60;}
 }
-const palettes={night:['#1c2b38','#2a3e49','#3a4e53'],dawn:['#b6b9c7','#d8c7bc','#e8ddca'],day:['#adc9dc','#d2e1e7','#e9eee5'],sunset:['#c2b8c9','#dfc4b7','#ebd8bf']};
+const palettes={night:['#192734','#2a3e49','#475952'],dawn:['#aeb2c1','#d8c7bc','#ede0cb'],day:['#a3bed1','#d2e1e7','#eeeadd'],sunset:['#b9aebe','#dfc4b7','#efdbbe']};
 const mix=(a,b,t)=>{const rgb=x=>x.match(/\w\w/g).map(v=>parseInt(v,16));const x=rgb(a.slice(1)),y=rgb(b.slice(1));return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');};
 export function sceneFor(data,at=Date.now(),override={}){
  const fresh=data&&Number.isFinite(data.fetchedAt)&&at-data.fetchedAt>=-60000&&at-data.fetchedAt<WEATHER_MAX_AGE&&at-data.observedAt<2*WEATHER_MAX_AGE;
@@ -26,6 +26,6 @@ export function sceneFor(data,at=Date.now(),override={}){
  if(polar)colors=palettes[data.isDay?'day':'night'];
  const kind=override.kind&&override.kind!=='live'?override.kind:fresh?weatherKind(data.code,data.wind):'clear';
  const overcast=['rain','storm','fog','snow','cloudy'].includes(kind);
- if(overcast){const grey=night?['#23313e','#30424b','#405252']:kind==='snow'?['#b7c8d0','#d4dddd','#e9e9df']:['#b4c3cb','#d2dcd9','#e5e6da'];colors=colors.map((c,i)=>mix(c,grey[i],kind==='storm'?.8:.55));}
+ if(overcast){const grey=night?['#1e2c39','#30424b','#495b54']:kind==='snow'?['#afc1ca','#d4dddd','#eeeee4']:['#aabac4','#d2dcd9','#eae9dc'];colors=colors.map((c,i)=>mix(c,grey[i],kind==='storm'?.8:.55));}
  return {colors,night,kind,hour,live:!!fresh};
 }

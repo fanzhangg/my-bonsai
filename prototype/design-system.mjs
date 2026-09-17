@@ -73,6 +73,9 @@ function showPanel(name,updateHash=true){
   tabs.forEach(tab=>{const active=tab.id===`tab-${name}`;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;$(tab.getAttribute('aria-controls')).hidden=!active;});
   if(!populated.has(name)){if(name==='trees')buildTrees();if(name==='pots')buildPots();if(name==='system')buildSystem();populated.add(name);}
   if(name==='colors')colorReview.render();
+  const motionFrame=$('motion-preview');
+  if(name==='motion'){if(!motionFrame.hasAttribute('src'))motionFrame.src='/motion-preview.html';}
+  else if(motionFrame.hasAttribute('src'))motionFrame.removeAttribute('src');
   if(updateHash&&location.hash!==`#${name}`)history.pushState(null,'',`#${name}`);
 }
 tabs.forEach((tab,index)=>{

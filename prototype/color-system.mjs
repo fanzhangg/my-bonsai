@@ -5,7 +5,7 @@ export function mix(a,b,t){const x=rgb(a),y=rgb(b);return '#'+x.map((v,i)=>Math.
 export function luminance(c){return rgb(c).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);}
 export function contrast(a,b){const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
 // Keep the material hue; shift only as far as required for its local backdrop.
-function readable(color,bg,ratio){if(contrast(color,bg)>=ratio)return color;const end=contrast('#050b08',bg)>contrast('#fdfef9',bg)?'#050b08':'#fdfef9';for(let i=1;i<=100;i++){const c=mix(color,end,i/100);if(contrast(c,bg)>=ratio)return c;}return end;}
+function readable(color,bg,ratio){if(contrast(color,bg)>=ratio)return color;let end=contrast('#050b08',bg)>contrast('#fdfef9',bg)?'#050b08':'#fdfef9';if(contrast(end,bg)<ratio)end=contrast('#000000',bg)>contrast('#ffffff',bg)?'#000000':'#ffffff';for(let i=1;i<=100;i++){const c=mix(color,end,i/100);if(contrast(c,bg)>=ratio)return c;}return end;}
 export function potColorTokens(scene,toneId){
  const tone=TONES.find(t=>t.id===toneId)||TONES[0],ground=mix(scene.colors[1],scene.colors[2],.45);
  const body=readable(tone.body,ground,2);
