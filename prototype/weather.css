@@ -1,6 +1,6 @@
-@property --sky-top{syntax:'<color>';inherits:true;initial-value:#b8ced0}
-@property --sky-middle{syntax:'<color>';inherits:true;initial-value:#dbe2d6}
-@property --sky-bottom{syntax:'<color>';inherits:true;initial-value:#eee9d8}
+@property --sky-top{syntax:'<color>';inherits:true;initial-value:#adc9dc}
+@property --sky-middle{syntax:'<color>';inherits:true;initial-value:#d2e1e7}
+@property --sky-bottom{syntax:'<color>';inherits:true;initial-value:#e9eee5}
 :root{--ink:#354d49;background:var(--sky-bottom);transition:--sky-top 2s,--sky-middle 2s,--sky-bottom 2s}
 body{isolation:isolate;color:var(--ink);transition:color 1s}
 #weather-sky,#weather-haze,#weather-effects{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
