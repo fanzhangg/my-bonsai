@@ -77,3 +77,10 @@ test('invalid cheat fields and cross-origin requests cannot change stored trees'
   assert.deepEqual(await store.get(id),record);
  }finally{await new Promise(r=>server.close(r));await store.close();await rm(dir,{recursive:true,force:true});}
 });
+
+test('rebasing preserves historical watering amounts after growth rate changes',()=>{
+ const record={createdAt:100000,config:configForClaim(randomUUID()),cuts:[],waterings:[{id:randomUUID(),at:100000,used:4000,amount:.025}]};
+ const saved=applyCheat(record,cheatRequest(record,24),2000000000000);
+ assert.equal(saved.waterings[0].amount,.025);
+ assert.deepEqual(snapshot(saved,2000000000000),snapshot(record,record.createdAt+24*HOUR));
+});

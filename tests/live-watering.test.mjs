@@ -26,7 +26,7 @@ test('partial and full watering persist, replay consistently, and retries never 
   const {data:after,status}=await post('/'+id+'/waterings',{id:randomUUID(),used:4000});assert.equal(status,200);
   assert.equal(after.waterings.length,2);
   const at=after.serverNow;
-  assert.ok(Math.abs(snapshot(after,at).progress-snapshot(before,at).progress-.0325)<1e-10);
+  assert.ok(Math.abs(snapshot(after,at).progress-snapshot(before,at).progress-.13)<1e-10);
   assert.deepEqual(replayFrame(after,at,1),snapshot(after,at));
   assert.deepEqual(snapshot(after,before.createdAt-1),snapshot(before,before.createdAt-1));
   const saved=applyCheat(after,cheatRequest(after,24),at+100000000);

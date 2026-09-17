@@ -7,11 +7,13 @@ export function nearPlanter(p,soil,top,factor){
 export function waterFacing(x,center,current=1){return x<center-18?-1:x>center+18?1:current;}
 // Capacity is replenished only after the can returns to its resting position.
 export const WATER_CAPACITY=4000;
+// A full four-second pour advances growth by ten percentage points.
+export const WATER_GROWTH_PER_TANK=.1;
 export function createWaterTank(){return {remaining:WATER_CAPACITY};}
 export function refillWaterTank(tank){Object.assign(tank,createWaterTank());}
 export function spendWater(tank,ms){
  const used=Math.min(tank.remaining,Math.max(0,ms));tank.remaining-=used;
- return {used,growth:used/WATER_CAPACITY*.025};
+ return {used,growth:used/WATER_CAPACITY*WATER_GROWTH_PER_TANK};
 }
 
 // Sweep the traveled segment so fast-moving water cannot tunnel through a surface.
