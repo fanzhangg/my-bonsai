@@ -39,7 +39,7 @@ window.addEventListener('popstate',()=>location.reload());
 const copyIcon=$('copy').innerHTML;let copiedTimer;
 $('copy').onclick=async()=>{const url=location.origin+'/t/'+record.id;try{await navigator.clipboard.writeText(url);status();$('copy').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';$('copy').setAttribute('aria-label','链接已复制');clearTimeout(copiedTimer);copiedTimer=setTimeout(()=>{$('copy').innerHTML=copyIcon;$('copy').setAttribute('aria-label','复制链接');},1800);}catch{status('未能复制，请保存地址栏链接：'+url);}};
 for(const p of PRESETS)$('preset').add(new Option(p.name,p.id));for(const l of LOOKS)$('look').add(new Option(l.name,l.id));
-function changeSample(){if(!sandbox)return;stop();sandbox.config=normalize({...sandbox.config,preset:$('preset').value,seed:$('seed').value,appearance:LOOKS.find(l=>l.id===$('look').value)});sandbox.cuts=[];paint();}
+function changeSample(){if(!sandbox)return;stop();const pot=sandbox.config.pot;sandbox.config=normalize({...sandbox.config,preset:$('preset').value,seed:$('seed').value,appearance:LOOKS.find(l=>l.id===$('look').value)});if(pot)sandbox.config.pot=pot;sandbox.cuts=[];paint();}
 $('preset').onchange=changeSample;$('look').onchange=changeSample;$('seed').onchange=changeSample;
 $('random').onclick=()=>{$('seed').value=crypto.randomUUID();changeSample();};
 $('time').oninput=()=>{stop();hours=Number($('time').value);paint();};

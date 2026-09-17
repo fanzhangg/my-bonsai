@@ -1,11 +1,17 @@
 import {colorsFor,normalizeAppearance} from './core/v1/appearance.mjs';
+import {TONES,normalizePot} from './pots.mjs';
 const rgb=c=>c.slice(1).match(/../g).map(v=>parseInt(v,16));
 export function mix(a,b,t){const x=rgb(a),y=rgb(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');}
 export function luminance(c){return rgb(c).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);}
 export function contrast(a,b){const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
 // Keep the material hue; shift only as far as required for its local backdrop.
 function readable(color,bg,ratio){if(contrast(color,bg)>=ratio)return color;const end=contrast('#050b08',bg)>contrast('#fdfef9',bg)?'#050b08':'#fdfef9';for(let i=1;i<=100;i++){const c=mix(color,end,i/100);if(contrast(c,bg)>=ratio)return c;}return end;}
-export function colorTokens(scene,appearance={},preset={}){
+export function potColorTokens(scene,toneId){
+ const tone=TONES.find(t=>t.id===toneId)||TONES[0],ground=mix(scene.colors[1],scene.colors[2],.45);
+ const body=readable(tone.body,ground,2);
+ return {'bonsai-vessel-body':body,'bonsai-vessel-rim':readable(tone.rim,ground,2),'bonsai-vessel-pattern':readable(tone.ink,body,1.65)};
+}
+export function colorTokens(scene,appearance={},preset={},potDesign){
  const a=normalizeAppearance(appearance),base=colorsFor(a),bg=scene.colors[1],ground=mix(bg,scene.colors[2],.45);
  const dark=luminance(bg)<.18;
  const foliage=a.foliage!=='native'?base.foliage:preset.kind==='broad'?['#42613d','#577647','#6d8952','#81995b']:preset.kind==='needle'?['#2e5144','#426653','#5b7a5c','#788d67']:base.foliage;
@@ -19,5 +25,6 @@ export function colorTokens(scene,appearance={},preset={}){
  const pot=preset.pot==='rect'?['#957c66','#635344']:preset.pot==='deep'?['#747c83','#444c56']:preset.pot==='oval-blue'?['#8a9b9a','#516867']:['#879087','#515e57'];
  tokens['bonsai-pot-top']=readable(pot[0],ground,2);tokens['bonsai-pot-bottom']=readable(pot[1],ground,2);
  tokens['bonsai-rim']=readable(preset.pot==='rect'?'#968574':'#8b8879',ground,2);
+ const selectedPot=normalizePot(potDesign);if(selectedPot)Object.assign(tokens,potColorTokens(scene,selectedPot.tone));
  return tokens;
 }

@@ -1,6 +1,7 @@
 import {generate} from './core/v1/canopy.mjs';
 import {render} from './growing-render.mjs';
 import {sample,pointOn} from './core/v1/model.mjs';
+import {normalizePot} from './pots.mjs';
 
 export const HOUR=3600000;
 export const VERSION='bonsai-growth-2';
@@ -16,6 +17,7 @@ export function snapshot(record,at=Date.now()){
 }
 export function grow(record,p){
  p=clamp(p);const tree=generate(record.config),original=new Map(tree.nodes.map(n=>[n.id,n])),schedule=new Map(),attachments=new Map();
+ const pot=normalizePot(record.config.pot);if(pot)tree.config.pot=pot;
  tree.viewBox={x:tree.root.x-FRAME.width/2,y:tree.root.y-FRAME.aboveSoil,width:FRAME.width,height:FRAME.height};
  function timing(n){if(schedule.has(n.id))return schedule.get(n.id);const parent=original.get(n.parent);let attach=1;
    if(parent){let best=Infinity;for(let i=0;i<=100;i++){const t=i/100,q=pointOn(parent,t),distance=Math.hypot(q.x-n.x,q.y-n.y);if(distance<best){best=distance;attach=t;}}}

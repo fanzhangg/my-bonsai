@@ -1,6 +1,7 @@
 import {sample,pointOn} from './core/v1/model.mjs';
 import {taperedPath} from './core/v1/style-render.mjs';
 import {normalizeAppearance,colorsFor} from './core/v1/appearance.mjs';
+import {normalizePot,potMarkup} from './pots.mjs';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const f=x=>Number(x).toFixed(2);
 const progress=(born,h,duration=20)=>clamp((h-born)/duration,0,1);
@@ -76,7 +77,8 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   const basePotColor=rect?['#957c66','#635344']:deep?['#747c83','#444c56']:preset.pot==='oval-blue'?['#8a9b9a','#516867']:['#879087','#515e57'];
   const potColor=basePotColor.map((c,i)=>material(i?'pot-bottom':'pot-top',c));
   const rim=rect?`<rect x="${x-w}" y="${y-9}" width="${w*2}" height="18" rx="5" fill="${material('rim','#968574')}"/>`:`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="11" fill="${material('rim','#8b8879')}"/>`;
-  const pot=`<path d="M${x-w} ${y} L${x-w*(deep?.83:.78)} ${y+h} Q${x} ${y+h+12} ${x+w*(deep?.83:.78)} ${y+h} L${x+w} ${y}Z" fill="url(#${id}-pot)"/>${rim}<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7" fill="${material('soil','#505141')}"/><ellipse cx="${x}" cy="${y-2}" rx="${w*.72}" ry="5" fill="${material('moss','#76815e')}"/>`;
+  const selectedPot=normalizePot(config.pot);
+  const pot=selectedPot?potMarkup(selectedPot,x,y,`${id}-vessel-clip`,{dynamic:transparent}):`<path d="M${x-w} ${y} L${x-w*(deep?.83:.78)} ${y+h} Q${x} ${y+h+12} ${x+w*(deep?.83:.78)} ${y+h} L${x+w} ${y}Z" fill="url(#${id}-pot)"/>${rim}<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7" fill="${material('soil','#505141')}"/><ellipse cx="${x}" cy="${y-2}" rx="${w*.72}" ry="5" fill="${material('moss','#76815e')}"/>`;
   const base=tree.nodes.find(n=>n.role==='trunk'&&!n.parent),neck=pointOn(base,.17),radius=base.width/2;
   const roots=[-2.85,-.25,2.5,.7,1.7].map((angle,i)=>{
     const reach=radius*(2.1+rand(`root${i}`,'reach')*.65)+5;

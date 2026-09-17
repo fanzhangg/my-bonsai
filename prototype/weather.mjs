@@ -3,7 +3,7 @@ import {colorTokens} from './color-system.mjs';
 import {realtimeWeatherEnabled} from '/runtime-config.mjs';
 const $=id=>document.getElementById(id),CACHE='bonsai-weather-v1';
 export function startWeather({debug=false}={}){
- let treeAppearance={},treePreset={},treeKey;
+ let treeAppearance={},treePreset={},treePot,treeKey;
  let data=null,override={},geoState=realtimeWeatherEnabled?'正在获取位置':'实时天气已关闭',busy=false,lastAttempt=0,scene,raf=0,previous=0,particles=[],width=0,height=0;
  const canvas=$('weather-effects'),ctx=canvas.getContext('2d'),motion=matchMedia('(prefers-reduced-motion: reduce)');
  if(realtimeWeatherEnabled)try{const cached=JSON.parse(sessionStorage.getItem(CACHE));if(cached&&Date.now()-cached.fetchedAt<WEATHER_MAX_AGE)data=cached;}catch{}
@@ -15,7 +15,7 @@ export function startWeather({debug=false}={}){
   raf=requestAnimationFrame(animate);
  }
  function run(){document.body.classList.toggle('weather-paused',document.hidden);if(raf)cancelAnimationFrame(raf);raf=0;ctx?.clearRect(0,0,width,height);if(!document.hidden&&!motion.matches&&particles.length){previous=performance.now();raf=requestAnimationFrame(animate);}}
- function apply(){const next=sceneFor(data,Date.now(),override),changed=next.kind!==scene?.kind;scene=next;const style=document.documentElement.style;['top','middle','bottom'].forEach((key,i)=>style.setProperty('--sky-'+key,scene.colors[i]));Object.entries(colorTokens(scene,treeAppearance,treePreset)).forEach(([key,value])=>style.setProperty('--'+key,value));document.body.classList.toggle('night',scene.night);document.body.dataset.weather=scene.kind;document.querySelector('meta[name="theme-color"]').content=scene.colors[0];$('weather-credit').hidden=!scene.live;
+ function apply(){const next=sceneFor(data,Date.now(),override),changed=next.kind!==scene?.kind;scene=next;const style=document.documentElement.style;['top','middle','bottom'].forEach((key,i)=>style.setProperty('--sky-'+key,scene.colors[i]));Object.entries(colorTokens(scene,treeAppearance,treePreset,treePot)).forEach(([key,value])=>style.setProperty('--'+key,value));document.body.classList.toggle('night',scene.night);document.body.dataset.weather=scene.kind;document.querySelector('meta[name="theme-color"]').content=scene.colors[0];$('weather-credit').hidden=!scene.live;
   if(debug)$('weather-info').textContent=`${override.kind&&override.kind!=='live'||Number.isFinite(override.hour)?'调试预览 · ':''}${geoState}\n${scene.live?(data.stale?'天气缓存 · ':'Open-Meteo · ')+data.timezone:'设备时间 · 天气未知'} · ${Math.floor(scene.hour).toString().padStart(2,'0')}:${Math.floor(scene.hour%1*60).toString().padStart(2,'0')}\n${scene.kind}${scene.live?' · 更新于 '+new Date(data.fetchedAt).toLocaleTimeString():''}`;
   if(changed){resetParticles();run();}
  }
@@ -31,5 +31,5 @@ export function startWeather({debug=false}={}){
  if(debug){$('weather-controls').hidden=false;$('weather-kind').onchange=e=>{override.kind=e.target.value;apply();};$('weather-hour').oninput=e=>{override.hour=Number(e.target.value);$('weather-hour-value').textContent=override.hour.toFixed(1)+' 时';apply();};$('weather-live').onclick=()=>{override={};$('weather-kind').value='live';$('weather-hour').value=sceneFor(data).hour;$('weather-hour-value').textContent='实时';apply();locate(true);};}
  resize();apply();locate();addEventListener('resize',()=>{resize();resetParticles();run();});motion.addEventListener('change',run);
  document.addEventListener('visibilitychange',()=>{run();if(!document.hidden){apply();locate();}});setInterval(()=>{if(!document.hidden){apply();locate();}},60000);
- return {setTree(tree){const key=JSON.stringify([tree.config.appearance,tree.preset.id]);if(key===treeKey)return;treeKey=key;treeAppearance=tree.config.appearance;treePreset=tree.preset;apply();}};
+ return {setTree(tree){const key=JSON.stringify([tree.config.appearance,tree.preset.id,tree.config.pot]);if(key===treeKey)return;treeKey=key;treeAppearance=tree.config.appearance;treePreset=tree.preset;treePot=tree.config.pot;for(const name of ['body','rim','pattern'])document.documentElement.style.removeProperty('--bonsai-vessel-'+name);apply();}};
 }
