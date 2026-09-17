@@ -4,6 +4,7 @@ import {configForClaim} from '../prototype/claim.mjs';
 import {POT_PRESETS,SHAPES,normalizePot,potMarkup} from '../prototype/pots.mjs';
 import {PRESETS} from '../prototype/core/v1/canopy.mjs';
 import {grow,draw,snapshot,HOUR} from '../prototype/growth.mjs';
+import {POT_SCALE} from '../prototype/growing-render.mjs';
 import {replayFrame} from '../prototype/playback.mjs';
 import {colorTokens,contrast,mix} from '../prototype/color-system.mjs';
 import {sceneFor} from '../prototype/weather-model.mjs';
@@ -68,13 +69,13 @@ test('soil stays inside every planter rim',()=>{
 test('exposed root tips fit the chosen pot through growth without clipping hanging branches',()=>{
   for(const preset of PRESETS)for(const pot of POT_PRESETS)for(const p of [.3,1]){
     const tree=grow({config:{preset:preset.id,seed:'DESIGN-SYSTEM-01',pot}},p);
-    const svg=draw(tree),half=SHAPES.find(s=>s.id===pot.shape).width/2;
+    const svg=draw(tree),half=SHAPES.find(s=>s.id===pot.shape).width/2*POT_SCALE;
     const roots=svg.match(/<g data-exposed-roots[^>]*>(.*?)<\/g>/)[1];
     for(const [,path] of roots.matchAll(/d="([^"]+)"/g)){
       const points=[...path.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map(m=>({x:Number(m[1]),y:Number(m[2])}));
       for(const tip of [points[24],points[25]]){
-        assert(Math.abs(tip.x-tree.root.x)<half-8,`${preset.id}/${pot.shape}: root outside rim`);
-        assert(Math.abs(tip.y-(tree.root.y-1))<3,`${preset.id}/${pot.shape}: root outside soil depth`);
+        assert(Math.abs(tip.x-tree.root.x)<half-8*POT_SCALE,`${preset.id}/${pot.shape}: root outside rim`);
+        assert(Math.abs(tip.y-(tree.root.y-POT_SCALE))<3,`${preset.id}/${pot.shape}: root outside soil depth`);
       }
     }
     const wood=[...svg.matchAll(/<g data-wind-wood="\d+"[^>]*>/g)].map(m=>m[0]);
