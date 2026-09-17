@@ -1,0 +1,16 @@
+.visitor-bug{position:absolute;top:0;left:0;width:48px;height:48px;min-height:48px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;pointer-events:auto;background:transparent!important;touch-action:manipulation;transition:none;will-change:transform,opacity}
+.visitor-bug:disabled{pointer-events:none}.visitor-bug:focus-visible{outline:2px solid var(--focus,#bd875c);outline-offset:0;background:#ffffff20!important}
+.visitor-butterfly>svg{width:calc(var(--butterfly-size,21px)*1.65);height:calc(var(--butterfly-size,21px)*1.65);overflow:visible}
+.visitor-butterfly>svg,.visitor-firefly{scale:var(--visitor-distance-scale,1)}
+.visitor-wing,.visitor-heading,.visitor-rest-heading,.visitor-folded-wing{transform-origin:24px 24px}
+.visitor-flight-form,.visitor-rest-form{transition:opacity .24s ease}
+.visitor-rest-form{opacity:0}
+.visitor-butterfly[data-behavior=resting] .visitor-flight-form{opacity:0}
+.visitor-butterfly[data-behavior=resting] .visitor-rest-form{opacity:1}
+.visitor-firefly{position:relative;display:block;width:7px;height:7px;border-radius:50%;background:#e1e5b4;box-shadow:0 0 10px 3.5px #dce8a766;transform:scale(var(--glow-size,1));animation:visitor-light 3.7s ease-in-out infinite;animation-delay:var(--offset)}
+.visitor-firefly::before{content:"";position:absolute;left:50%;top:50%;width:35px;height:35px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#dce8a738,transparent 70%);pointer-events:none}
+.visitor-show-hits .visitor-bug{outline:1px dashed currentColor;background:#ffffff18!important}
+.visitor-still *{animation-play-state:paused!important}
+@keyframes visitor-light{0%,100%{opacity:.4}50%{opacity:.9}}
+
+@media(prefers-reduced-motion:reduce){.visitor-firefly{animation:none}.visitor-flight-form,.visitor-rest-form{transition:none}}

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"></head>
 <body>
 <header class="masthead"><a class="brand" href="/">一盆树<span>形态、色彩与界面设计系统</span></a><span class="draft">v0.2 · 待审核</span></header>
 <main>
@@ -12,6 +12,7 @@
     <button id="tab-colors" role="tab" aria-controls="panel-colors" aria-selected="false" tabindex="-1">04 色彩与天气</button>
     <button id="tab-system" role="tab" aria-controls="panel-system" aria-selected="false" tabindex="-1">05 基础与组件</button>
     <button id="tab-motion" role="tab" aria-controls="panel-motion" aria-selected="false" tabindex="-1">06 动效设计</button>
+    <button id="tab-visitors" role="tab" aria-controls="panel-visitors" aria-selected="false" tabindex="-1">07 小小访客</button>
   </nav>
   <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
     <div class="composer">
@@ -61,6 +62,24 @@
     <div class="section-heading"><div><p class="eyebrow">MOTION / WIND / WEATHER</p><h2>树干稳住，枝叶随风。</h2></div><span>应用同款动效 · 独立预览</span></div>
     <iframe id="motion-preview" class="motion-preview" title="盆栽与天气动效实时预览"></iframe>
     <div class="principles"><article><span>01 / 植物</span><h3>稳定骨架，柔软枝梢</h3><p>主干与粗枝固定，细枝从连接点轻摆。叶团跟随枝梢，再叠加错拍颤动。</p></article><article><span>02 / 天气</span><h3>轻淡的天气气氛</h3><p>天气由背景渐变与半透明灰色粒子表现。雨雪飘落，风线掠过，不叠加光晕、光束或云雾光效。</p></article><article><span>03 / 节奏</span><h3>连贯而有分寸</h3><p>枝叶约 4.7 秒一个主摆周期，天气切换平滑过渡。遵循系统减少动态效果设置，离开此章节停止预览。</p></article></div>
+  </section>
+  <section id="panel-visitors" role="tabpanel" aria-labelledby="tab-visitors" hidden>
+    <div class="section-heading"><div><p class="eyebrow">LITTLE VISITORS / INTERACTION</p><h2>一盆树，也有小小来客。</h2></div><span>交互提案 · 点击或轻触，送它飞一会儿</span></div>
+    <div class="visitor-workspace">
+      <div id="visitor-scene" class="visitor-scene" data-time="day">
+        <div class="visitor-scene-heading"><span id="visitor-time-label">白昼 · 10:00</span><span>轻触小访客</span></div>
+        <div id="visitor-tree" class="visitor-tree"></div><div id="visitor-layer" class="visitor-layer" aria-label="可互动的小昆虫"></div>
+        <div class="visitor-scene-caption"><span id="visitor-scene-note">有的绕着枝叶飞，有的停下来歇一歇。</span><span id="visitor-count">3 位访客</span></div>
+      </div>
+      <aside class="visitor-options"><p class="eyebrow">试着靠近一点</p><h3>给安静，添一点生机。</h3><p>不必照料，也不用追赶。偶尔相遇，轻轻一点，看它飞向远处。</p>
+        <fieldset><legend>预览时刻</legend><div class="choices"><button type="button" data-visitor-time="day" aria-pressed="true">白天 · 蝴蝶</button><button type="button" data-visitor-time="night" aria-pressed="false">夜晚 · 萤火虫</button></div></fieldset>
+        <div class="visitor-actions"><button id="visitor-pause" type="button" aria-pressed="false">暂停飞舞</button><button id="visitor-reset" type="button">重新邀请</button></div>
+        <p id="visitor-status" class="visitor-status" role="status">点击一只蝴蝶，看看它的反应。</p>
+        <label class="visitor-hit-toggle"><input id="visitor-hit-areas" type="checkbox"> 显示触摸范围</label>
+        <p class="visitor-footnote">沿用搭配实验室的树与盆。支持鼠标、触摸与键盘；系统开启减少动态效果时，小访客静止，点击后淡出。</p>
+      </aside>
+    </div>
+    <div class="principles"><article><span>01 / 相遇</span><h3>小小的，不抢戏</h3><p>淡杏、米白、灰蓝三种小剪影，用轻微轮廓变化区分。无翅纹和描边，沿弧线轻飞；停留 6–8 秒时侧身合翅，身体贴近叶面。白天最多 3 只蝴蝶，夜晚最多 5 点萤光，数量随来访变化。触摸范围保持 48px。</p></article><article><span>02 / 回应</span><h3>一点，就飞远</h3><p>点击、轻触或按 Enter / 空格，小访客从当前位置向外飞走，约 1.1 秒沿弧线飞远，同时缩小、淡出。只回应被点到的那一只。</p></article><article><span>03 / 回来</span><h3>留一点等待</h3><p>小访客会在停留 14–35 秒后自行离开。间隔 4–16 秒，随机的新访客沿弧线从左、右或上方飞入，用 3–5 秒由小到大、由淡到清晰地靠近树冠。暂停或离开章节时停止计时。</p></article></div>
   </section>
   <footer><span>一盆树 · Design review 0.2</span><span>现有树形与配色算法 / 八款盆器 / 已接入随机认养</span></footer>
 </main><script type="module" src="/design-system.mjs"></script>

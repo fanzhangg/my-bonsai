@@ -4,7 +4,7 @@ import {createParticles,particlePose} from './weather-particles.mjs';
 import {colorTokens} from './color-system.mjs';
 import {realtimeWeatherEnabled} from '/runtime-config.mjs';
 const $=id=>document.getElementById(id),CACHE='bonsai-weather-v1';
-export function startWeather({debug=false,preview=false}={}){
+export function startWeather({debug=false,preview=false,onSceneChange=()=>{}}={}){
  startStars();
  let treeAppearance={},treePreset={},treePot,treeKey;
  let data=null,override=preview?{kind:'clear',hour:12}:{},geoState=realtimeWeatherEnabled?'正在获取位置':'实时天气已关闭',busy=false,lastAttempt=0,scene,raf=0,previous=0,elapsed=0,particles=[],width=0,height=0;
@@ -44,6 +44,7 @@ export function startWeather({debug=false,preview=false}={}){
  function apply(){const next=sceneFor(data,Date.now(),override),changed=next.kind!==scene?.kind;scene=next;const style=document.documentElement.style;['top','middle','bottom'].forEach((key,i)=>style.setProperty('--sky-'+key,scene.colors[i]));Object.entries(colorTokens(scene,treeAppearance,treePreset,treePot)).forEach(([key,value])=>style.setProperty('--'+key,value));document.body.classList.toggle('night',scene.night);document.body.dataset.weather=scene.kind;document.querySelector('meta[name="theme-color"]').content=scene.colors[0];$('weather-credit').hidden=!scene.live;
   if(debug)$('weather-info').textContent=`${override.kind&&override.kind!=='live'||Number.isFinite(override.hour)?'调试预览 · ':''}${geoState}\n${scene.live?(data.stale?'天气缓存 · ':'Open-Meteo · ')+data.timezone:'设备时间 · 天气未知'} · ${Math.floor(scene.hour).toString().padStart(2,'0')}:${Math.floor(scene.hour%1*60).toString().padStart(2,'0')}\n${scene.kind}${scene.live?' · 更新于 '+new Date(data.fetchedAt).toLocaleTimeString():''}`;
   if(changed){resetParticles();run();}
+  onSceneChange(scene);
  }
  async function locate(force=false){if(preview||!realtimeWeatherEnabled||busy||document.hidden||(!force&&Date.now()-lastAttempt<10*60*1000))return;busy=true;lastAttempt=Date.now();
   try{if(!navigator.geolocation)throw new Error('此浏览器不支持定位');

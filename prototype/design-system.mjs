@@ -4,6 +4,7 @@ import {grow,profile,VERSION} from './growth.mjs';
 import {render} from './growing-render.mjs';
 import {TONES,SHAPES,PATTERNS,POT_PRESETS,potMarkup,potSvg} from './design-system-pots.mjs';
 import {createColorReview} from './colors.mjs';
+import {createVisitorReview} from './design-system-visitors.mjs';
 
 const $=id=>document.getElementById(id);
 const state={tree:'juniper',shape:'oval',tone:'sand',pattern:'plain',look:'original',stage:'mature'};
@@ -73,6 +74,7 @@ function showPanel(name,updateHash=true){
   tabs.forEach(tab=>{const active=tab.id===`tab-${name}`;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;$(tab.getAttribute('aria-controls')).hidden=!active;});
   if(!populated.has(name)){if(name==='trees')buildTrees();if(name==='pots')buildPots();if(name==='system')buildSystem();populated.add(name);}
   if(name==='colors')colorReview.render();
+  visitorReview.setActive(name==='visitors');
   const motionFrame=$('motion-preview');
   if(name==='motion'){if(!motionFrame.hasAttribute('src'))motionFrame.src='/motion-preview.html';}
   else if(motionFrame.hasAttribute('src'))motionFrame.removeAttribute('src');
@@ -109,5 +111,6 @@ const colorReview=createColorReview({
   editPot:()=>{showPanel('compose');tabs[0].focus();}
 });
 document.querySelectorAll('[data-open-colors]').forEach(button=>button.addEventListener('click',()=>{showPanel('colors');$('tab-colors').focus();}));
+const visitorReview=createVisitorReview({getState:()=>state,renderTree:()=>scene(state.tree,state,state.look,state.stage)});
 window.addEventListener('hashchange',()=>showPanel(location.hash.slice(1),false));
 paint();showPanel(location.hash.slice(1)||'compose',false);

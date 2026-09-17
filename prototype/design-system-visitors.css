@@ -1,0 +1,20 @@
+@import url('./visitors.css');
+.visitor-workspace{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(280px,1fr);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.visitor-scene{position:relative;min-height:510px;overflow:hidden;isolation:isolate;color:#35483b;transition:background .5s}
+.visitor-scene[data-time=night]{color:#e0e8df}
+.visitor-tree,.visitor-layer{position:absolute;inset:0}
+.visitor-tree{display:grid;place-items:center;padding:30px 0}
+.visitor-tree>svg{width:100%;height:100%;max-height:480px}
+.visitor-layer{pointer-events:none}
+.visitor-scene-heading,.visitor-scene-caption{position:absolute;left:24px;right:24px;display:flex;justify-content:space-between;gap:12px;font-size:11px;line-height:1.8;z-index:2;pointer-events:none}
+.visitor-scene-heading{top:24px;letter-spacing:1px}.visitor-scene-heading span:last-child{opacity:.7}
+.visitor-scene-caption{bottom:24px}.visitor-scene-caption span:last-child{white-space:nowrap;opacity:.7}
+.visitor-options{padding:30px;display:flex;flex-direction:column;gap:24px;background:var(--paper);border-left:1px solid var(--line)}
+.visitor-options>.eyebrow{margin:0}.visitor-options>h3{font-size:20px;font-weight:400;margin-top:-10px}
+.visitor-options>p:not(.eyebrow){font-size:13px;line-height:1.9;color:var(--muted)}
+.visitor-actions{display:flex;gap:8px;flex-wrap:wrap}.visitor-status{padding:14px 16px;background:#eef0e6;border-radius:12px;min-height:78px}
+.visitor-hit-toggle{display:flex;align-items:center;gap:8px;font-size:12px;min-height:44px;cursor:pointer}.visitor-hit-toggle input{accent-color:#355d47;width:18px;height:18px}
+.visitor-options>.visitor-footnote{font-size:11px!important;border-top:1px solid var(--line);padding-top:16px}
+@media(max-width:800px){.visitor-workspace{grid-template-columns:1fr}.visitor-options{border-left:0;border-top:1px solid var(--line);padding:24px}.visitor-scene{min-height:440px}}
+@media(max-width:430px){.visitor-scene{min-height:380px}.visitor-scene-heading,.visitor-scene-caption{left:18px;right:18px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.visitor-wings,.visitor-firefly{animation:none}}
