@@ -33,7 +33,7 @@ test('partial and full watering persist, replay consistently, and retries never 
   assert.deepEqual(saved.waterings.map(w=>w.amount),after.waterings.map(w=>w.amount));
   const reopened=await openStore({url:'',file});assert.deepEqual((await reopened.get(id)).waterings,after.waterings);await reopened.close();
   const gallery=await (await fetch(base.replace('/trees','/gallery'))).json();assert.equal(gallery.trees.find(t=>t.id===id).waterings.length,2);
-  await store.mutate(id,old=>{const at=Date.now(),cuts=snapshot(old,at).nodes.filter(n=>n.role==='primary').map((n,seq)=>({id:randomUUID(),branchId:n.id,seq,at}));return {...old,cuts};});
+  await store.mutate(id,old=>{const at=Date.now(),mature={...old,createdAt:at-1000*3600000},cuts=snapshot(mature,at).nodes.filter(n=>n.role==='primary').map((n,seq)=>({id:randomUUID(),branchId:n.id,seq,at}));return {...mature,cuts};});
   const {data:recovery}=await post('/'+id+'/waterings',{id:randomUUID(),used:4000});
   assert.equal(recovery.waterings.at(-1).recoveryHours,24);
   assert.ok(snapshot(recovery,recovery.serverNow).nodes.some(n=>n.regrown&&n.growth>.1));
