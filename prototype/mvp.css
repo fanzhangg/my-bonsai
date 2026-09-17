@@ -6,6 +6,9 @@ main{position:relative;width:100%;max-width:none;min-height:100svh;padding:0;dis
 #stage svg{display:block;width:100%;height:100%;max-height:1040px}
 #welcome{position:fixed;bottom:max(7svh,24px);left:50%;transform:translateX(-50%);z-index:2}
 .primary{white-space:nowrap;border-radius:999px;padding:14px 34px;box-shadow:0 4px 20px #243d3010}
+#claim{min-width:220px;min-height:60px;padding:18px 48px;font-size:18px;font-weight:600;letter-spacing:1px}
+#claim:hover:not(:disabled){background:#294c39}
+.night #claim:hover:not(:disabled){background:#ccddc9}
 .copy{position:fixed;right:max(20px,env(safe-area-inset-right));top:max(20px,env(safe-area-inset-top));width:48px;height:48px;padding:13px;border:0;border-radius:50%;opacity:.65;z-index:3}
 .copy:hover,.copy:focus-visible{opacity:1}.copy svg{display:block;width:22px;height:22px}
 .new-tree{right:auto;left:max(20px,env(safe-area-inset-left));text-decoration:none}

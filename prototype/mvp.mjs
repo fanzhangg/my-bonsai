@@ -28,6 +28,7 @@ function cheatControls(busy=pruning.busy||watering.busy){
  $('debug').querySelectorAll('button,input,select').forEach(el=>el.disabled=busy||loading);
  $('save-cheat').disabled=busy||loading||!treeId||!dirty;
  $('claim').disabled=busy||loading;
+ $('regenerate').disabled=busy||loading;
 }
 function cheatStatus(text){$('cheat-status').textContent=text;cheatControls();}
 function changed(){dirty=true;cheatStatus(treeId?'有未保存的修改':'认领时会保存当前样本');}
@@ -97,7 +98,18 @@ function debugFields(){$('preset').value=sandbox.config.preset;$('look').value=l
 function resetSandbox(){stop();sandbox=structuredClone(record);hours=Math.max(0,(Date.now()+offset-record.createdAt)/HOUR);dirty=false;debugFields();paint();cheatStatus(treeId?'已载入保存的状态':'调整后的样本会随认领保存');}
 async function sync(){if(loading||playing||pruning.busy||watering.busy||waterQueue.length||(!treeId)||sandbox)return;loading=true;pruningAvailability();try{const data=await api('/'+treeId),initial=!record;record=data;offset=data.serverNow-Date.now();void recordVisit();$('copy').hidden=false;$('retry').hidden=true;status();if(debug){resetSandbox();$('debug').hidden=false;}if(initial)replay();else paint();}catch(e){status(e.message||'暂时无法连接');$('retry').hidden=false;}finally{loading=false;cheatControls();pruningAvailability();}}
 $('retry').onclick=async()=>{try{await flushWater();status();$('retry').hidden=true;await sync();}catch(e){status(e.message||'暂时无法保存，请重试');}};
-const claimId=crypto.randomUUID();
+let claimId=crypto.randomUUID();
+function showPreview(){
+ stop();sandbox=undefined;offset=0;hours=0;dirty=false;
+ record={version:VERSION,createdAt:Date.now(),config:configForClaim(claimId),cuts:[]};
+ $('welcome').hidden=false;$('regenerate').hidden=false;status();
+ if(debug){resetSandbox();$('debug').hidden=false;}
+ replay();
+}
+$('regenerate').onclick=()=>{
+ if(treeId||loading||pruning.busy||watering.busy)return;
+ claimId=crypto.randomUUID();showPreview();
+};
 $('claim').onclick=async()=>{
  if(loading||pruning.busy||watering.busy)return;
  loading=true;cheatControls();pruningAvailability();status();
@@ -106,7 +118,7 @@ $('claim').onclick=async()=>{
   treeId=data.id;record=data;offset=data.serverNow-Date.now();
   void recordVisit();
   history.pushState(null,'','/t/'+treeId+(debug?'?cheat=1':''));
-  $('welcome').hidden=true;$('copy').hidden=false;$('new-tree').hidden=false;$('exit').href='/t/'+treeId;
+  $('welcome').hidden=true;$('regenerate').hidden=true;$('copy').hidden=false;$('new-tree').hidden=false;$('exit').href='/t/'+treeId;
   document.body.classList.remove('home');
   if(debug)resetSandbox();
   pruningAvailability();
@@ -147,4 +159,4 @@ $('exit').href=location.pathname;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){visitPending=true;if(record)void recordVisit();sync();}});setInterval(()=>{if(!document.hidden)sync();},15000);
 document.body.classList.toggle('debug-mode',debug);document.body.classList.toggle('home',!treeId);
 $('new-tree').hidden=!treeId;
-if(treeId)await sync();else{record={version:VERSION,createdAt:Date.now(),config:configForClaim(claimId),cuts:[]};$('welcome').hidden=false;if(debug){resetSandbox();$('debug').hidden=false;}replay();}
+if(treeId)await sync();else showPreview();
