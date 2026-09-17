@@ -27,6 +27,32 @@ npm start
 npm test
 ```
 
+## 开发与持续集成
+
+日常开发使用 `dev`；`main` 保持为 GitHub 默认分支和部署分支。流程为：
+
+```text
+提交并 push 到 dev → GitHub Actions: npm ci + npm test → 成功后自动快进合入 main
+```
+
+本地首次使用：
+
+```sh
+git fetch origin
+git switch dev
+git branch --set-upstream-to=origin/dev dev
+```
+
+如果本地尚无 `dev`，使用 `git switch --track origin/dev`。之后在 `dev` 上正常 `git commit` 和 `git push` 即可；`commit` 只写入本地，`push` 才会触发 CI。不要直接向 `main` 推送开发改动。
+
+工作流位于 `.github/workflows/ci.yml`，使用 Node.js 24。向 `dev` / `main` 推送，以及以这两个分支为目标的 PR，都会运行测试；只有 `dev` 的 push 或手动运行会在测试成功后自动更新 `main`。测试失败、取消或超时时不会更新 `main`。新提交会取消同一分支的旧运行，合入前还会检查 dev 是否已有更新。
+
+`main` 的 GitHub 分支保护要求来自 GitHub Actions 的 `Tests (Node 24)` 检查通过，对管理员同样生效，并禁止强制推送和删除。自动合入使用通过测试的原始提交 SHA，仅允许快进；若 `main` 出现独立提交导致分叉，在 `dev` 合入 `origin/main` 后重新 push，CI 会测试合并后的结果。
+
+CI 使用仓库自带的 `GITHUB_TOKEN`，无需额外 PAT 或生产数据库密钥。测试任务只有读取权限，合入任务才有写入权限，且不运行应用代码。GitHub 不会因为这个 token 更新 `main` 再触发一次 push 工作流；该提交已在 dev 测试完成。未来新增 GitHub Actions 部署时，应接在此流程后，不能依赖这次自动合入触发另一个 push 工作流。
+
+Render 的部署分支应设置为 `main`。当前测试覆盖应用逻辑和本地 JSON 存储，不包含真实 Neon 数据库、生产部署或完整浏览器视觉验收；自动合入代表现有测试通过，不保证所有线上场景均已验证。
+
 ## Render + Neon
 
 仓库包含 `render.yaml`。在 Render 设置 Neon 的 `DATABASE_URL` 后部署。生产模式强制使用 PostgreSQL；未配置数据库不会启动。本地可复制 `.env.example` 为 `.env` 后填写连接串，启动命令会自动读取。

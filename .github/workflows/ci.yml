@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (Node 24)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  promote:
+    name: Promote tested dev to main
+    needs: test
+    if: github.ref == 'refs/heads/dev' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    concurrency:
+      group: promote-main
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Fast-forward main to the tested commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin \
+            +refs/heads/main:refs/remotes/origin/main \
+            +refs/heads/dev:refs/remotes/origin/dev
+
+          if [[ "$(git rev-parse origin/dev)" != "$GITHUB_SHA" ]]; then
+            echo 'A newer dev commit exists; its own CI run will promote it.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [[ "$(git rev-parse origin/main)" == "$GITHUB_SHA" ]]; then
+            echo 'main already contains this tested commit.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if ! git merge-base --is-ancestor origin/main "$GITHUB_SHA"; then
+            echo '::error::main has diverged. Merge origin/main into dev and push dev to test the combined changes.'
+            exit 1
+          fi
+
+          # Push the exact tested SHA, never an untested branch tip or a force update.
+          git push origin "$GITHUB_SHA:refs/heads/main"
+          echo "Promoted tested commit \`$GITHUB_SHA\` from dev to main." >> "$GITHUB_STEP_SUMMARY"
