@@ -51,4 +51,4 @@ $('exit').href=location.pathname;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});setInterval(()=>{if(!document.hidden)sync();},15000);
 document.body.classList.toggle('debug-mode',debug);document.body.classList.toggle('home',!treeId);
 $('new-tree').hidden=!treeId;
-if(treeId)await sync();else{record={version:VERSION,createdAt:Date.now(),config:configForClaim(claimId),cuts:[]};$('welcome').hidden=false;paint(snapshot(record,record.createdAt));if(debug){resetSandbox();$('debug').hidden=false;}}
+if(treeId)await sync();else{record={version:VERSION,createdAt:Date.now(),config:configForClaim(claimId),cuts:[]};$('welcome').hidden=false;if(debug){resetSandbox();$('debug').hidden=false;}replay();}
