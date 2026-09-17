@@ -2,7 +2,7 @@ import {waterPoint,waterImpact,nearPlanter,waterFacing,createWaterTank,spendWate
 import {toolHome} from './tool-home.mjs';
 
 export function createWatering({scene,holder,can,water,status,initialProgress=.55,renderTree,onDose=()=>{},onFinish=async()=>{},onBusyChange=()=>{},onError=()=>{},getHome}){
- const ns='http://www.w3.org/2000/svg',vessel=can.querySelector('.watering-vessel');
+ const ns='http://www.w3.org/2000/svg',vessel=can.querySelector('.watering-vessel'),facing=can.querySelector('.watering-facing');
  let progress=initialProgress,tree,svg,saving=false,usedThisHold=0,active=false,held=false,pouring=false,returning=false,pointer=null,raf=0,started=0,lastEmit=0,lastGrowth=0,lastFrame=0,direction=1,growthTarget=initialProgress,lastSplash=0,pouredThisHold=false,position={x:0,y:0};
  const particles=[],splashes=[];
  const tank=createWaterTank();
@@ -15,7 +15,9 @@ export function createWatering({scene,holder,can,water,status,initialProgress=.5
   if(!usedThisHold)return;const used=usedThisHold;usedThisHold=0;saving=true;notify();
   try{await onFinish(used);}catch(error){onError(error);}finally{saving=false;notify();}
  }
- function place(p){position=p;can.style.left=p.x+'px';can.style.top=p.y+'px';if(svg&&active){direction=waterFacing(p.x,geometry().soil.x,direction);can.querySelector('svg').style.transform='scaleX('+direction+')';}}
+ // Keep mirroring inside SVG: legacy WebKit can omit outer CSS transforms
+ // from getScreenCTM(), leaving emitted water on the opposite side of the can.
+ function place(p){position=p;can.style.left=p.x+'px';can.style.top=p.y+'px';if(svg&&active){direction=waterFacing(p.x,geometry().soil.x,direction);facing.setAttribute('transform','scale('+direction+' 1)');}}
  function home(){return getHome?getHome(scene):toolHome(scene);}
  function screen(x,y){const q=new DOMPoint(x,y).matrixTransform(svg.getScreenCTM()),r=scene.getBoundingClientRect();return {x:q.x-r.x,y:q.y-r.y};}
  function geometry(){return {soil:screen(tree.root.x,tree.root.y-3),top:screen(tree.root.x,svg.querySelector('[data-wind-tree]').getBBox().y),factor:svg.getScreenCTM().a};}

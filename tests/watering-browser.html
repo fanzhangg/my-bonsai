@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Watering nozzle browser regression</title>
+<style>body{font:16px system-ui;background:#faf9f3}iframe{border:1px solid #ccc}pre{white-space:pre-wrap}button{padding:10px;margin:6px}</style>
+<h1>Watering nozzle browser regression</h1>
+<p>Run <code>node tests/watering-browser.mjs</code> and open its local URL. Uses the application SVG, styles and watering controller. Pink marker = rendered nozzle; water must start there.</p>
+<label><input id="legacy" type="checkbox" checked>Simulate legacy WebKit omitting outer SVG CSS transforms from getScreenCTM()</label>
+<button id="run">Run mobile and desktop checks</button>
+<pre id="results">Ready</pre>
+<iframe title="Watering preview" width="390" height="700"></iframe>
+<script type="module">
+const frame=document.querySelector('iframe'),results=document.querySelector('#results');
+const source=await (await fetch('/index.html')).text(),parsed=new DOMParser().parseFromString(source,'text/html');
+const markup=parsed.querySelector('#live-watering').outerHTML.replace(' hidden','');
+document.querySelector('#run').onclick=async()=>{
+ const run=document.querySelector('#run');run.disabled=true;
+ try{
+ results.textContent='Running…';const reports=[];
+ for(const [width,height] of [[1280,800],[844,390],[320,568],[390,844]]){
+  frame.width=width;frame.height=height;
+  frame.srcdoc=`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/design-system-watering.css"><link rel="stylesheet" href="/watering.css"><style>body{margin:0;background:#faf9f3}#stage{position:absolute;inset:0}#stage>svg{width:100%;height:100%}#live-watering{--tool-hit-size:112px}.watering-vessel{transition:none}</style><div id="stage"></div>${markup}`;
+  await new Promise(resolve=>frame.onload=resolve);
+  const w=frame.contentWindow,d=w.document;
+  // Deterministic animation ticks exercise the real emission/drawing path.
+  let tick;w.requestAnimationFrame=fn=>(tick=fn,1);w.cancelAnimationFrame=()=>{tick=null;};
+  const script=d.createElement('script');script.type='module';script.textContent=`
+   import {createWatering} from '/watering.mjs';
+   import {snapshot,draw,VERSION} from '/growth.mjs';
+   import {configForClaim} from '/claim.mjs';
+   const holder=document.querySelector('#stage'),tree=snapshot({version:VERSION,createdAt:Date.now()-7*86400000,config:configForClaim('watering-browser'),cuts:[]});
+   holder.innerHTML=draw(tree,{transparent:true,viewBox:{x:tree.root.x-300,y:tree.root.y-420,width:640,height:620}});
+   window.watering=createWatering({scene:document.querySelector('#live-watering'),holder,can:document.querySelector('#watering-can'),water:document.querySelector('#watering-water'),status:document.querySelector('#watering-status'),renderTree:()=>tree});
+   window.watering.setActive(true);
+   window.ready=true;
+  `;d.body.append(script);
+  const deadline=Date.now()+10000;
+  while(!w.ready){if(Date.now()>deadline)throw new Error('Fixture initialization timed out');await new Promise(r=>setTimeout(r,20));}
+  // Let ResizeObserver finish its initial delivery before holding the can.
+  await new Promise(r=>setTimeout(r,100));
+  const can=d.querySelector('#watering-can'),vessel=can.querySelector('.watering-vessel');
+  if(document.querySelector('#legacy').checked){
+   // https://bugs.webkit.org/show_bug.cgi?id=209220
+   const native=vessel.getScreenCTM.bind(vessel),outer=can.querySelector('svg');
+   vessel.getScreenCTM=()=>{const transform=outer.style.transform;outer.style.transform='none';try{return native();}finally{outer.style.transform=transform;}};
+  }
+  const marker=d.createElementNS('http://www.w3.org/2000/svg','circle');
+  for(const [key,value] of Object.entries({cx:-51,cy:-14,r:2,fill:'#e40080'}))marker.setAttribute(key,value);
+  vessel.append(marker);
+  can.dispatchEvent(new w.KeyboardEvent('keydown',{key:' '}));
+  // Pointer movement uses touch's 48px finger offset, without pointer capture.
+  // Keyboard pickup keeps the controller pointer null, so use that same id.
+  let time=w.performance.now()+300;
+  for(const [label,x] of [['right',width/2+90],['left',width/2-90],['right again',width/2+90],['left again',width/2-90]]){
+   const event=new w.Event('pointermove');Object.assign(event,{pointerId:null,pointerType:'touch',clientX:x,clientY:height*.4+48});can.dispatchEvent(event);
+   for(let i=0;i<8;i++){time+=60;tick?.(time);}
+   const path=d.querySelectorAll('.watering-stream')[2].getAttribute('d');
+   const match=path.match(/M([-\d.]+) ([-\d.]+)/),rect=marker.getBoundingClientRect();
+   const error=match?Math.hypot(Number(match[1])-(rect.x+rect.width/2),Number(match[2])-(rect.y+rect.height/2)):Infinity;
+   reports.push(`${width}×${height} ${label}: ${error<1?'PASS':'FAIL'} — nozzle/stream gap ${error.toFixed(2)}px`);
+  }
+  results.textContent=reports.join('\n');
+ }
+ }catch(error){results.textContent+='\nFAIL: '+error.message;}finally{run.disabled=false;}
+};
+</script>
