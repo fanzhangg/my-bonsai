@@ -13,8 +13,9 @@ export const FRAME={width:740,height:740,aboveSoil:470};
 const clamp=x=>Math.max(0,Math.min(1,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 export function profile(record){return {days:3+sample(record.config.seed,'lifetime','days')*3,initial:({broom:.5,literati:.55,cascade:.35}[record.config.preset]??.3)};}
+export function wateringProgress(record,at=Date.now()){return (record.waterings??[]).reduce((sum,w)=>sum+(w.at<=at?w.amount:0),0);}
 export function snapshot(record,at=Date.now()){
- const {days,initial}=profile(record),p=clamp(initial+(at-record.createdAt)/(days*24*HOUR)*(1-initial));
+ const {days,initial}=profile(record),p=clamp(initial+(at-record.createdAt)/(days*24*HOUR)*(1-initial)+wateringProgress(record,at));
  return grow(record,p,{at});
 }
 export function grow(record,p,{morphology=true,at=Infinity}={}){
@@ -45,8 +46,8 @@ export function grow(record,p,{morphology=true,at=Infinity}={}){
  appendRegrowth(tree,{shoots,original,clusters,attachments,mapped,scale,thickness,seed:record.config.seed,at});
  return tree;
 }
-export function draw(tree,{transparent=false,viewBox=tree.viewBox}={}){
- const svg=render(tree,{hour:tree.hour,id:'growing-tree',transparent,viewBox});
+export function draw(tree,{transparent=false,viewBox=tree.viewBox,id='growing-tree'}={}){
+ const svg=render(tree,{hour:tree.hour,id,transparent,viewBox});
  const seed=`<ellipse cx="${tree.root.x}" cy="${tree.root.y-4}" rx="4" ry="2.5" fill="#8f6240" opacity="${tree.seedOpacity}"/>`;
  return svg.replace('</svg>',seed+'</svg>');
 }

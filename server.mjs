@@ -4,9 +4,11 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {openStore} from './storage.mjs';
 import {VERSION,snapshot} from './prototype/growth.mjs';
+import {WATER_CAPACITY} from './prototype/watering-motion.mjs';
 import {configForClaim} from './prototype/claim.mjs';
 import {applyCheat} from './prototype/cheats.mjs';
 import {coordinates,weatherAt} from './weather-service.mjs';
+import {activity,activityKey,GALLERY_LIMIT,GALLERY_PAGE_SIZE,GALLERY_SORTS} from './activity.mjs';
 const root=path.resolve(fileURLToPath(new URL('./prototype/',import.meta.url)));
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
@@ -28,7 +30,20 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
         try{return send(200,await weatherAt(c.lat,c.lon));}catch{fail(503,'天气暂不可用');}
       }
       if(url.pathname.startsWith('/api/')){
-        const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts|cheats))?)?$/);if(!route)fail(404,'找不到页面');
+        if(url.pathname==='/api/gallery'){
+          if(req.method!=='GET')fail(405,'不支持的操作');
+          const sort=url.searchParams.get('sort')??'active';if(!GALLERY_SORTS.includes(sort))fail(400,'无效排序方式');
+          let after=null;const cursor=url.searchParams.get('cursor');
+          if(cursor!==null){
+            try{if(cursor.length>512)throw new Error();after=JSON.parse(Buffer.from(cursor,'base64url').toString());}catch{fail(400,'无效分页');}
+            if(!after||after.sort!==sort||!uuid(after.id)||!Number.isSafeInteger(after.at)||after.at<=0||!Number.isInteger(after.count)||after.count<1||after.count>=GALLERY_LIMIT)fail(400,'无效分页');
+          }
+          const count=after?.count??0,pageSize=Math.min(GALLERY_PAGE_SIZE,GALLERY_LIMIT-count);
+          const records=await store.listGallery(sort,{after,limit:pageSize+1}),trees=records.slice(0,pageSize);
+          const last=trees.at(-1),nextCursor=records.length>pageSize&&count+trees.length<GALLERY_LIMIT?Buffer.from(JSON.stringify({sort,id:last.id,at:activity(last)[activityKey(sort)],count:count+trees.length})).toString('base64url'):null;
+          return send(200,{trees:trees.map(tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],...activity(tree)})),sort,limit:GALLERY_LIMIT,pageSize:GALLERY_PAGE_SIZE,nextCursor,serverNow:Date.now()});
+        }
+        const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts|cheats|visits|waterings))?)?$/);if(!route)fail(404,'找不到页面');
         const [,id,action]=route;if(id&&!uuid(id))fail(404,'找不到这盆树');
         if(action==='join')fail(410,'当前版本不支持加入');
         let body={};
@@ -37,13 +52,30 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
           if(!req.headers['content-type']?.startsWith('application/json'))fail(415,'需要 JSON');
           let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>8192)fail(413,'请求过大');chunks.push(chunk);}try{body=JSON.parse(Buffer.concat(chunks).toString());}catch{fail(400,'无效请求');}if(!body||Array.isArray(body)||typeof body!=='object')fail(400,'无效请求');
         }
-        const result=tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,revision:tree.revision??0,serverNow:Date.now()});
+        const result=tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],revision:tree.revision??0,serverNow:Date.now()});
         if(req.method==='GET'&&id&&!action){const tree=await store.get(id);if(!tree)fail(404,'找不到这盆树，请检查链接');return send(200,result(tree));}
         if(req.method!=='POST')fail(405,'不支持的操作');
+        if(action==='visits'){
+          const tree=await store.mutate(id,old=>{
+            if(!old)fail(404,'找不到这盆树');
+            return {...old,lastVisitedAt:Date.now()};
+          });
+          return send(200,{lastVisitedAt:tree.lastVisitedAt});
+        }
         if(action==='cheats'){
           const tree=await store.mutate(id,old=>{
             if(!old)fail(404,'找不到这盆树');
-            return applyCheat(old,body,Date.now());
+            const at=Date.now();return {...applyCheat(old,body,at),lastInteractedAt:at};
+          });
+          return send(200,result(tree));
+        }
+        if(action==='waterings'){
+          if(!uuid(body.id)||!Number.isFinite(body.used)||body.used<=0||body.used>WATER_CAPACITY+0.01)fail(400,'无效浇水请求');
+          const tree=await store.mutate(id,old=>{
+            if(!old)fail(404,'找不到这盆树');
+            const waterings=old.waterings??[],existing=waterings.find(w=>w.id===body.id);
+            if(existing){if(existing.used!==body.used)fail(409,'浇水请求已使用');return old;}
+            const at=Date.now();return {...old,revision:(old.revision??0)+1,lastInteractedAt:at,waterings:[...waterings,{id:body.id,at,used:body.used,amount:Math.min(body.used,WATER_CAPACITY)/WATER_CAPACITY*.025}]};
           });
           return send(200,result(tree));
         }
@@ -55,7 +87,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
             if(existing){if(existing.branchId!==body.branchId)fail(409,'剪枝请求已使用');return old;}
             const at=Date.now(),branch=snapshot(old,at).nodes.find(n=>n.id===body.branchId);
             if(!branch||branch.role!=='primary'||branch.growth<=0)fail(409,'这根枝条无法修剪');
-            return {...old,revision:(old.revision??0)+1,cuts:[...old.cuts,{id:body.id,seq:old.cuts.length+1,at,branchId:branch.id}]};
+            return {...old,lastInteractedAt:at,revision:(old.revision??0)+1,cuts:[...old.cuts,{id:body.id,seq:old.cuts.length+1,at,branchId:branch.id}]};
           });
           return send(200,result(tree));
         }
@@ -71,7 +103,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
         fail(405,'不支持的操作');
       }
       if(!['GET','HEAD'].includes(req.method))fail(405,'不支持的操作');
-      const name=url.pathname==='/'||/^\/t\/[^/]+$/.test(url.pathname)?'/index.html':decodeURIComponent(url.pathname);
+      const name=url.pathname==='/gallery'||url.pathname==='/gallery/'?'/gallery.html':url.pathname==='/'||/^\/t\/[^/]+$/.test(url.pathname)?'/index.html':decodeURIComponent(url.pathname);
       const target=path.resolve(root,`.${name}`);if(!target.startsWith(root+path.sep)||!['.html','.css','.mjs','.svg'].includes(path.extname(target)))fail(404,'找不到页面');
       let file;try{file=await readFile(target);}catch{fail(404,'找不到页面');}
       res.writeHead(200,{'Content-Type':({'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[path.extname(target)]+'; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});res.end(req.method==='HEAD'?undefined:file);

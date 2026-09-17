@@ -1,3 +1,4 @@
+import {WATER_CAPACITY} from './watering-motion.mjs';
 import {PRESETS,normalize} from './core/v1/canopy.mjs';
 import {LOOKS,lookFor} from './core/v1/appearance.mjs';
 import {grow,snapshot,HOUR} from './growth.mjs';
@@ -10,6 +11,7 @@ const fail=(status,message)=>{throw Object.assign(new Error(message),{status});}
 export function cheatRequest(record,hours){
  return {revision:record.revision??0,preset:record.config.preset,seed:record.config.seed,
   look:lookFor(record.config.appearance)?.id??null,hours,
+  waterings:(record.waterings??[]).map(w=>({id:w.id,used:w.used,hour:(w.at-record.createdAt)/HOUR})),
   cuts:(record.cuts??[]).map(c=>({id:c.id,branchId:c.branchId,hour:(c.at-record.createdAt)/HOUR}))};
 }
 
@@ -37,5 +39,11 @@ export function applyCheat(record,body,at){
   if(!branches.has(cut.branchId)&&!snapshot(history,cut.at).nodes.some(n=>n.id===cut.branchId&&n.role==='primary'&&n.growth>0))fail(400,'无效剪枝记录');
   history.cuts.push(cut);
  }
- return {...record,config,createdAt,cuts,revision:(record.revision??0)+1};
+ const rawWater=body.waterings??(record.waterings??[]).map(w=>({id:w.id,used:w.used,hour:(w.at-record.createdAt)/HOUR}));
+ if(!Array.isArray(rawWater)||rawWater.length>256)fail(400,'无效浇水记录');
+ const waterIds=new Set(),waterings=rawWater.map(w=>{
+  if(!w||!uuid(w.id)||waterIds.has(w.id)||!Number.isFinite(w.used)||w.used<=0||w.used>WATER_CAPACITY+.01||!validHour(w.hour))fail(400,'无效浇水记录');
+  waterIds.add(w.id);return {id:w.id,used:w.used,at:createdAt+w.hour*HOUR,amount:Math.min(w.used,WATER_CAPACITY)/WATER_CAPACITY*.025};
+ });
+ return {...record,config,createdAt,cuts,waterings,revision:(record.revision??0)+1};
 }
