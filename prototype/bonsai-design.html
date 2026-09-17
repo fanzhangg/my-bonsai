@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 盆栽设计语言</title><link rel="stylesheet" href="/bonsai-design.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>一盆树 · 盆栽设计语言</title><link rel="stylesheet" href="/bonsai-design.css"><link rel="stylesheet" href="/pruning.css"><link rel="stylesheet" href="/bonsai-pruning-review.css"></head>
 <body>
 <header><a class="brand" href="/">一盆树<span>盆栽设计语言</span></a><a class="back" href="/design-system.html#branches">返回设计审核 ↗</a></header>
 <main>
@@ -12,7 +12,7 @@
       <fieldset><legend><span>02</span> 叶与冠</legend><div class="select-row"><label>冠型<select id="crown"></select></label><label>叶形<select id="leaf"></select></label></div><p id="crown-note" class="field-note"></p></fieldset>
       <fieldset><legend><span>03</span> 固定层次色组</legend><div id="palette-options" class="palette-options"></div><div id="depth-colors" class="depth-colors"></div><p class="field-note">后冠深，前冠浅；同一色组内，以柔和明暗塑造体积。</p></fieldset>
       <fieldset><legend><span>04</span> 个体变化</legend><div class="select-row"><label>变化幅度<select id="variation"><option value="0.25">克制</option><option value="0.55" selected>自然</option><option value="0.85">鲜明</option></select></label><label>枝量<select id="density"><option value="0.2">疏朗</option><option value="0.5" selected>均衡</option><option value="0.8">丰茂</option></select></label></div><p class="field-note">每株独立生成。换色保留树形，页面链接可留住这一株。</p></fieldset>
-      <div class="growth-control"><label for="maturity">生长进度 <output id="maturity-label">100%</output></label><input id="maturity" type="range" min="5" max="100" step="1" value="100"><div class="range-caption"><span>初生</span><span>成树</span></div></div>
+      <div class="growth-control"><label for="maturity">认领后时间 <output id="maturity-label">168 小时</output></label><input id="maturity" type="range" min="0" max="336" step="0.5" value="168"><p class="field-note">拿起剪刀，选择一级或二级侧枝。稀疏处会自然补长；快进时间查看新的树形。</p><p id="design-growth-status" class="field-note" role="status"></p><div class="review-growth-actions"><button data-grow-hours="1">+1 小时</button><button data-grow-hours="12">+12 小时</button><button data-grow-hours="24">+1 天</button><button id="design-clear">剪空一级侧枝</button><button id="design-undo" disabled>撤回上一步</button><button id="design-fork" hidden>从此刻继续（移除后续修剪）</button></div><p class="field-note">更换树形、种子或枝干参数会清空修剪；配色、冠型、叶形保留修剪。此处操作仅供审核，不写入已认领的树。</p></div>
     </aside>
   </section>
   <section class="principles" aria-labelledby="principles-title"><div class="principles-heading"><p class="eyebrow">HOW IT GROWS</p><h2 id="principles-title">同一套准则，不同的风骨。</h2></div><div class="principle-grid">
@@ -21,6 +21,6 @@
     <article><span class="number">03 / 色彩</span><h3>先分前后，再画体积。</h3><p>每套配色固定后、中、前三组色阶，组内由暗到亮。新老叶与整体受光只做小幅修色，保留柔和、清楚的层次。</p></article>
   </div><p class="closing">种子决定主干曲线、出枝位置与数量；树形约束比例和留白。枝芽按各自节奏伸展，修剪后的幸存枝干保持原位。</p></section>
 </main>
-<footer><span>一盆树 · 生成设计系统</span><span>视觉原型 · 尚未接入认养</span></footer>
+<footer><span>一盆树 · 生成设计系统</span><span>bonsai-growth-3 · 与认领盆栽共用生长模型</span></footer>
 <noscript>请启用 JavaScript 查看盆栽生成预览。</noscript><script type="module" src="/bonsai-design.mjs"></script>
 </body></html>

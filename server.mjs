@@ -8,6 +8,7 @@ import {WATER_CAPACITY,WATERING_RULES,wateringAmount} from './prototype/watering
 import {configForClaim} from './prototype/claim.mjs';
 import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './prototype/tree-versions.mjs';
 import {applyCheat} from './prototype/cheats.mjs';
+import {canPrune} from './prototype/pruning-model.mjs';
 import {coordinates,weatherAt} from './weather-service.mjs';
 import {activity,activityKey,GALLERY_LIMIT,GALLERY_PAGE_SIZE,GALLERY_SORTS} from './activity.mjs';
 import {publicOrigin,shareMetadata,createShareImageCache} from './share-preview.mjs';
@@ -54,7 +55,8 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
         if(req.method==='POST'){
           if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)fail(403,'请从应用页面提交');
           if(!req.headers['content-type']?.startsWith('application/json'))fail(415,'需要 JSON');
-          let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>8192)fail(413,'请求过大');chunks.push(chunk);}try{body=JSON.parse(Buffer.concat(chunks).toString());}catch{fail(400,'无效请求');}if(!body||Array.isArray(body)||typeof body!=='object')fail(400,'无效请求');
+          const bodyLimit=action==='cheats'||!id?1048576:8192;
+          let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>bodyLimit)fail(413,'请求过大');chunks.push(chunk);}try{body=JSON.parse(Buffer.concat(chunks).toString());}catch{fail(400,'无效请求');}if(!body||Array.isArray(body)||typeof body!=='object')fail(400,'无效请求');
         }
         const result=tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],wateringRules:WATERING_RULES,revision:tree.revision??0,serverNow:Date.now()});
         if(req.method==='GET'&&id&&!action){const tree=await store.get(id);if(!tree)fail(404,'找不到这盆树，请检查链接');return send(200,result(tree));}
@@ -90,8 +92,8 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
             const existing=old.cuts.find(c=>c.id===body.id);
             if(existing){if(existing.branchId!==body.branchId)fail(409,'剪枝请求已使用');return old;}
             const at=Date.now(),branch=snapshot(old,at).nodes.find(n=>n.id===body.branchId);
-            if(!branch||branch.role!=='primary'||branch.growth<=0)fail(409,'这根枝条无法修剪');
-            return {...old,lastInteractedAt:at,revision:(old.revision??0)+1,cuts:[...old.cuts,{id:body.id,seq:old.cuts.length+1,at,branchId:branch.id}]};
+            if(!canPrune(branch)||branch.growth<=0)fail(409,'这根枝条无法修剪');
+            return {...old,lastInteractedAt:at,revision:(old.revision??0)+1,cuts:[...old.cuts,{id:body.id,seq:old.cuts.length+1,at,branchId:branch.id,...(old.version===CURRENT_VERSION?{model:'state-1'}:{})}]};
           });
           return send(200,result(tree));
         }

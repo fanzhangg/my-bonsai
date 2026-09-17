@@ -7,7 +7,8 @@ import * as runtime from '/runtime-config.mjs';
 import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './tree-versions.mjs';
 import {FORMS,CROWNS,LEAVES,PALETTES} from './core/v3/bonsai-language.mjs';
 import {normalizeDesign} from './core/v3/config.mjs';
-import {cheatRequest,MAX_CHEAT_HOURS} from './cheats.mjs';
+import {cheatRequest,MAX_CHEAT_HOURS,futureOperations,branchTimeline} from './cheats.mjs';
+import {canPrune} from './pruning-model.mjs';
 import {startWeather} from './weather.mjs';
 import {startWind} from './wind.mjs';
 import {createVisitors} from './visitors.mjs';
@@ -24,6 +25,9 @@ const wind=startWind($('stage'));
 let treeId=location.pathname.match(/^\/t\/([^/]+)$/)?.[1];
 let sharing;
 let record,sandbox,offset=0,hours=0,playing=false,timer,loading=false,dirty=false;
+let draftUndo=null;
+
+function rememberDraft(){if(sandbox)draftUndo={record:structuredClone(sandbox),hours};}
 let pendingWater=0,pendingRecovery=0,recoveryRate=0;const waterQueue=[];let waterSave=null;
 let visitPending=true,visitInFlight=false;
 async function recordVisit(){
@@ -32,9 +36,10 @@ async function recordVisit(){
  try{await api('/'+treeId+'/visits',{});}catch{visitPending=true;}
  finally{visitInFlight=false;}
 }
-function cheatControls(busy=pruning.busy||watering.busy){
+function cheatControls(busy=pruning.busy||watering.busy||playing){
  $('debug').querySelectorAll('button,input,select').forEach(el=>el.disabled=busy||loading);
  $('save-cheat').disabled=busy||loading||!treeId||!dirty;
+ $('undo-draft').disabled=busy||loading||!draftUndo;
  $('claim').disabled=busy||loading;
  $('regenerate').disabled=busy||loading;
  $('share').disabled=busy||loading;
@@ -46,7 +51,7 @@ const pruning=createPruning({
  scene:$('live-pruning'),treeElement:$('stage'),tool:$('pruning-scissors'),message:$('pruning-message'),
  onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);watering.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);},
  onCommit:async branchId=>{
-  if(sandbox){sandbox.cuts.push({id:crypto.randomUUID(),seq:sandbox.cuts.length+1,at:now(),branchId});changed();return;}
+  if(sandbox){rememberDraft();sandbox.cuts.push({id:crypto.randomUUID(),seq:sandbox.cuts.length+1,at:now(),branchId,...(treeVersion(sandbox)===CURRENT_VERSION?{model:'state-1'}:{})});changed();return;}
   const body={id:crypto.randomUUID(),branchId};
   let data;
   // A network retry must reuse the same operation ID: never cut twice.
@@ -83,14 +88,14 @@ const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$(
  getHome:scene=>toolHome(scene,190),
  onDose:used=>{if(pendingWater===0)recoveryRate=wateringRecovery(waterSnapshot(),WATER_CAPACITY,(sandbox||record).wateringRules)/WATER_CAPACITY;pendingWater+=used;pendingRecovery+=used*recoveryRate;},
  onFinish:async used=>{
-  if(sandbox){sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:wateringAmount(used,sandbox.wateringRules),recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}
+  if(sandbox){rememberDraft();sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:wateringAmount(used,sandbox.wateringRules),recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}
   waterQueue.push({id:crypto.randomUUID(),used,recoveryHours:used*recoveryRate});await flushWater();
  },
  onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);pruning.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);if(!busy&&record)paint(waterSnapshot());},
  onError:error=>{status(error.message||'浇水暂时无法保存，请重试');$('retry').hidden=false;}
 });
 function pruningAvailability(){
- const available=Boolean(record&&(treeId||sandbox)&&!playing);
+ const available=Boolean(record&&(treeId||sandbox)&&!playing&&!(sandbox&&futureOperations(sandbox,now())));
  $('live-pruning').hidden=!available;
  $('pruning-scissors').disabled=loading;
  pruning.setActive(available&&!loading&&!watering.busy);
@@ -101,11 +106,22 @@ const current=()=>sandbox||record;
 const now=()=>sandbox?sandbox.createdAt+hours*HOUR:Date.now()+offset;
 function status(text=''){$('status').textContent=text;$('status').hidden=!text;}
 async function api(path,body){const r=await fetch('/api/trees'+path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});const data=await r.json();if(!r.ok)throw Object.assign(new Error(data.error),{httpStatus:r.status});return data;}
-function paint(tree=snapshot(current(),now())){if(pruning.busy)return;weather.setTree(tree);$('stage').innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree)});pruning.refresh(tree);watering.refresh(tree);pruningAvailability();wind.refresh();visitors.refresh();visitors.setActive(true);if(debug){$('age').textContent=`${hours.toFixed(1)} 小时`;$('info').textContent=`${record.id||'未认领样本'}\n${current().version??VERSION}\n成熟需 ${tree.matureDays.toFixed(1)} 天 · 生长 ${(tree.progress*100).toFixed(1)}% · 枝段 ${tree.nodes.length} · 叶团 ${tree.clusters.filter(c=>tree.hour>c.born).length}\n${playing?'回放中':'静止预览'}`;}}
-function stop(){clearTimeout(timer);playing=false;}
-function replay(){stop();const data=structuredClone(current()),end=now(),start=performance.now();if(matchMedia('(prefers-reduced-motion: reduce)').matches){paint();return;}playing=true;const frame=()=>{const p=Math.min(1,(performance.now()-start)/REPLAY_MS);paint(replayFrame(data,end,p));if(p<1)timer=setTimeout(frame,70);else{stop();paint();}};frame();}
-function debugFields(){designFields();$('preset').value=sandbox.config.preset;$('look').value=lookFor(sandbox.config.appearance)?.id||'original';$('seed').value=sandbox.config.seed;$('time').max=Math.max(168,Math.ceil(hours));$('time').value=hours;}
-function resetSandbox(){stop();sandbox=structuredClone(record);hours=Math.max(0,(Date.now()+offset-record.createdAt)/HOUR);dirty=false;debugFields();paint();cheatStatus(treeId?'已载入保存的状态':'调整后的样本会随认领保存');}
+function paint(tree=snapshot(current(),now())){
+ if(pruning.busy)return;weather.setTree(tree);$('stage').innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree)});
+ pruning.refresh(tree);watering.refresh(tree);pruningAvailability();wind.refresh();visitors.refresh();visitors.setActive(true);
+ if(debug){
+  $('age').textContent=`${hours.toFixed(1)} 小时`;
+  const future=futureOperations(current(),now()),first=tree.nodes.filter(n=>canPrune(n)&&n.pruningLevel!==2).length,second=tree.nodes.filter(n=>canPrune(n)&&n.pruningLevel===2).length;
+  $('timeline-note').textContent=future?`当前时刻之后还有 ${future} 次剪枝或浇水。回看不改变历史；要在此处重新修剪，请先从这里继续。`:'剪枝与浇水作用于当前预览时刻；快进可观察局部恢复。';
+  $('branch-timeline').hidden=!future;
+  $('growth-summary').textContent=`可剪一级侧枝 ${first} 根${tree.engineVersion===CURRENT_VERSION?` · 二级侧枝 ${second} 根`:''}${tree.recovery?.length?` · ${tree.recovery.length} 处正在准备新生长`:' · 当前没有待萌芽区域'}`;
+  $('info').textContent=`${record.id||'未认领样本'}\n${current().version??VERSION}\n基础树形成熟 ${(tree.progress*100).toFixed(1)}% · 剪枝历史 ${current().cuts.length} 次\n${playing?'当前树形回放中':'预览已暂停，快进时间继续生长'}`;
+ }
+}
+function stop(){clearTimeout(timer);playing=false;cheatControls();}
+function replay(){stop();const data=structuredClone(current()),end=now(),start=performance.now();if(matchMedia('(prefers-reduced-motion: reduce)').matches){paint();return;}playing=true;cheatControls();const frame=()=>{const p=Math.min(1,(performance.now()-start)/REPLAY_MS);paint(replayFrame(data,end,p));if(p<1)timer=setTimeout(frame,70);else{stop();paint();}};frame();}
+function debugFields(){designFields();$('preset').value=sandbox.config.preset;$('look').value=lookFor(sandbox.config.appearance)?.id||'original';$('seed').value=sandbox.config.seed;$('time').max=Math.min(MAX_CHEAT_HOURS,Math.max(168,Math.ceil(hours),...(sandbox.cuts??[]).map(c=>Math.ceil((c.at-sandbox.createdAt)/HOUR)),...(sandbox.waterings??[]).map(c=>Math.ceil((c.at-sandbox.createdAt)/HOUR))));$('time').value=hours;}
+function resetSandbox(){stop();sandbox=structuredClone(record);draftUndo=null;hours=Math.max(0,(Date.now()+offset-record.createdAt)/HOUR);dirty=false;debugFields();paint();cheatStatus(treeId?'已载入保存的状态':'调整后的样本会随认领保存');}
 async function sync(){if(loading||playing||pruning.busy||watering.busy||waterQueue.length||(!treeId)||sandbox)return;loading=true;pruningAvailability();try{const data=await api('/'+treeId),initial=!record;record=data;offset=data.serverNow-Date.now();void recordVisit();$('share').hidden=false;$('retry').hidden=true;status();if(debug){resetSandbox();$('debug').hidden=false;}if(initial)replay();else paint();}catch(e){status(e.message||'暂时无法连接');$('retry').hidden=false;}finally{loading=false;cheatControls();pruningAvailability();}}
 $('retry').onclick=async()=>{try{await flushWater();status();$('retry').hidden=true;await sync();}catch(e){status(e.message||'暂时无法保存，请重试');}};
 let claimId=crypto.randomUUID();
@@ -151,7 +167,7 @@ function designFields(){
  $('design-variation').value=c.variation;$('design-density').value=c.density;
 }
 function changeSample(){
- if(!sandbox)return;stop();const before=sandbox.config,modern=treeVersion(sandbox)===CURRENT_VERSION;
+ if(!sandbox)return;stop();rememberDraft();const before=sandbox.config,modern=treeVersion(sandbox)===CURRENT_VERSION;
  const geometryChanged=before.preset!==$('preset').value||before.seed!==$('seed').value;
  if(modern){
   sandbox.config=normalizeDesign({...before,preset:$('preset').value,seed:$('seed').value,
@@ -164,8 +180,10 @@ function changeSample(){
 for(const key of ['crown','leaf','palette','variation','density'])$('design-'+key).onchange=changeSample;
 $('preset').onchange=changeSample;$('look').onchange=changeSample;$('seed').onchange=changeSample;
 $('random').onclick=()=>{$('seed').value=crypto.randomUUID();changeSample();};
-$('time').oninput=()=>{stop();hours=Number($('time').value);changed();paint();};
-document.querySelectorAll('[data-hours]').forEach(button=>button.onclick=()=>{stop();hours=Math.min(MAX_CHEAT_HOURS,hours+Number(button.dataset.hours));changed();debugFields();paint();});
+$('time').oninput=()=>{stop();rememberDraft();hours=Number($('time').value);changed();paint();};
+document.querySelectorAll('[data-hours]').forEach(button=>button.onclick=()=>{stop();rememberDraft();hours=Math.min(MAX_CHEAT_HOURS,hours+Number(button.dataset.hours));changed();debugFields();paint();});
+$('branch-timeline').onclick=()=>{stop();rememberDraft();sandbox=branchTimeline(sandbox,now());changed();debugFields();paint();cheatStatus('已移除这个时刻之后的操作，接下来的生长会按当前树形重新推演。可撤回。');};
+$('undo-draft').onclick=()=>{if(!draftUndo)return;stop();sandbox=draftUndo.record;hours=draftUndo.hours;draftUndo=null;changed();debugFields();paint();};
 $('replay').onclick=replay;
 $('reset').onclick=async()=>{
  if(loading||pruning.busy)return;

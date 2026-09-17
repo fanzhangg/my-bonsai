@@ -45,13 +45,15 @@ test('visible points and snap targets match at mobile and desktop sizes',()=>{
     assert.equal(pruningTarget([trunk,branch],new Set(['side']),chosen.point,scale,chosen,choices),null);
   }
 });
-test('points move away from trunk junctions and omit branches with no exposed cut point',()=>{
+test('points move away from trunk junctions and hidden branches retain a linked cut point',()=>{
   const trunk=straight('trunk','trunk',0,-100,0,100),side=straight('side','primary',0,0,40,0);
   const choices=pruningPoints([trunk,side],new Set(),.55);
   assert.equal(choices.length,1);
   assert.ok(choices[0].point.x>pointOn(side,.22).x);
   assert.equal(pruningTarget([trunk,side],new Set(),choices[0].point,.55)?.node.id,'side');
-  assert.deepEqual(pruningPoints([trunk,straight('short','primary',0,0,2,0)]),[]);
+  const hidden=straight('short','primary',0,0,2,0),[choice]=pruningPoints([trunk,hidden]);
+  assert.deepEqual(choice.anchor,pointOn(hidden,.62));
+  assert.equal(pruningTarget([trunk,hidden],new Set(),choice.point)?.node.id,'short');
   assert.deepEqual(pruningPoints([{...side,growth:0}]),[]);
 });
 test('nearest visible point wins when moving between adjacent branches',()=>{

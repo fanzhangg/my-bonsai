@@ -29,17 +29,19 @@ class Element extends EventTarget {
 }
 function fire(el,type,details={}){const event=new Event(type,{cancelable:true});Object.assign(event,{button:0,pointerId:1,pointerType:'mouse',clientX:736,clientY:530,...details});el.dispatchEvent(event);}
 const settled=()=>new Promise(resolve=>setImmediate(resolve));
-function setup(t,{fail=false}={}){
+function setup(t,{fail=false,hidden=false}={}){
   const win=new Element(),doc=new Element();doc.createElement=tag=>new Element(tag);doc.createElementNS=(_,tag)=>new Element(tag);
   const globals={window:win,document:doc,matchMedia:()=>({matches:true}),getComputedStyle:()=>({transform:'none',getPropertyValue:()=> '0px'}),ResizeObserver:class{observe(){}},DOMPoint:class{constructor(x,y){this.x=x;this.y=y;}matrixTransform(){return this;}}};
   for(const [key,value]of Object.entries(globals)){const previous=Object.getOwnPropertyDescriptor(globalThis,key);Object.defineProperty(globalThis,key,{value,configurable:true});t.after(()=>previous?Object.defineProperty(globalThis,key,previous):delete globalThis[key]);}
   const scene=new Element(),treeElement=new Element(),svg=new Element('svg'),tool=new Element('button'),message=new Element('p');
   scene.append(tool);scene.append(message);treeElement.append(svg);
   const branch={id:'side',role:'primary',x:100,y:100,cx1:160,cy1:100,cx2:240,cy2:100,ex:300,ey:100,width:10,tipWidth:4,growth:1};
+  const trunk={id:'trunk',role:'trunk',x:100,y:0,cx1:100,cy1:66,cx2:100,cy2:133,ex:100,ey:200,width:80,tipWidth:80,growth:1};
+  if(hidden)Object.assign(branch,{cx1:101,cx2:102,ex:103,pruningLevel:2});
   const wood=new Element('path');wood.setAttribute('data-wind-wood',0);svg.append(wood);
   const commits=[],busy=[],errors=[];
   const pruning=createPruning({scene,treeElement,tool,message,onCommit:async id=>{if(fail)throw new Error('offline');commits.push(id);},onBusyChange:value=>busy.push(value),onError:error=>errors.push(error)});
-  pruning.refresh({nodes:[branch]});pruning.setActive(true);
+  pruning.refresh({nodes:hidden?[branch,trunk]:[branch]});pruning.setActive(true);
   const markers=scene.querySelector('.pruning-points');
   const point=()=>({clientX:parseFloat(markers.children[0].style.left),clientY:parseFloat(markers.children[0].style.top)});
   const pickup=(type='mouse')=>{fire(tool,'pointerdown',{pointerType:type});fire(win,'pointerup',{pointerType:type});};
@@ -76,6 +78,21 @@ test('Escape, interrupted drag and blank release clear points and never commit',
   assert.equal(h.pruning.busy,false);
   fire(h.tool,'pointerdown');fire(h.win,'pointerup',{clientX:700,clientY:400});await settled();
   assert.deepEqual(h.commits,[]);assert.equal(h.pruning.busy,false);
+});
+
+test('a secondary branch fully behind the trunk can be tapped through its callout and its outline is cleared',async t=>{
+  const h=setup(t,{hidden:true});h.pickup('touch');
+  assert.equal(h.markers.children.length,1);assert.equal(h.markers.querySelectorAll('.pruning-leader').length,1);
+  const point=h.point();fire(h.win,'pointerdown',{...point,pointerType:'touch'});
+  assert.match(h.message.textContent,/二级侧枝/);assert.equal(h.svg.querySelectorAll('.pruning-outline').length,1);
+  fire(h.win,'pointerup',{...point,pointerType:'touch'});await settled();
+  assert.deepEqual(h.commits,['side']);assert.equal(h.svg.querySelectorAll('.pruning-outline').length,0);
+});
+
+test('keyboard can select and cut a fully occluded branch',async t=>{
+  const h=setup(t,{hidden:true});fire(h.tool,'keydown',{key:' '});fire(h.tool,'keydown',{key:'ArrowRight'});
+  assert.match(h.message.textContent,/二级侧枝 1，共 1 根/);
+  fire(h.tool,'keydown',{key:' '});await settled();assert.deepEqual(h.commits,['side']);
 });
 
 test('secondary touches cannot pick up, move, cancel or drop the primary scissors gesture',async t=>{

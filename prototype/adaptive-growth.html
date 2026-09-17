@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>剪后新生 · 盆栽生长原型</title><link rel="stylesheet" href="./adaptive-growth.css"></head>
+<body>
+<main>
+  <header class="page-header"><a class="wordmark" href="./adaptive-growth.html">盆栽 <span>／ 生长研究</span></a><span class="review-tag"><i></i> 交互原型 · 本地保存</span></header>
+  <section class="intro"><div><p class="eyebrow">AFTER THE CUT · 01</p><h1>剪下之后，<br class="mobile-break">还有新的可能。</h1><p class="subtitle">留住喜欢的枝，给新的生长腾出空间。</p></div><p class="intro-note">每一根新枝，<br>都从当下的树形出发。</p></section>
+  <div class="workspace">
+    <section class="studio" aria-label="剪枝画布">
+      <div class="studio-top"><div class="preset-tabs" role="group" aria-label="选择树形"><button data-preset="juniper" aria-pressed="true">真柏</button><button data-preset="literati" aria-pressed="false">文人松</button><button data-preset="broom" aria-pressed="false">榉树</button></div><span class="elapsed" id="elapsed">第 0 天 · 00:00</span></div>
+      <div class="scene" id="scene"><div id="tree"></div><div id="markers"></div><span class="scene-label" id="scene-label">你的树 · 可修剪</span><div class="legend"><i></i> 新枝正在生长</div></div>
+      <div class="canvas-caption"><span id="hint">点击枝条上的圆点，剪去这根枝。</span><button class="text-button" id="undo" disabled>撤回上一步 ↶</button></div>
+      <div class="timeline"><button id="play" class="play-button" aria-pressed="false"><span>▶</span> 自动生长</button><div class="time-steps"><button data-hours="1">+1 小时</button><button data-hours="6">+6 小时</button><button data-hours="24">+1 天</button><button data-hours="72">+3 天</button></div><span class="speed-note">自动：每秒 2 小时</span></div>
+    </section>
+    <aside>
+      <section class="panel status-panel"><div class="panel-heading"><h2>生长中的层次</h2><span class="small-label">LIVE</span></div><p class="panel-copy">某层剪稀了，会独立萌芽补枝。</p><div id="zones"></div><div class="totals"><div><strong id="branch-count">0</strong><span>可剪侧枝</span></div><div><strong id="new-count">0</strong><span>新生枝条</span></div><div><strong id="cut-count">0</strong><span>次修剪</span></div></div></section>
+      <section class="panel"><h2>试试不同的剪法</h2><p class="panel-copy">剪空一层，再快进一天，看它如何回应。</p><div class="scenario-buttons"><button id="clear-zone">剪空下层 <span>↗</span></button><button id="clear-all">剪空所有侧枝 <span>↗</span></button></div><label class="switch-row"><span>细枝修剪 <small>也可选择二级枝</small></span><input type="checkbox" id="fine"></label><label class="switch-row"><span>查看未修剪对照 <small>同一种子 · 同一时刻</small></span><input type="checkbox" id="compare"></label><label class="switch-row"><span>只看枝干结构</span><input type="checkbox" id="skeleton"></label></section>
+      <section class="panel journal"><div class="panel-heading"><h2>这棵树的变化</h2><span class="small-label" id="log-count">观察记录</span></div><ol id="journal"></ol></section>
+    </aside>
+  </div>
+  <footer><p>主干保留，侧枝持续更新。新芽约 1 小时出现，侧枝约 10 小时后可剪。<br>这是玩法验证原型，尚未接入正式盆栽与云端保存。</p><div><button class="text-button" id="new-seed">换一棵树 ↗</button><button class="text-button" id="reset">重置这棵树</button></div></footer>
+  <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+</main><script type="module" src="./adaptive-growth.mjs"></script>
+</body></html>

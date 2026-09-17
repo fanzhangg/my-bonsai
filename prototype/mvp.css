@@ -28,6 +28,11 @@ body:has(#live-pruning.is-dragging) #stage{touch-action:none}
 #live-pruning button,#live-watering button{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;appearance:none}
 
 /* Keep mobile scenes inside the viewport; debug forms still need scrolling. */
+.debug-mode #live-pruning,.debug-mode #live-watering{position:absolute;top:0;bottom:auto;height:75svh}
+.debug-mode .copy{position:absolute}
+#growth-summary{line-height:1.8;opacity:1!important;color:#4f6d4e}
+#timeline-note{line-height:1.8}
+#branch-timeline{width:100%;margin-bottom:12px;background:#eef0df;font-size:12px}
 @media (max-width:600px), (hover:none) and (pointer:coarse){
   html:has(> body:not(.debug-mode)){height:100%;overflow:hidden;overscroll-behavior:none}
   body:not(.debug-mode){position:fixed;inset:0;height:100svh;height:100dvh;overflow:hidden;overscroll-behavior:none;touch-action:pinch-zoom}
