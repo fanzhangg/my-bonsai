@@ -27,7 +27,7 @@ function card(record,now){
  link.className='tree-card';link.href='/t/'+encodeURIComponent(record.id);
  link.setAttribute('aria-label',`探望${name}，编号 ${record.id.slice(0,8)}`);
  art.className='tree-art';art.setAttribute('aria-hidden','true');
- const caption=document.createElement('span');caption.className='tree-caption';caption.textContent=record.name||'未命名盆栽';
+ const caption=document.createElement('span');caption.className='tree-caption';caption.textContent=record.name||'';
  link.append(art,caption);item.append(link);
  return {item,art,render(){try{art.innerHTML=draw(snapshot(record,now),{transparent:false,id:`gallery-${record.id}`});const svg=art.firstElementChild;
   // Gallery paper is a presentation override; published tree renderers stay unchanged.
