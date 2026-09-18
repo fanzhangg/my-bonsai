@@ -4,7 +4,7 @@ import {LOOKS,lookFor} from './core/v1/appearance.mjs';
 import {grow,snapshot,HOUR} from './growth.mjs';
 import {treeVersion,CURRENT_VERSION} from './tree-versions.mjs';
 import {validateDesign} from './core/v3/config.mjs';
-import {canPrune} from './pruning-model.mjs';
+import {canPrune,CUT_MODELS} from './pruning-model.mjs';
 
 export const MAX_CHEAT_HOURS=24*365*100;
 export const MAX_CHEAT_CUTS=4096;
@@ -18,7 +18,7 @@ const fail=(status,message)=>{throw Object.assign(new Error(message),{status});}
 export function cheatRequest(record,hours){
  return {revision:record.revision??0,preset:record.config.preset,seed:record.config.seed,
   look:lookFor(record.config.appearance)?.id??null,hours,
-  ...(treeVersion(record)===CURRENT_VERSION?{design:Object.fromEntries(['crown','leaf','palette','variation','density'].map(key=>[key,record.config[key]]))}:{}),
+  ...(treeVersion(record)===CURRENT_VERSION?{design:Object.fromEntries(['crown','leaf','palette','variation','density','growthPolicy'].map(key=>[key,record.config[key]]))}:{}),
   waterings:(record.waterings??[]).map(w=>({id:w.id,used:w.used,recoveryHours:w.recoveryHours??0,hour:(w.at-record.createdAt)/HOUR})),
   cuts:(record.cuts??[]).map(c=>({id:c.id,branchId:c.branchId,hour:(c.at-record.createdAt)/HOUR,...(c.model?{model:c.model}:{})}))};
 }
@@ -35,13 +35,13 @@ export function applyCheat(record,body,at){
  const modern=treeVersion(record)===CURRENT_VERSION;
  const config=modern?validateDesign({...record.config,...body.design,preset:body.preset,seed:body.seed}):{...record.config,...normalize({...record.config,preset:body.preset,seed:body.seed,appearance:look??record.config.appearance})};
  const createdAt=at-body.hours*HOUR;
- const geometryChanged=record.config.preset!==config.preset||record.config.seed!==config.seed||(modern&&(record.config.variation!==config.variation||record.config.density!==config.density));
+ const geometryChanged=record.config.preset!==config.preset||record.config.seed!==config.seed||(modern&&(record.config.variation!==config.variation||record.config.density!==config.density||record.config.growthPolicy!==config.growthPolicy));
  if(geometryChanged&&body.cuts.length)fail(400,'更换树形、种子或枝干参数后须清空剪枝记录');
  const branches=new Set(grow({version:record.version,config,cuts:[]},1).nodes.filter(n=>n.role==='primary').map(n=>n.id));
  const ids=new Set(),cuts=body.cuts.map((cut,i)=>{
   if(!cut||!uuid(cut.id)||ids.has(cut.id)||typeof cut.branchId!=='string'||cut.branchId.length>100||!validHour(cut.hour))fail(400,'无效剪枝记录');
   ids.add(cut.id);
-  if(cut.model!==undefined&&cut.model!=='state-1')fail(400,'无效剪枝算法');
+  if(cut.model!==undefined&&!CUT_MODELS.includes(cut.model))fail(400,'无效剪枝算法');
   return {id:cut.id,seq:i+1,branchId:cut.branchId,at:createdAt+cut.hour*HOUR,...(cut.model?{model:cut.model}:{})};
  });
  // Regrown branches are created by earlier cuts, so validate their identities
@@ -62,7 +62,7 @@ export function applyCheat(record,body,at){
   unchangedPrefix=unchangedPrefix&&Boolean(old&&old.id===cut.id&&old.branchId===cut.branchId&&old.model===cut.model&&Math.abs((old.at-record.createdAt)-(cut.at-createdAt))<1);
   const relativeWater=(items,origin,until)=>items.filter(w=>w.at-origin<=until).map(w=>[w.id,w.at-origin,w.amount,w.recoveryHours??0]);
   const persisted=unchangedPrefix&&JSON.stringify(relativeWater(record.waterings??[],record.createdAt,cut.at-createdAt))===JSON.stringify(relativeWater(waterings,createdAt,cut.at-createdAt));
-  if(modern&&!persisted&&cut.model!=='state-1')fail(400,'新的剪枝记录需要当前生长算法');
+  if(modern&&!persisted&&!CUT_MODELS.includes(cut.model))fail(400,'新的剪枝记录需要当前生长算法');
   if(modern?!persisted&&!snapshot(history,cut.at).nodes.some(n=>n.id===cut.branchId&&canPrune(n)):!branches.has(cut.branchId)&&!snapshot(history,cut.at).nodes.some(n=>n.id===cut.branchId&&n.role==='primary'&&n.growth>0))fail(400,'无效剪枝记录');
   history.cuts.push(cut);
  }

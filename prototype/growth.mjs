@@ -4,6 +4,7 @@ import {generate} from './core/v3/runtime.mjs';
 import {render} from './core/v3/growing-render.mjs';
 import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './tree-versions.mjs';
 import {applyRecovery,branchLevels} from './core/v3/regrowth.mjs';
+import {CUT_MODELS} from './pruning-model.mjs';
 export {HOUR,FRAME,profile,wateringProgress,wateringRecovery} from './core/v2/growth.mjs';
 // Historical callers without an explicit version remain on v2.
 export const VERSION=LEGACY_VERSION;
@@ -12,7 +13,7 @@ export function grow(record,p,options={}){
   if(treeVersion(record)===LEGACY_VERSION)return legacy.grow(record,p,options);
   const at=options.at??Infinity,events=[...(record.cuts??[])].sort((a,b)=>a.at-b.at||a.seq-b.seq);
   const hasOldGenerations=events.some(c=>c.branchId.startsWith('regrow:'));
-  const firstAdaptive=hasOldGenerations?events.findIndex(c=>c.model==='state-1'):-1;
+  const firstAdaptive=hasOldGenerations?events.findIndex(c=>CUT_MODELS.includes(c.model)):-1;
   let tree;
   if(hasOldGenerations&&(firstAdaptive<0||at<events[firstAdaptive].at)){
    // Historical v3 replacement IDs remain replayable; migrate only when the
@@ -31,10 +32,10 @@ export function grow(record,p,options={}){
   tree.engineVersion=CURRENT_VERSION;tree.viewBox=tree.applicationFrame;
   return tree;
 }
-export function snapshot(record,at=Date.now()){
+export function snapshot(record,at=Date.now(),options={}){
   if(treeVersion(record)===LEGACY_VERSION)return legacy.snapshot(record,at);
   const {days,initial}=legacy.profile(record),p=Math.max(0,Math.min(1,initial+(at-record.createdAt)/(days*24*legacy.HOUR)*(1-initial)+legacy.wateringProgress(record,at)));
-  return grow(record,p,{at});
+  return grow(record,p,{...options,at});
 }
 export function applicationFrame(tree){return tree.engineVersion===CURRENT_VERSION?tree.viewBox:{x:tree.root.x-300,y:tree.root.y-420,width:640,height:620};}
 export function draw(tree,{transparent=false,viewBox=tree.viewBox,id='growing-tree'}={}){

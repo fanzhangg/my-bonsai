@@ -9,7 +9,7 @@ import {grow as oldGrow} from '../prototype/core/v2/growth.mjs';
 import {generate} from '../prototype/core/v3/runtime.mjs';
 import {normalizeDesign,FORMS} from '../prototype/core/v3/config.mjs';
 import {CURRENT_VERSION} from '../prototype/tree-versions.mjs';
-import {branchFamily,canPrune,pruningPoints,pruningTarget} from '../prototype/pruning-model.mjs';
+import {branchFamily,canPrune,pruningPoints,pruningTarget,CUT_MODEL} from '../prototype/pruning-model.mjs';
 import {applyCheat,cheatRequest,branchTimeline,futureOperations} from '../prototype/cheats.mjs';
 import {createServer} from '../server.mjs';
 import {openStore} from '../storage.mjs';
@@ -119,14 +119,25 @@ test('API accepts secondary cuts, rejects finer wood and keeps retries idempoten
  const r={...recordFor(),id:randomUUID(),createdAt:Date.now()-matureAt},frame=snapshot(r);await store.mutate(r.id,()=>r);
  const post=async body=>{const response=await fetch(`http://127.0.0.1:${server.address().port}/api/trees/${r.id}/cuts`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:response.status,data:await response.json()};};
  const body={id:randomUUID(),branchId:frame.nodes.find(n=>n.pruningLevel===2&&canPrune(n)).id};
- const [a,b]=await Promise.all([post(body),post(body)]);assert.equal(a.status,200);assert.equal(b.status,200);assert.deepEqual(a.data.cuts,b.data.cuts);assert.equal(a.data.cuts[0].model,'state-1');
+ const [a,b]=await Promise.all([post(body),post(body)]);assert.equal(a.status,200);assert.equal(b.status,200);assert.deepEqual(a.data.cuts,b.data.cuts);assert.equal(a.data.cuts[0].model,CUT_MODEL);
+ const quiet=snapshot(a.data,a.data.serverNow);assert(!quiet.nodes.some(n=>n.recoveryCut===body.id),'at the lower bound, no immediate replacement');
+ const parent=frame.nodes.find(n=>n.id===body.branchId).parent;
+ const secondId=randomUUID(),second=await post({id:secondId,branchId:quiet.nodes.find(n=>n.parent===parent&&canPrune(n)).id});assert.equal(second.status,200);
+ const sparse=snapshot(second.data,second.data.serverNow);assert(!sparse.nodes.some(n=>n.recoveryCut===secondId));
+ const waiting=sparse.recovery.find(j=>j.key===parent);assert(waiting);
+ const later=second.data.serverNow+(waiting.hours+8)*HOUR;
+ const fresh=snapshot(second.data,later).nodes.find(n=>n.parent===parent&&n.regrown);assert(fresh&&canPrune(fresh));
+ assert.equal((await post({id:randomUUID(),branchId:fresh.id})).status,409,'a future branch cannot be cut early');
+ const advanced=applyCheat(second.data,cheatRequest(second.data,(later-second.data.createdAt)/HOUR),Date.now());
+ await store.mutate(r.id,()=>advanced);
+ const recut=await post({id:randomUUID(),branchId:fresh.id});assert.equal(recut.status,200);assert(!snapshot(recut.data,recut.data.serverNow).nodes.some(n=>n.id===fresh.id));
  assert.equal((await post({id:randomUUID(),branchId:frame.nodes.find(n=>n.pruningLevel===3).id})).status,409);
  const reopened=await openStore({url:'',file:path.join(dir,'trees.json')});t.after(()=>reopened.close());const persisted=await reopened.get(r.id);
  assert(!snapshot(persisted).nodes.some(n=>n.id===body.branchId));
  let time=250*HOUR;
  for(let cycle=0;cycle<20;cycle++){
   const frame=snapshot(persisted,persisted.createdAt+time);
-  for(const n of frame.nodes.filter(n=>n.pruningLevel===1))cut(persisted,n,persisted.createdAt+time);
+  for(const n of frame.nodes.filter(n=>n.pruningLevel===1&&canPrune(n)))cut(persisted,n,persisted.createdAt+time);
   time+=72*HOUR;
  }
  const longBody=JSON.stringify(cheatRequest(persisted,time/HOUR));assert(Buffer.byteLength(longBody)>8192);

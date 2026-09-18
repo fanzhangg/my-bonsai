@@ -7,8 +7,10 @@ import * as runtime from '/runtime-config.mjs';
 import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './tree-versions.mjs';
 import {FORMS,CROWNS,LEAVES,PALETTES} from './core/v3/bonsai-language.mjs';
 import {normalizeDesign} from './core/v3/config.mjs';
+import {NATURAL_GROWTH} from './core/v3/natural-growth.mjs';
 import {cheatRequest,MAX_CHEAT_HOURS,futureOperations,branchTimeline} from './cheats.mjs';
-import {canPrune} from './pruning-model.mjs';
+import {canPrune,CUT_MODEL} from './pruning-model.mjs';
+import {growthStatus} from './growth-status.mjs';
 import {startWeather} from './weather.mjs';
 import {startWind} from './wind.mjs';
 import {createVisitors} from './visitors.mjs';
@@ -52,7 +54,7 @@ const pruning=createPruning({
  scene:$('live-pruning'),treeElement:$('stage'),tool:$('pruning-scissors'),message:$('pruning-message'),
  onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);watering.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);},
  onCommit:async branchId=>{
-  if(sandbox){rememberDraft();sandbox.cuts.push({id:crypto.randomUUID(),seq:sandbox.cuts.length+1,at:now(),branchId,...(treeVersion(sandbox)===CURRENT_VERSION?{model:'state-1'}:{})});changed();return;}
+  if(sandbox){rememberDraft();sandbox.cuts.push({id:crypto.randomUUID(),seq:sandbox.cuts.length+1,at:now(),branchId,...(treeVersion(sandbox)===CURRENT_VERSION?{model:CUT_MODEL}:{})});changed();return;}
   const body={id:crypto.randomUUID(),branchId};
   let data;
   // A network retry must reuse the same operation ID: never cut twice.
@@ -118,7 +120,7 @@ function paint(tree=snapshot(current(),now())){
   const future=futureOperations(current(),now()),first=tree.nodes.filter(n=>canPrune(n)&&n.pruningLevel!==2).length,second=tree.nodes.filter(n=>canPrune(n)&&n.pruningLevel===2).length;
   $('timeline-note').textContent=future?`当前时刻之后还有 ${future} 次剪枝或浇水。回看不改变历史；要在此处重新修剪，请先从这里继续。`:'剪枝与浇水作用于当前预览时刻；快进可观察局部恢复。';
   $('branch-timeline').hidden=!future;
-  $('growth-summary').textContent=`可剪一级侧枝 ${first} 根${tree.engineVersion===CURRENT_VERSION?` · 二级侧枝 ${second} 根`:''}${tree.recovery?.length?` · ${tree.recovery.length} 处正在准备新生长`:' · 当前没有待萌芽区域'}`;
+  $('growth-summary').textContent=`可剪一级侧枝 ${first} 根${tree.engineVersion===CURRENT_VERSION?` · 二级侧枝 ${second} 根`:''} · ${growthStatus(tree)}`;
   $('info').textContent=`${record.id||'未认领样本'}\n${current().version??VERSION}\n基础树形成熟 ${(tree.progress*100).toFixed(1)}% · 剪枝历史 ${current().cuts.length} 次\n${playing?'当前树形回放中':'预览已暂停，快进时间继续生长'}`;
  }
 }
@@ -131,7 +133,7 @@ $('retry').onclick=async()=>{try{await flushWater();status();$('retry').hidden=t
 let claimId=crypto.randomUUID();
 function showPreview(){
  stop();sandbox=undefined;offset=0;hours=0;dirty=false;
- record={version:newTreeVersion,createdAt:Date.now(),config:configForClaim(claimId,newTreeVersion),cuts:[]};
+ record={version:newTreeVersion,createdAt:Date.now(),config:configForClaim(claimId,newTreeVersion,runtime.newGrowthPolicy),cuts:[]};
  $('welcome').hidden=false;$('regenerate').hidden=false;status();
  if(debug){resetSandbox();$('debug').hidden=false;}
  replay();
@@ -145,7 +147,7 @@ $('claim').onclick=async()=>{
  if([...$('claim-name').value.trim()].length>30){status('盆栽名称最多 30 个字符');$('claim-name').focus();return;}
  loading=true;cheatControls();pruningAvailability();status();
  try{
-  const data=await api('',{id:claimId,name:$('claim-name').value.trim(),version:record.version,...(sandbox?{cheat:cheatRequest(sandbox,hours)}:{})});
+  const data=await api('',{id:claimId,name:$('claim-name').value.trim(),version:record.version,growthPolicy:record.config.growthPolicy,...(sandbox?{cheat:cheatRequest(sandbox,hours)}:{})});
   treeId=data.id;record=data;showName();offset=data.serverNow-Date.now();
   void recordVisit();
   history.pushState(null,'','/t/'+treeId+(debug?'?cheat=1':''));
@@ -179,7 +181,7 @@ function changeSample(){
    crown:$('design-crown').value,leaf:$('design-leaf').value,palette:$('design-palette').value,
    variation:Number($('design-variation').value),density:Number($('design-density').value)});
  }else{const pot=before.pot;sandbox.config=normalize({...before,preset:$('preset').value,seed:$('seed').value,appearance:LOOKS.find(l=>l.id===$('look').value)});if(pot)sandbox.config.pot=pot;}
- if(geometryChanged||(modern&&(before.variation!==sandbox.config.variation||before.density!==sandbox.config.density)))sandbox.cuts=[];
+ if(geometryChanged||(modern&&(before.variation!==sandbox.config.variation||before.density!==sandbox.config.density))){sandbox.cuts=[];if(modern)sandbox.config.growthPolicy=NATURAL_GROWTH;}
  designFields();changed();paint();
 }
 for(const key of ['crown','leaf','palette','variation','density'])$('design-'+key).onchange=changeSample;

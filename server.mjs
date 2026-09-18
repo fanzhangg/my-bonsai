@@ -8,7 +8,8 @@ import {WATER_CAPACITY,WATERING_RULES,wateringAmount} from './prototype/watering
 import {configForClaim} from './prototype/claim.mjs';
 import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './prototype/tree-versions.mjs';
 import {applyCheat} from './prototype/cheats.mjs';
-import {canPrune} from './prototype/pruning-model.mjs';
+import {canPrune,CUT_MODEL} from './prototype/pruning-model.mjs';
+import {NATURAL_GROWTH,NATURAL_GROWTH_POLICIES} from './prototype/core/v3/natural-growth.mjs';
 import {coordinates,weatherAt} from './weather-service.mjs';
 import {activity,activityKey,GALLERY_LIMIT,GALLERY_PAGE_SIZE,GALLERY_SORTS} from './activity.mjs';
 import {publicOrigin,shareMetadata,createShareImageCache} from './share-preview.mjs';
@@ -25,7 +26,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
       if(url.pathname==='/runtime-config.mjs'){
         if(req.method!=='GET')fail(405,'不支持的操作');
         res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
-        return res.end(`export const realtimeWeatherEnabled=${Boolean(realtimeWeatherEnabled)};\nexport const newTreeVersion=${JSON.stringify(newTreeVersion)};`);
+        return res.end(`export const realtimeWeatherEnabled=${Boolean(realtimeWeatherEnabled)};\nexport const newTreeVersion=${JSON.stringify(newTreeVersion)};\nexport const newGrowthPolicy=${JSON.stringify(newTreeVersion===CURRENT_VERSION?NATURAL_GROWTH:null)};`);
       }
       if(url.pathname==='/healthz'){await store.health();return send(200,{ok:true});}
       if(url.pathname==='/api/weather'){
@@ -94,7 +95,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
             if(existing){if(existing.branchId!==body.branchId)fail(409,'剪枝请求已使用');return old;}
             const at=Date.now(),branch=snapshot(old,at).nodes.find(n=>n.id===body.branchId);
             if(!canPrune(branch)||branch.growth<=0)fail(409,'这根枝条无法修剪');
-            return {...old,lastInteractedAt:at,revision:(old.revision??0)+1,cuts:[...old.cuts,{id:body.id,seq:old.cuts.length+1,at,branchId:branch.id,...(old.version===CURRENT_VERSION?{model:'state-1'}:{})}]};
+            return {...old,lastInteractedAt:at,revision:(old.revision??0)+1,cuts:[...old.cuts,{id:body.id,seq:old.cuts.length+1,at,branchId:branch.id,...(old.version===CURRENT_VERSION?{model:CUT_MODEL}:{})}]};
           });
           return send(200,result(tree));
         }
@@ -104,9 +105,10 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
             if(old)return old;
             // Older open homepages omit the version; preserve their preview.
             const version=treeVersion({version:body.version??LEGACY_VERSION});
+            if(body.growthPolicy!=null&&!NATURAL_GROWTH_POLICIES.includes(body.growthPolicy))fail(400,'无效生长规则');
             if(body.name!==undefined&&typeof body.name!=='string')fail(400,'无效盆栽名称');
             const name=(body.name??'').trim();if([...name].length>30||/[\u0000-\u001f\u007f]/u.test(name))fail(400,'盆栽名称最多 30 个字符，不能包含换行或控制字符');
-            const at=Date.now(),record={id:body.id,name,version,createdAt:at,config:configForClaim(body.id,version),cuts:[],revision:0};
+            const at=Date.now(),record={id:body.id,name,version,createdAt:at,config:configForClaim(body.id,version,body.growthPolicy),cuts:[],revision:0};
             return body.cheat===undefined?record:applyCheat(record,body.cheat,at);
           });
           return send(201,result(tree));

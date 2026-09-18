@@ -1,12 +1,14 @@
 import {snapshot,draw,HOUR} from './growth.mjs';
 import {CURRENT_VERSION} from './tree-versions.mjs';
 import {normalizeDesign} from './core/v3/config.mjs';
+import {NATURAL_GROWTH} from './core/v3/natural-growth.mjs';
 
 import {createPruning} from './pruning.mjs';
+import {CUT_MODEL} from './pruning-model.mjs';
 
 export function createPruningReview(){
   const $=id=>document.getElementById(id);
-  const record={version:CURRENT_VERSION,createdAt:0,cuts:[],config:normalizeDesign({preset:'juniper',seed:'DESIGN-SYSTEM-01'})};
+  const record={version:CURRENT_VERSION,createdAt:0,cuts:[],config:normalizeDesign({preset:'juniper',seed:'DESIGN-SYSTEM-01',growthPolicy:NATURAL_GROWTH})};
   let at=7*24*HOUR;
   const controls=document.createElement('div');controls.className='pruning-review-controls';
   const advance=document.createElement('button'),reset=document.createElement('button');
@@ -18,8 +20,8 @@ export function createPruningReview(){
     review.refresh(tree);
   }
   const review=createPruning({scene:$('pruning-scene'),treeElement:$('pruning-tree'),tool:$('pruning-scissors'),message:$('pruning-message'),
-    onCommit:async branchId=>{record.cuts.push({id:crypto.randomUUID(),seq:record.cuts.length+1,at,branchId});},
-    onBusyChange:busy=>{advance.disabled=reset.disabled=busy;},onSettled:paint});
+    onCommit:async branchId=>{record.cuts.push({id:crypto.randomUUID(),seq:record.cuts.length+1,at,branchId,model:CUT_MODEL});},
+    onBusyChange:busy=>{advance.disabled=reset.disabled=busy;},onSettled:()=>paint()});
   advance.addEventListener('click',()=>{if(review.busy)return;at+=8*HOUR;paint();});
   reset.addEventListener('click',()=>{if(review.busy)return;at=7*24*HOUR;record.cuts=[];paint();});
   paint();return review;

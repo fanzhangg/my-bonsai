@@ -1,4 +1,6 @@
 import {pointOn} from './core/v1/model.mjs';
+export const CUT_MODEL='state-8';
+export const CUT_MODELS=['state-1','state-2','state-3','state-4','state-5','state-6','state-7',CUT_MODEL];
 
 // v3 explicitly annotates structural levels; old trees retain primary-only cuts.
 export function canPrune(node){
