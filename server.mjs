@@ -37,16 +37,17 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
       if(url.pathname.startsWith('/api/')){
         if(url.pathname==='/api/gallery'){
           if(req.method!=='GET')fail(405,'不支持的操作');
+          const query=url.searchParams.get('q')?.trim()??'';if([...query].length>30)fail(400,'搜索名称最多 30 个字符');
           const sort=url.searchParams.get('sort')??'active';if(!GALLERY_SORTS.includes(sort))fail(400,'无效排序方式');
           let after=null;const cursor=url.searchParams.get('cursor');
           if(cursor!==null){
             try{if(cursor.length>512)throw new Error();after=JSON.parse(Buffer.from(cursor,'base64url').toString());}catch{fail(400,'无效分页');}
-            if(!after||after.sort!==sort||!uuid(after.id)||!Number.isSafeInteger(after.at)||after.at<=0||!Number.isInteger(after.count)||after.count<1||after.count>=GALLERY_LIMIT)fail(400,'无效分页');
+            if(!after||after.sort!==sort||(after.query??'')!==query||!uuid(after.id)||!Number.isSafeInteger(after.at)||after.at<=0||!Number.isInteger(after.count)||after.count<1||after.count>=GALLERY_LIMIT)fail(400,'无效分页');
           }
           const count=after?.count??0,pageSize=Math.min(GALLERY_PAGE_SIZE,GALLERY_LIMIT-count);
-          const records=await store.listGallery(sort,{after,limit:pageSize+1}),trees=records.slice(0,pageSize);
-          const last=trees.at(-1),nextCursor=records.length>pageSize&&count+trees.length<GALLERY_LIMIT?Buffer.from(JSON.stringify({sort,id:last.id,at:activity(last)[activityKey(sort)],count:count+trees.length})).toString('base64url'):null;
-          return send(200,{trees:trees.map(tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],...activity(tree)})),sort,limit:GALLERY_LIMIT,pageSize:GALLERY_PAGE_SIZE,nextCursor,serverNow:Date.now()});
+          const records=await store.listGallery(sort,{after,query,limit:pageSize+1}),trees=records.slice(0,pageSize);
+          const last=trees.at(-1),nextCursor=records.length>pageSize&&count+trees.length<GALLERY_LIMIT?Buffer.from(JSON.stringify({sort,query,id:last.id,at:activity(last)[activityKey(sort)],count:count+trees.length})).toString('base64url'):null;
+          return send(200,{trees:trees.map(tree=>({id:tree.id,name:tree.name??'',version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],...activity(tree)})),sort,limit:GALLERY_LIMIT,pageSize:GALLERY_PAGE_SIZE,nextCursor,serverNow:Date.now()});
         }
         const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts|cheats|visits|waterings))?)?$/);if(!route)fail(404,'找不到页面');
         const [,id,action]=route;if(id&&!uuid(id))fail(404,'找不到这盆树');
@@ -58,7 +59,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
           const bodyLimit=action==='cheats'||!id?1048576:8192;
           let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>bodyLimit)fail(413,'请求过大');chunks.push(chunk);}try{body=JSON.parse(Buffer.concat(chunks).toString());}catch{fail(400,'无效请求');}if(!body||Array.isArray(body)||typeof body!=='object')fail(400,'无效请求');
         }
-        const result=tree=>({id:tree.id,version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],wateringRules:WATERING_RULES,revision:tree.revision??0,serverNow:Date.now()});
+        const result=tree=>({id:tree.id,name:tree.name??'',version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],wateringRules:WATERING_RULES,revision:tree.revision??0,serverNow:Date.now()});
         if(req.method==='GET'&&id&&!action){const tree=await store.get(id);if(!tree)fail(404,'找不到这盆树，请检查链接');return send(200,result(tree));}
         if(req.method!=='POST')fail(405,'不支持的操作');
         if(action==='visits'){
@@ -103,7 +104,9 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
             if(old)return old;
             // Older open homepages omit the version; preserve their preview.
             const version=treeVersion({version:body.version??LEGACY_VERSION});
-            const at=Date.now(),record={id:body.id,version,createdAt:at,config:configForClaim(body.id,version),cuts:[],revision:0};
+            if(body.name!==undefined&&typeof body.name!=='string')fail(400,'无效盆栽名称');
+            const name=(body.name??'').trim();if([...name].length>30||/[\u0000-\u001f\u007f]/u.test(name))fail(400,'盆栽名称最多 30 个字符，不能包含换行或控制字符');
+            const at=Date.now(),record={id:body.id,name,version,createdAt:at,config:configForClaim(body.id,version),cuts:[],revision:0};
             return body.cheat===undefined?record:applyCheat(record,body.cheat,at);
           });
           return send(201,result(tree));

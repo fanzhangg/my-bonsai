@@ -6,7 +6,8 @@ export function shareVersion(record,at=Date.now()){
 }
 export function shareData(record,origin,at=Date.now()){
  const url=new URL('/t/'+record.id,origin).href;
- return {title:SHARE_TITLE,text:SHARE_TEXT,url,image:`${url}/share.png?v=${shareVersion(record,at)}`};
+ const name=typeof record.name==='string'?record.name.trim():'';
+ return {title:name?`${SHARE_TITLE}「${name}」`:SHARE_TITLE,text:SHARE_TEXT,url,image:`${url}/share.png?v=${shareVersion(record,at)}`};
 }
 export const invitation=data=>`${data.title}\n${data.text}\n${data.url}`;
 // Keep this synchronous so navigator.share is called during the user's click.

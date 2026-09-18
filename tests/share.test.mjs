@@ -9,7 +9,7 @@ import {createServer} from '../server.mjs';
 import {configForClaim} from '../prototype/claim.mjs';
 import {VERSION,HOUR,snapshot} from '../prototype/growth.mjs';
 import {shareData,invitation,nativeShareData,SHARE_TITLE,SHARE_TEXT} from '../prototype/share-data.mjs';
-import {renderShareImage,publicOrigin,createShareImageCache} from '../share-preview.mjs';
+import {renderShareImage,publicOrigin,createShareImageCache,shareMetadata} from '../share-preview.mjs';
 
 test('native invitations keep the tree link with or without supported photo sharing',()=>{
  const record={id:randomUUID(),revision:4},data=shareData(record,'https://bonsai.example/ignored',60000);
@@ -74,4 +74,18 @@ test('thumbnail rendering follows the actual seed, saved pot and growth state',(
  assert.notDeepEqual(young,renderShareImage({...record,config:configForClaim(randomUUID())},at));
  const cache=createShareImageCache();assert.strictEqual(cache(record,at),cache(record,at+1));
  assert.notDeepEqual(cache({...record,revision:1,config:configForClaim(randomUUID())},at),cache(record,at));
+});
+
+test('named trees use their name in invitations and safely escaped social titles',()=>{
+ const record={id:randomUUID(),name:'  小松 <芽> & "叶"  '};
+ const data=shareData(record,'https://garden.example');
+ assert.equal(data.title,SHARE_TITLE+'「小松 <芽> & "叶"」');
+ assert(invitation(data).startsWith(data.title+'\n'));
+ assert.equal(nativeShareData(data,null,{}).title,data.title);
+ const html=shareMetadata(record,'https://garden.example');
+ const title=SHARE_TITLE+'「小松 &lt;芽&gt; &amp; &quot;叶&quot;」';
+ assert(html.includes('<title>'+title+' · 一盆树</title>'));
+ assert(html.includes('property="og:title" content="'+title+'"'));
+ assert(html.includes('name="twitter:title" content="'+title+'"'));
+ for(const name of [undefined,'','   '])assert.equal(shareData({...record,name},'https://garden.example').title,SHARE_TITLE);
 });

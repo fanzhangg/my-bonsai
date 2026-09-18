@@ -1,13 +1,22 @@
-:root{color:#35483b;background:#faf9f3}
+:root{font-family:"Iowan Old Style","Palatino Linotype","Songti SC","STSong","SimSun",serif;color:#35483b;background:#faf9f3}
 *{box-sizing:border-box}body{margin:0}
 main{width:100%;margin:0;padding:0}
 .home-link{position:fixed;top:max(20px,env(safe-area-inset-top));left:max(20px,env(safe-area-inset-left));z-index:1;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;color:inherit;background:#faf9f3;text-decoration:none}
 .home-link svg{width:22px;height:22px}.home-link:hover{background:#e9eee4}.home-link:focus-visible{outline:2px solid #789080;outline-offset:4px}
 .gallery-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;list-style:none;padding:0;margin:0}
-.tree-card{display:block;color:inherit;text-decoration:none}
+.tree-card{position:relative;display:flex;flex-direction:column;height:100%;color:inherit;text-decoration:none;background:var(--card-paper,#e8dccb)}
 .tree-card:focus-visible{outline:2px solid #789080;outline-offset:4px;border-radius:8px}
 .tree-art{aspect-ratio:1;display:grid;place-items:center}
 .tree-art svg{display:block;width:100%;height:100%}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 @media(max-width:1000px){.gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#gallery-status{text-align:center;font-size:13px;margin:8px 20px 16px;color:#526454}
+.tree-caption{display:block;padding:12px 8% 20px;text-align:center;overflow-wrap:anywhere;font-size:16px;line-height:1.5;letter-spacing:.06em;color:var(--caption-ink,#706858);background:transparent;pointer-events:none}
+@media(max-width:650px){.tree-caption{font-size:14px}}
+
+#gallery-status:empty{display:none}
+
+#gallery-search{position:relative;display:flex;justify-content:center;padding:max(20px,env(safe-area-inset-top)) 0 16px}
+#gallery-search button{position:absolute;left:calc(50% + min(160px,calc(50vw - 80px)) + 8px);height:48px;padding:8px 10px;border:1px solid #68716d70;border-radius:12px;font:inherit;color:#68716d;background:transparent;cursor:pointer}
+#gallery-search button:focus-visible{outline:2px solid #78908070;outline-offset:3px}

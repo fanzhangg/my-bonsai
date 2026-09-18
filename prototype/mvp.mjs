@@ -41,6 +41,7 @@ function cheatControls(busy=pruning.busy||watering.busy||playing){
  $('save-cheat').disabled=busy||loading||!treeId||!dirty;
  $('undo-draft').disabled=busy||loading||!draftUndo;
  $('claim').disabled=busy||loading;
+ $('claim-name').disabled=loading;
  $('regenerate').disabled=busy||loading;
  $('share').disabled=busy||loading;
  if(!busy&&!loading)void sharing?.prepare();
@@ -106,7 +107,10 @@ const current=()=>sandbox||record;
 const now=()=>sandbox?sandbox.createdAt+hours*HOUR:Date.now()+offset;
 function status(text=''){$('status').textContent=text;$('status').hidden=!text;}
 async function api(path,body){const r=await fetch('/api/trees'+path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});const data=await r.json();if(!r.ok)throw Object.assign(new Error(data.error),{httpStatus:r.status});return data;}
+function showName(){const name=treeId?(record?.name??''):$('claim-name').value.trim();$('tree-name').textContent=name;$('tree-name').hidden=!name;}
+$('claim-name').addEventListener('input',showName);
 function paint(tree=snapshot(current(),now())){
+ showName();
  if(pruning.busy)return;weather.setTree(tree);$('stage').innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree)});
  pruning.refresh(tree);watering.refresh(tree);pruningAvailability();wind.refresh();visitors.refresh();visitors.setActive(true);
  if(debug){
@@ -138,10 +142,11 @@ $('regenerate').onclick=()=>{
 };
 $('claim').onclick=async()=>{
  if(loading||pruning.busy||watering.busy)return;
+ if([...$('claim-name').value.trim()].length>30){status('盆栽名称最多 30 个字符');$('claim-name').focus();return;}
  loading=true;cheatControls();pruningAvailability();status();
  try{
-  const data=await api('',{id:claimId,version:record.version,...(sandbox?{cheat:cheatRequest(sandbox,hours)}:{})});
-  treeId=data.id;record=data;offset=data.serverNow-Date.now();
+  const data=await api('',{id:claimId,name:$('claim-name').value.trim(),version:record.version,...(sandbox?{cheat:cheatRequest(sandbox,hours)}:{})});
+  treeId=data.id;record=data;showName();offset=data.serverNow-Date.now();
   void recordVisit();
   history.pushState(null,'','/t/'+treeId+(debug?'?cheat=1':''));
   $('welcome').hidden=true;$('regenerate').hidden=true;$('share').hidden=false;$('new-tree').hidden=false;$('exit').href='/t/'+treeId;

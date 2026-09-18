@@ -99,3 +99,25 @@ test('cursor follows activity order after a new visitor changes earlier ranking'
  assert.equal(second.nextCursor,null);
  assert.equal((await get('/api/gallery')).data.trees[0].id,records[27].id);
 });
+test('optional names persist, validate, remain immutable on retry, and search before pagination',async t=>{
+ const {post,get,store,file}=await fixture(t);
+ const id=randomUUID();
+ const claim=await post('/api/trees',{id,name:'  小松 Pine 🌿  '});
+ assert.equal(claim.status,201);assert.equal(claim.data.name,'小松 Pine 🌿');
+ assert.equal((await post('/api/trees',{id,name:'changed'})).data.name,'小松 Pine 🌿');
+ assert.equal((await get('/api/trees/'+id)).data.name,'小松 Pine 🌿');
+ for(const name of [42,null,'树'.repeat(31),'bad\nname'])assert.equal((await post('/api/trees',{id:randomUUID(),name})).status,400);
+ assert.equal((await post('/api/trees',{id:randomUUID(),name:'   '})).data.name,'');
+ assert.equal((await post('/api/trees',{id:randomUUID()})).data.name,'');
+ await post('/api/trees/'+id+'/visits');
+ for(let i=0;i<30;i++){const other=randomUUID();await store.mutate(other,()=>({id:other,name:i<26?'Pine '+i:'100%_树',version:VERSION,createdAt:1,config:configForClaim(other),cuts:[],lastVisitedAt:Date.now()+i}));}
+ const first=(await get('/api/gallery?q=pINE')).data;
+ assert.equal(first.trees.length,24);assert.ok(first.nextCursor);
+ const second=(await get('/api/gallery?q=pINE&cursor='+first.nextCursor)).data;
+ assert.equal(second.trees.length,3);assert.ok(second.trees.some(t=>t.id===id));
+ assert.equal((await get('/api/gallery?q=other&cursor='+first.nextCursor)).status,400);
+ assert.equal((await get('/api/gallery?q='+encodeURIComponent('100%_'))).data.trees.length,4);
+ assert.equal((await get('/api/gallery?q='+encodeURIComponent('小松'))).data.trees[0].name,'小松 Pine 🌿');
+ assert.equal((await get('/api/gallery?q=missing')).data.trees.length,0);
+ const reopened=await openStore({url:'',file});assert.equal((await reopened.get(id)).name,'小松 Pine 🌿');await reopened.close();
+});

@@ -1,0 +1,5 @@
+.text-input{box-sizing:border-box;display:block;width:min(320px,calc(100vw - 160px));height:48px;min-height:48px;min-width:0;border:1px solid #68716d70;border-radius:12px;padding:8px 12px;background:transparent;text-align:center;color:#68716d;font:400 18px/1.5 "Iowan Old Style","Palatino Linotype","Songti SC","STSong","SimSun",serif;letter-spacing:.06em;appearance:none}
+.text-input::placeholder{color:#68716d;opacity:1}
+.text-input:focus-visible{outline:2px solid #78908070;outline-offset:3px}
+.night .text-input,.night .text-input::placeholder{color:#c1c9c3}
+.night .text-input{border-color:#c1c9c370}

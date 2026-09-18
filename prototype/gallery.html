@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#faf9f3"><title>盆栽小院 · 一盆树</title><link rel="stylesheet" href="/gallery.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#faf9f3"><title>盆栽小院 · 一盆树</title><link rel="stylesheet" href="/gallery.css"><link rel="stylesheet" href="/text-input.css"></head>
 <body>
 <a class="home-link" href="/" aria-label="返回首页" title="返回首页"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18"/></svg></a>
 <main aria-label="盆栽小院">
-  <p id="gallery-status" class="sr-only" role="status" aria-live="polite">正在加载盆栽</p>
+  <form id="gallery-search" role="search"><label for="name-search" class="sr-only">搜索盆栽名字</label><input id="name-search" class="text-input" type="search" placeholder="搜索盆栽名字" autocomplete="off"><button type="submit">搜索</button></form>
+  <p id="gallery-status" role="status" aria-live="polite">正在加载盆栽</p>
   <ul id="gallery-grid" class="gallery-grid" aria-label="盆栽列表" aria-busy="true"></ul>
 </main>
 <script type="module" src="/gallery.mjs"></script>
