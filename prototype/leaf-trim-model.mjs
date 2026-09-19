@@ -225,14 +225,17 @@ export function shapeLeafPoint(p,shape){
 }
 // Each closure catches a small surface tuft. A pass does not tunnel through
 // every overlapping crown volume; another pass can reach what was underneath.
-export function snipNearEdge(group,catalog,point,reach){
+export function nearbyEdgeLeaves(edges,point,reach){
  // The crosshair must be close to the exposed part of a leaf, not merely
  // somewhere inside a leaf that also happens to touch the canopy silhouette.
  const nearby=new Set();
- for(const [leaf,points]of outerLeafEdges(group,catalog)){
+ for(const [leaf,points]of edges){
   if(points.some(p=>Math.hypot(p.x-point.x,p.y-point.y)<=reach))nearby.add(leaf);
  }
- return snipAt(group,catalog,point,reach,nearby);
+ return nearby;
+}
+export function snipNearEdge(group,catalog,point,reach,edges=outerLeafEdges(group,catalog)){
+ return snipAt(group,catalog,point,reach,nearbyEdgeLeaves(edges,point,reach));
 }
 export function snipTarget(group,catalog,point,reach,edge=outerLeaves(group,catalog)){
  const candidates=[];

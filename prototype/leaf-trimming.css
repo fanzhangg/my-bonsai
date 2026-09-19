@@ -5,19 +5,24 @@
 .leaf-layer:hover .leaf-layer-dot,.leaf-layer:focus .leaf-layer-dot{fill:#bc895b;stroke:#fff}
 .leaf-tool,.leaf-entry{padding:0!important;border:0!important;border-radius:50%;background:transparent!important;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;appearance:none}
 .leaf-tool{position:absolute;width:92px;height:112px;transform:translate(-50%,-50%)}
-.leaf-tool svg,.leaf-entry svg{width:56px;height:84px;overflow:visible;pointer-events:none}
+.leaf-tool svg,.leaf-entry svg{width:72px;height:108px;overflow:visible;pointer-events:none;transform:rotate(-18deg)}
 .leaf-entry{position:fixed;bottom:calc(48px + env(safe-area-inset-bottom));right:min(calc(254px + env(safe-area-inset-right)),calc(100vw - 112px));width:112px;height:112px;z-index:4}
 .debug-mode .leaf-entry{position:absolute;top:calc(75svh - 160px);bottom:auto}
-.leaf-floating{position:fixed;width:56px;height:84px;transform:translate(-50%,-6.666667%);transform-origin:50% 6.666667%;pointer-events:none;z-index:2}
+.leaf-floating{position:fixed;width:72px;height:108px;transform:translate(-50%,-6.666667%) rotate(-18deg);transform-origin:50% 6.666667%;pointer-events:none;z-index:2}
 .leaf-floating svg{width:100%;height:100%;overflow:visible}
 .leaf-blade-a{transform-box:view-box;transform-origin:0 -28px;transform:rotate(-10deg)}.leaf-blade-b{transform-box:view-box;transform-origin:0 -28px;transform:rotate(10deg)}
-.is-snipping .leaf-blade-a{animation:leaf-snip-a var(--leaf-snip-duration,190ms) ease-in-out}.is-snipping .leaf-blade-b{animation:leaf-snip-b var(--leaf-snip-duration,190ms) ease-in-out}
+.is-in-range .leaf-blade-a{animation:leaf-ready-a 480ms ease-in-out infinite}.is-in-range .leaf-blade-b{animation:leaf-ready-b 480ms ease-in-out infinite}
+.is-snipping .leaf-blade-a{animation:leaf-snip-a var(--leaf-snip-duration,160ms) ease-in-out}.is-snipping .leaf-blade-b{animation:leaf-snip-b var(--leaf-snip-duration,160ms) ease-in-out}
 .leaf-tool .leaf-cut-point,.leaf-entry .leaf-cut-point{display:none}
 .leaf-floating .leaf-cut-point>circle:first-child{fill:transparent;stroke-width:1}
 .leaf-floating .leaf-cut-point>circle:last-child{r:.7;opacity:.75}
 .leaf-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .leaf-editing{overflow:hidden!important}.leaf-editor button:focus-visible{outline:2px solid #bc895b;outline-offset:3px}
 @keyframes leaf-snip-a{40%,55%{transform:rotate(0)}}@keyframes leaf-snip-b{40%,55%{transform:rotate(0)}}
+@keyframes leaf-ready-a{0%,100%{transform:rotate(-24deg)}45%,60%{transform:rotate(0)}}
+@keyframes leaf-ready-b{0%,100%{transform:rotate(24deg)}45%,60%{transform:rotate(0)}}
+.night [data-tool-shape] [stroke="#394f43"],.night [data-tool-shape] [stroke="#486252"]{stroke:#a8c0a5}
+.night .leaf-cut-point circle,.night .leaf-cut-point path{stroke:#ead8b1}
 @media(prefers-reduced-motion:reduce){.leaf-editor *{transition:none!important;animation:none!important}}
 
 .leaf-falling{position:fixed;pointer-events:none;z-index:1}.leaf-falling svg{width:100%;height:100%;overflow:visible}

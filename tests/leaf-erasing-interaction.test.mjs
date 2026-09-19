@@ -129,6 +129,24 @@ test('a quick press cuts immediately and waiting after release cannot cut again'
  t.mock.timers.tick(2000);await settled();assert.equal(h.saves.length,1);
 });
 
+test('hovering a cuttable edge keeps the scissors moving without removing any leaves',async t=>{
+ const h=setup(t);h.open();
+ const target=h.editor.querySelectorAll('[data-layer-id]').find(el=>el.getAttribute('data-layer-id')===h.group.id);
+ const event=new Event('keydown',{cancelable:true});Object.defineProperty(event,'target',{value:target});Object.assign(event,{key:' '});h.editor.dispatchEvent(event);
+ const floating=h.editor.querySelector('.leaf-floating');
+ pointer(h.editor,'pointermove',{clientX:h.center.x,clientY:h.center.y});
+ assert(floating.classes.has('is-in-range'));
+ t.mock.timers.tick(2000);await settled();
+ assert(floating.classes.has('is-in-range'),'animation stays active even without a cut or more pointer events');
+ assert.equal(h.saves.length,0);
+ pointer(h.editor,'pointermove',{clientX:-999,clientY:-999});
+ assert(!floating.classes.has('is-in-range'),'leaving the edge stops the loop');
+ pointer(h.editor,'pointermove',{clientX:h.center.x,clientY:h.center.y});
+ assert(floating.classes.has('is-in-range'));
+ fire(h.editor,'keydown',{key:'Escape'});await settled();
+ assert(!floating.classes.has('is-in-range'));assert.equal(h.saves.length,0);
+});
+
 test('fine keyboard aiming uses half-pixel steps and an empty snip keeps the selection',async t=>{
  const h=setup(t);h.open();
  const target=h.editor.querySelectorAll('[data-layer-id]').find(el=>el.getAttribute('data-layer-id')===h.group.id);

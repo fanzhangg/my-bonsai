@@ -1,5 +1,6 @@
 import {snapshot,draw,applicationFrame} from './growth.mjs';
-import {leafLayers,referenceRim,snippedRim,smoothLeafPath,inside,SNIP_MODEL,SNIP_TARGET_LIMIT,leafSites,snipNearEdge,proposeSnip,eraseEvent} from './leaf-trim-model.mjs';
+import {leafLayers,referenceRim,snippedRim,smoothLeafPath,inside,SNIP_MODEL,SNIP_TARGET_LIMIT,leafSites,snipNearEdge,snipTarget,nearbyEdgeLeaves,proposeSnip,eraseEvent} from './leaf-trim-model.mjs';
+import {outerLeafEdges} from './leaf-edge.mjs';
 import {createSnipPacer,SNIP_INTERVAL_MS,SNIP_REACH_PX} from './leaf-trim-stroke.mjs';
 
 export const leafScissors=`<svg viewBox="-40 -76 80 120" aria-hidden="true" data-tool-shape="long-handle-trimming">
@@ -28,7 +29,7 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
  document.body.append(editor);
  editor.style.setProperty('--leaf-snip-duration',(SNIP_INTERVAL_MS-10)+'ms');
  const canvas=editor.querySelector('.leaf-canvas'),hint=editor.querySelector('[role=status]'),tool=editor.querySelector('.leaf-tool'),floating=editor.querySelector('.leaf-floating');
- let active=false,saving=false,base,at,tree,groups=[],rims=new Map(),selected=null,svg,gesture=null,targets=[],stroke=null,catalog=new Map(),snipTimer,home,returnFocus,holderVisibility,keyboardPoint=null;
+ let active=false,saving=false,base,at,tree,groups=[],rims=new Map(),selected=null,svg,gesture=null,targets=[],stroke=null,catalog=new Map(),edges=new Map(),snipTimer,home,returnFocus,holderVisibility,keyboardPoint=null;
  const say=text=>{hint.textContent=text;};
  function layout(){
   const r=holder.getBoundingClientRect();Object.assign(canvas.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});
@@ -49,9 +50,14 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
  function svgScale(){const m=svg.getScreenCTM();return Math.hypot(m.a,m.b);}
  function world(p){return new DOMPoint(p.x,p.y).matrixTransform(svg.getScreenCTM().inverse());}
  function screen(p){return new DOMPoint(p.x,p.y).matrixTransform(svg.getScreenCTM());}
- function place(p){floating.hidden=false;floating.style.left=p.x+'px';floating.style.top=p.y+'px';}
+ function place(p){
+  floating.hidden=false;floating.style.left=p.x+'px';floating.style.top=p.y+'px';
+  const point=world(p),reach=SNIP_REACH_PX/svgScale();
+  const inRange=selected&&!saving&&snipTarget(selected,catalog,point,reach,nearbyEdgeLeaves(edges,point,reach));
+  floating.classList[inRange?'add':'remove']('is-in-range');
+ }
  function choose(g){
-  selected=g;targets=[];stroke=null;keyboardPoint=null;render();say('已选第 '+(groups.indexOf(g)+1)+' 层树冠。按住拖动修叶，松手保存；Esc 放回。');
+  selected=g;edges=outerLeafEdges(selected,catalog);targets=[];stroke=null;keyboardPoint=null;render();say('已选第 '+(groups.indexOf(g)+1)+' 层树冠。按住拖动修叶，松手保存；Esc 放回。');
  }
  function hit(p){return [...groups].sort((a,b)=>b.z-a.z).find(g=>g.clusters.some(c=>inside(p,rims.get(c.key))));}
  function falling(cuts){
@@ -67,16 +73,17 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
   }
  }
  function sampleSnip(p){
-  const cuts=snipNearEdge(selected,catalog,world(p),SNIP_REACH_PX/svgScale());if(!cuts.length)return false;
+  const cuts=snipNearEdge(selected,catalog,world(p),SNIP_REACH_PX/svgScale(),edges);if(!cuts.length)return false;
   falling(cuts);targets.push(...cuts.map(({clusterKey,index})=>({clusterKey,index})));
   for(const c of selected.clusters)rims.set(c.key,snippedRim(tree,c,catalog.get(c.key)));
+  edges=outerLeafEdges(selected,catalog);
   return true;
  }
  function append(pScreen){
   if(!selected)return;
   stroke??=createSnipPacer(sampleSnip);
   if(!stroke.move(pScreen))return;
-  render();floating.classList.add('is-snipping');clearTimeout(snipTimer);
+  render();place(pScreen);floating.classList.add('is-snipping');clearTimeout(snipTimer);
   snipTimer=setTimeout(()=>floating.classList.remove('is-snipping'),SNIP_INTERVAL_MS-10);
  }
  function begin(e,fromTool=false){
@@ -102,14 +109,14 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
  }
  function releaseCapture(){stroke?.stop();const id=gesture?.id;gesture=null;if(id!==undefined&&editor.hasPointerCapture(id))editor.releasePointerCapture(id);}
  function close(){
-  releaseCapture();active=false;editor.hidden=true;floating.hidden=true;floating.classList.remove('is-snipping');targets=[];stroke=null;clearTimeout(snipTimer);selected=null;keyboardPoint=null;
+  releaseCapture();active=false;editor.hidden=true;floating.hidden=true;floating.classList.remove('is-snipping','is-in-range');targets=[];stroke=null;clearTimeout(snipTimer);selected=null;edges=new Map();keyboardPoint=null;
   holder.style.visibility=holderVisibility;document.body.classList.remove('leaf-editing');onBusyChange(false);onClose();returnFocus?.focus();
  }
  async function finish(){
   if(!active||saving)return;
   releaseCapture();
   if(!targets.length){close();return;}
-  saving=true;tool.hidden=true;floating.classList.remove('is-snipping');say('正在保存修叶');
+  saving=true;tool.hidden=true;floating.classList.remove('is-snipping','is-in-range');say('正在保存修叶');
   const id=crypto.randomUUID(),operations=[{model:SNIP_MODEL,crownId:selected.id,targets}];
   const working={...base,leafTrims:[...(base.leafTrims??[]),{...eraseEvent(proposeSnip(tree,operations[0]),at,id+':0',(base.leafTrims?.length??0)+1),batchId:id}]};
   try{
