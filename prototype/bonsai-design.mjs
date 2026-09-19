@@ -11,6 +11,7 @@ import {growthStatus} from './growth-status.mjs';
 import {render} from './core/v3/growing-render.mjs';
 import {individualOptions} from './core/v3/bonsai-individual.mjs';
 
+import {STYLIZED_LEAVES} from './core/v3/stylized-foliage.mjs';
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const freshSeed=()=>crypto.randomUUID();
@@ -47,22 +48,27 @@ function paintTree(tree=snapshot(currentRecord(),hours*HOUR)){
 }
 function paint(){
   const {form,crown,leaf,palette}=selection(state);state={preset:form.id,crown,leaf,palette,...individualOptions(state)};
+  const theme=PALETTES[palette].scene,specimen=document.querySelector('.specimen');
+  specimen.style.background=theme?.background??'';
+  for(const [key,value]of Object.entries({'bark':theme?.bark,'vessel-body':theme?.body,'vessel-rim':theme?.rim,'moss':theme?.moss})){
+    if(value)specimen.style.setProperty('--bonsai-'+key,value);else specimen.style.removeProperty('--bonsai-'+key);
+  }
   $('variation').value=state.variation;$('density').value=state.density;
   $('form-options').innerHTML=FORMS.map(f=>`<button type="button" data-form="${f.id}" aria-pressed="${f.id===form.id}">${f.name}</button>`).join('');
   $('form-note').textContent=form.note;
   $('crown').innerHTML=form.crowns.map(id=>`<option value="${id}" ${id===crown?'selected':''}>${CROWNS[id].name}</option>`).join('');
   $('leaf').innerHTML=form.leaves.map(id=>`<option value="${id}" ${id===leaf?'selected':''}>${LEAVES[id]}</option>`).join('');
-  $('crown-note').textContent=CROWNS[crown].note+(leaf==='maple'||leaf==='fan'?' · 阔叶风格化变体':'');
-  $('palette-options').innerHTML=Object.keys(PALETTES).map(id=>`<button type="button" data-palette="${id}" aria-pressed="${id===palette}" title="${PALETTES[id].note}"><i class="color-dot" style="background:${PALETTES[id].layers[1][1]}"></i>${PALETTES[id].name}</button>`).join('');
+  $('crown-note').textContent=CROWNS[crown].note+(form.naturalLeaves.includes('needle')?' · 松树仅支持针叶，可自由调整配色':'')+(Object.hasOwn(STYLIZED_LEAVES,leaf)?' · 卡通叶形':'')+(leaf==='maple'||leaf==='fan'?' · 阔叶风格化变体':'');
+  $('palette-options').innerHTML=Object.keys(PALETTES).map(id=>`<button type="button" data-palette="${id}" aria-pressed="${id===palette}" title="${PALETTES[id].note}"><i class="color-dot" style="background:linear-gradient(135deg,${PALETTES[id].layers.map(row=>row[1]).join(',')})"></i>${PALETTES[id].name}</button>`).join('');
   $('depth-colors').innerHTML=PALETTES[palette].layers.map((colors,i)=>`<div class="depth-group"><div class="ramp" role="img" aria-label="${['后冠','中冠','前冠'][i]}：暗部、固有色、亮面、高光">${colors.map(c=>`<i style="background:${c}"></i>`).join('')}</div><span>${['后冠','中冠','前冠'][i]}</span></div>`).join('');
   $('specimen-number').textContent=`${String(FORMS.indexOf(form)+1).padStart(2,'0')} / ${form.gesture}`;
-  $('specimen-name').textContent=leaf==='maple'?'圆顶枫树':leaf==='fan'?'圆顶银杏':form.name;
+  $('specimen-name').textContent=Object.hasOwn(STYLIZED_LEAVES,leaf)?`${form.name} · ${LEAVES[leaf]}`:leaf==='maple'?'圆顶枫树':leaf==='fan'?'圆顶银杏':form.name;
   $('specimen-note').textContent=`${CROWNS[crown].name} · ${LEAVES[leaf]} · ${PALETTES[palette].name}`;
   prepare();paintTree();
 }
-$('form-options').addEventListener('click',e=>{const b=e.target.closest('[data-form]');if(!b)return;remember();resetGeometry();state={preset:b.dataset.form,palette:state.palette,...individualOptions(state)};paint();});
-$('palette-options').addEventListener('click',e=>{const b=e.target.closest('[data-palette]');if(!b)return;state.palette=b.dataset.palette;paint();});
-for(const key of ['crown','leaf'])$(key).addEventListener('change',e=>{state[key]=e.target.value;paint();});
+$('form-options').addEventListener('click',e=>{const b=e.target.closest('[data-form]');if(!b)return;remember();resetGeometry();state={preset:b.dataset.form,...(Object.hasOwn(STYLIZED_LEAVES,state.leaf)?{leaf:state.leaf}:{}),palette:state.palette,...individualOptions(state)};paint();});
+$('palette-options').addEventListener('click',e=>{const b=e.target.closest('[data-palette]');if(!b)return;remember();state.palette=b.dataset.palette;paint();});
+for(const key of ['crown','leaf'])$(key).addEventListener('change',e=>{remember();state[key]=e.target.value;paint();});
 for(const key of ['variation','density'])$(key).addEventListener('change',e=>{remember();resetGeometry();state[key]=Number(e.target.value);paint();});
 document.querySelector('.views').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;view=b.dataset.view;paintTree();});
 $('maturity').addEventListener('input',e=>{hours=Number(e.target.value);paintTree();});

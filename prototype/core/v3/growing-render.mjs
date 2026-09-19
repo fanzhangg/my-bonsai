@@ -1,3 +1,5 @@
+import {PALETTES} from './bonsai-language.mjs';
+import {STYLIZED_LEAVES,stylizedLeafMarkup} from './stylized-foliage.mjs';
 import {sample,pointOn} from '../v1/model.mjs';
 import {taperedPath} from '../v1/style-render.mjs';
 import {normalizeAppearance,colorsFor} from '../v1/appearance.mjs';
@@ -43,8 +45,12 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   const opening={rx:originalOpening.rx*potScale,cy:y+(originalOpening.cy-y)*potScale,
     markup:originalOpening.markup.replace('/>',` transform="${potTransform}"/>`)};
   const appearance=normalizeAppearance(config.appearance),colors=colorsFor(appearance);
-  const material=(name,color)=>transparent?`var(--bonsai-${name},${color})`:color;
-  const shape=appearance.shape==='auto'?(preset.kind==='broad'?'oval':preset.kind):appearance.shape;
+  const theme=PALETTES[tree.language?.palette]?.scene;
+  if(theme)colors.background=theme.background;
+  const materials=theme?{'bark':theme.bark,'moss':theme.moss}:{};
+  const material=(name,color)=>transparent?`var(--bonsai-${name},${materials[name]??color})`:materials[name]??color;
+  const shape=Object.hasOwn(STYLIZED_LEAVES,config.appearance?.shape)?config.appearance.shape:appearance.shape==='auto'?(preset.kind==='broad'?'oval':preset.kind):appearance.shape;
+  const decorative=Object.hasOwn(STYLIZED_LEAVES,shape);
   const broad=shape!=='scale'&&shape!=='needle',needle=shape==='needle',silhouette=view==='silhouette';
   const silhouetteColor=appearance.background==='night'?'#d6dfd7':'#334c3e',woodColor=silhouette?silhouetteColor:material('bark',colors.bark);
   const basePalette=appearance.foliage!=='native'?colors.foliage:preset.kind==='broad'?['#42613d','#577647','#6d8952','#81995b']:preset.kind==='needle'?['#2e5144','#426653','#5b7a5c','#788d67']:colors.foliage;
@@ -75,7 +81,7 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
       const clip=`${volumeId}-paint`;
       detail.push(`<defs><clipPath id="${clip}"><path d="${base}"/></clipPath></defs><g clip-path="url(#${clip})" opacity="${f(.90*(c.leafAmount??1))}"><path d="${base}" fill="${illustrated.base}"/>${illustrated.surfaces.map(s=>`<path d="${s.d}" fill="${s.color}"/>`).join('')}</g>`);
     }else if(density>=.6 && (c.leafAmount??1)>.35)detail.push(`<path d="${base}" fill="${c.layerPalette?`url(#${volumeId})`:leafPalette[c.z<0?0:1]}" opacity="${f((c.layerPalette?.9:(.68+(density-.6)*.7))*(c.leafAmount??1))}"/>`);
-    const count=Math.round((broad?37:needle?40:48)*density*(c.leafBudget??1));
+    const count=Math.round((decorative?19:broad?37:needle?40:48)*density*(c.leafBudget??1));
     for(let j=0;j<(c.starterLeaves??Math.ceil(count*(c.leafAmount??1)));j++){
       const k=`${c.key}:${j}`,a=rand(k,'a')*Math.PI*2,r=Math.sqrt(rand(k,'r'));
       const {x,y}=c.starterLeaves?{x:c.x+(j===0?-3:3),y:c.y-2}:canopyPoint(c,a,r);
@@ -86,6 +92,8 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
       const angle=(rand(k,'angle')-.5)*(broad?130:65);
       if(needle){const tilt=(x-c.x)/c.rx*.65+(preset.lean??0);
         for(let q=-1;q<=1;q++){const a=tilt+q*.22;detail.push(`<path d="M${f(x)} ${f(y)} l${f(Math.sin(a)*size*1.6)} ${f(-Math.cos(a)*size*1.6)}" fill="none" stroke="${color}" stroke-width="1.45" stroke-linecap="round"/>`);}
+      }else if(Object.hasOwn(STYLIZED_LEAVES,shape)){
+        detail.push(stylizedLeafMarkup(shape,{x,y,size:size*2.05,angle,color,accent:leafPalette[3],silhouette,showCenter:true}));
       }else if(shape==='maple'||shape==='fan'||shape==='lance'){
         const path=shape==='maple'?'M0 1 L-.23 .43 L-.75 .53 L-.54 .1 L-1 -.23 L-.48 -.3 L-.5 -.83 L-.18 -.58 L0 -1.15 L.18 -.58 L.5 -.83 L.48 -.3 L1 -.23 L.54 .1 L.75 .53 L.23 .43Z':shape==='fan'?'M0 .9 Q-.18 .24 -.82 -.23 Q-1 -.65 -.74 -.83 Q-.36 -1.04 0 -.86 Q.38 -1.06 .78 -.82 Q1 -.55 .79 -.22 Q.18 .27 0 .9Z':'M0 1.22 Q-.68 .1 0 -1.25 Q.65 -.05 0 1.22Z';
         detail.push(`<path d="${path}" fill="${color}" transform="translate(${f(x)} ${f(y)}) rotate(${f(angle)}) scale(${f(size*(shape==='lance'?1:1.18))})"/>`);
@@ -119,7 +127,13 @@ export function render(tree,{view='foliage',hour=96,id='canopy',viewBox=tree.vie
   const basePotColor=rect?['#957c66','#635344']:deep?['#747c83','#444c56']:preset.pot==='oval-blue'?['#8a9b9a','#516867']:['#879087','#515e57'];
   const potColor=basePotColor.map((c,i)=>material(i?'pot-bottom':'pot-top',c));
   const rim=rect?`<rect x="${x-w}" y="${y-9}" width="${w*2}" height="18" rx="5" fill="${material('rim','#968574')}"/>`:`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="11" fill="${material('rim','#8b8879')}"/>`;
-  const pot=selectedPot?potMarkup(selectedPot,x,y,`${id}-vessel-clip`,{dynamic:transparent}):`<path d="M${x-w} ${y} L${x-w*(deep?.83:.78)} ${y+h} Q${x} ${y+h+12} ${x+w*(deep?.83:.78)} ${y+h} L${x+w} ${y}Z" fill="url(#${id}-pot)"/>${rim}<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7" fill="${material('soil','#505141')}"/><ellipse cx="${x}" cy="${y-2}" rx="${w*.72}" ry="5" fill="${material('moss','#76815e')}"/>`;
+  function vesselMarkup(){
+    const markup=potMarkup(selectedPot,x,y,`${id}-vessel-clip`,{dynamic:transparent||Boolean(theme)});
+    if(transparent||!theme)return markup;
+    const colors={'vessel-body':theme.body,'vessel-rim':theme.rim,moss:theme.moss};
+    return markup.replace(/var\(--bonsai-([^,]+),([^)]+)\)/g,(_,name,fallback)=>colors[name]??fallback);
+  }
+  const pot=selectedPot?vesselMarkup():`<path d="M${x-w} ${y} L${x-w*(deep?.83:.78)} ${y+h} Q${x} ${y+h+12} ${x+w*(deep?.83:.78)} ${y+h} L${x+w} ${y}Z" fill="url(#${id}-pot)"/>${rim}<ellipse cx="${x}" cy="${y-2}" rx="${w-6}" ry="7" fill="${material('soil','#505141')}"/><ellipse cx="${x}" cy="${y-2}" rx="${w*.72}" ry="5" fill="${material('moss','#76815e')}"/>`;
   const base=tree.nodes.find(n=>n.role==='trunk'&&!n.parent),neck=pointOn(base,.17),radius=base.width/2;
   const roots=[-2.85,-.25,2.5,.7,1.7].map((angle,i)=>{
     const reach=Math.min(radius*(2.1+rand(`root${i}`,'reach')*.65)+5,opening.rx*.84);

@@ -36,7 +36,7 @@ test('v3 freezes the reviewed design and generates every form/palette/pot reprod
   assert.deepEqual(config,configForClaim(id,CURRENT_VERSION));
   seen.forms.add(config.preset);seen.palettes.add(config.palette);seen.pots.add(JSON.stringify(config.pot));seen.pairs.add(config.preset+':'+config.palette);
  }
- assert.equal(seen.forms.size,7);assert.equal(seen.palettes.size,5);assert.equal(seen.pots.size,8);assert.equal(seen.pairs.size,35);
+ assert.equal(seen.forms.size,7);assert.equal(seen.palettes.size,Object.keys(PALETTES).length);assert.equal(seen.pots.size,8);for(const form of FORMS)for(const [id,p]of Object.entries(PALETTES))if(!p.stylized)assert(seen.pairs.has(form.id+':'+id));
  for(const f of FORMS){
   const config=normalizeDesign({preset:f.id,seed:'655bc0bf-ed33-4435-bbf6-e27eafaff27a',variation:.85,density:.8});
   const a=review(config),b=generateLanguage(config);assert.deepEqual(a,b,'frozen algorithm retains reviewed geometry and coloring');

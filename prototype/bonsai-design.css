@@ -2,3 +2,6 @@
 
 /* Keep the specimen visible while the compact controls scroll. */
 @media(min-width:651px){.explorer{align-items:start}.specimen{position:sticky;top:20px}.tree-art{flex:none;min-height:0}.tree-art svg{max-height:min(520px,calc(100vh - 180px))}}
+
+
+.specimen{transition:background-color .25s ease}@media(prefers-reduced-motion:reduce){.specimen{transition:none}}

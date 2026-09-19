@@ -1,3 +1,4 @@
+import {PALETTES} from './core/v3/bonsai-language.mjs';
 import {colorsFor,normalizeAppearance} from './core/v1/appearance.mjs';
 import {TONES,normalizePot} from './pots.mjs';
 const rgb=c=>c.slice(1).match(/../g).map(v=>parseInt(v,16));
@@ -13,6 +14,8 @@ export function potColorTokens(scene,toneId){
 }
 export function colorTokens(scene,appearance={},preset={},potDesign,language){
  const a=normalizeAppearance(appearance),base=colorsFor(a),bg=scene.colors[1],ground=mix(bg,scene.colors[2],.45);
+ const theme=PALETTES[language?.palette]?.scene;
+ if(theme)base.bark=theme.bark;
  const dark=luminance(bg)<.18;
  const foliage=a.foliage!=='native'?base.foliage:preset.kind==='broad'?['#42613d','#577647','#6d8952','#81995b']:preset.kind==='needle'?['#2e5144','#426653','#5b7a5c','#788d67']:base.foliage;
  const tokens={'ink':readable('#354d49',scene.colors[0],4.5),'muted':readable('#697b72',ground,4.5),'surface':dark?'#283d45':'#edf0e7','border':dark?'#61757a':'#a3afa3','action':dark?'#c3d4bd':'#355648','action-ink':dark?'#21382e':'#f6f6eb','focus':dark?'#e8c990':'#735028','bonsai-bark':readable(base.bark,bg,3),'bonsai-soil':dark?'#525648':'#505141','bonsai-moss':dark?'#8c9873':'#76815e'};
@@ -26,6 +29,11 @@ export function colorTokens(scene,appearance={},preset={},potDesign,language){
  tokens['bonsai-pot-top']=readable(pot[0],ground,2);tokens['bonsai-pot-bottom']=readable(pot[1],ground,2);
  tokens['bonsai-rim']=readable(preset.pot==='rect'?'#968574':'#8b8879',ground,2);
  const selectedPot=normalizePot(potDesign);if(selectedPot)Object.assign(tokens,potColorTokens(scene,selectedPot.tone));
+ if(theme){
+  tokens['bonsai-vessel-body']=readable(theme.body,ground,2);
+  tokens['bonsai-vessel-rim']=readable(theme.rim,ground,2);
+  tokens['bonsai-moss']=dark?mix(theme.moss,'#e1e9d5',.25):theme.moss;
+ }
  // One bounded environment adjustment across all three fixed crown ramps.
  // Keep each cluster's age/light tint and gradient instead of replacing it
  // with the legacy four-color foliage palette.

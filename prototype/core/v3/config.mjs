@@ -4,7 +4,7 @@ import {FORMS,PALETTES,selection} from './bonsai-language.mjs';
 import {individualOptions} from './bonsai-individual.mjs';
 import {NATURAL_GROWTH_POLICIES} from './natural-growth.mjs';
 export {FORMS,PALETTES};
-export const PALETTE_BACKGROUNDS={forest:'ivory',mist:'fog',spring:'mint',amber:'sand',ruby:'rose'};
+export const PALETTE_BACKGROUNDS={forest:'ivory',mist:'fog',spring:'mint',amber:'sand',ruby:'rose',sakura:'rose',lilac:'fog',candy:'rose'};
 export function normalizeDesign(input={}){
   const {form,crown,leaf,palette}=selection(input),options=individualOptions(input);
   return {...normalize(input),preset:form.id,crown,leaf,palette,
