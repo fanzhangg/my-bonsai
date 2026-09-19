@@ -20,7 +20,7 @@ export function createTrimStroke(start,onSample,spacing=7){
 // One visible closure at a time. Fast motion never queues missed cuts, and
 // resting or releasing the scissors cannot trigger a delayed cut.
 export const SNIP_INTERVAL_MS=170;
-export const SNIP_REACH_PX=6;
+export const SNIP_REACH_PX=16;
 export function createSnipPacer(onSnip,{interval=SNIP_INTERVAL_MS,distance=2}={}){
  let last=null,lastAt=-Infinity,active=true;
  return {

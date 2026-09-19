@@ -6,7 +6,18 @@ import {snipTarget,snipNearEdge,leafSites,leafLayers} from '../prototype/leaf-tr
 import {snapshot,draw,HOUR} from '../prototype/growth.mjs';
 import {CURRENT_VERSION} from '../prototype/tree-versions.mjs';
 import {normalizeDesign} from '../prototype/core/v3/config.mjs';
-import {createSnipPacer} from '../prototype/leaf-trim-stroke.mjs';
+import {createSnipPacer,SNIP_REACH_PX} from '../prototype/leaf-trim-stroke.mjs';
+
+test('nearby empty space catches an exposed leaf without requiring a direct hit',()=>{
+ const c={key:'selected'},other={key:'other'},group={clusters:[c],x:0,y:0};
+ const leaf={index:0,x:0,y:0,size:2,angle:0,shape:'round'};
+ const point={x:14,y:0};
+ const catalog=new Map([[c.key,[leaf]],[other.key,[{...leaf,x:14}]]]);
+ assert(leafDistance(leaf,point)>9,'aim is in blank space outside the previous tolerance');
+ assert.deepEqual(snipNearEdge(group,catalog,{x:30,y:0},SNIP_REACH_PX),[],'distant foliage stays untouched');
+ assert.deepEqual(snipNearEdge(group,catalog,point,SNIP_REACH_PX).map(t=>[t.clusterKey,t.index]),[['selected',0]]);
+ assert.equal(other.leafSnips,undefined,'nearby other layers remain untouched');
+});
 
 test('blade hits follow real rotated leaf edges and needle tips, including small regrowth',()=>{
  for(const shape of ['oval','round','scale','maple','fan','lance','needle','sakura','star','heart'])for(const regrowth of [1,.25]){
