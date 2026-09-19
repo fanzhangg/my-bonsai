@@ -10,16 +10,19 @@
 <div id="insect-layer" role="group" aria-label="植物周围的小访客" tabindex="-1"></div>
 <div id="live-pruning" hidden><p id="pruning-message" class="pruning-sr-only" role="status" aria-live="polite">拿起剪刀，慢慢靠近一根旁支。</p>
       <button id="pruning-scissors" class="pruning-scissors" type="button" aria-label="拖动剪刀剪下旁支；也可按空格拿起，用方向键选择，再按空格剪下" aria-describedby="pruning-message">
-        <svg viewBox="-54 -54 108 108" aria-hidden="true" fill="currentColor">
+        <svg viewBox="-54 -54 108 108" aria-hidden="true" data-tool-shape="butterfly-pruning">
           <g class="scissor-half scissor-a">
-            <path d="M0 -43 Q-10 -30 -6 -5 L17 22 L21 18 L5 -3 Z" fill="#a4afa7"/>
-            <path d="M13 17 C20 12 30 19 32 29 C35 41 29 48 21 45 C13 43 8 32 9 24 C9 21 11 19 13 17 Z M17 23 C13 25 16 36 22 39 C27 42 29 36 27 30 C25 23 21 20 17 23 Z" fill-rule="evenodd"/>
+            <path d="M0 -38 C-12 -32 -16 -17 -10 -4 L3 8 L11 1 C6 -10 2 -26 0 -38Z" fill="#88968d"/>
+            <path d="M0 -37 Q-3 -22 3 -4 L6 0" fill="none" stroke="#d5ddd4" stroke-width="2"/>
+            <path d="M4 3 C15 4 34 9 39 24 C45 40 29 48 17 39 C7 31 4 18 4 3Z" fill="none" stroke="#344c40" stroke-width="6.5" stroke-linejoin="round"/>
           </g>
           <g class="scissor-half scissor-b">
-            <path d="M0 -43 Q10 -30 6 -5 L-17 22 L-21 18 L-5 -3 Z" fill="#c5cdc3"/>
-            <path d="M-13 17 C-20 12 -30 19 -32 29 C-35 41 -29 48 -21 45 C-13 43 -8 32 -9 24 C-9 21 -11 19 -13 17 Z M-17 23 C-13 25 -16 36 -22 39 C-27 42 -29 36 -27 30 C-25 23 -21 20 -17 23 Z" fill-rule="evenodd"/>
+            <path d="M0 -38 C12 -32 16 -17 10 -4 L-3 8 L-11 1 C-6 -10 -2 -26 0 -38Z" fill="#bdc7bc"/>
+            <path d="M0 -37 Q3 -22 -3 -4 L-6 0" fill="none" stroke="#ebeee3" stroke-width="2"/>
+            <path d="M-4 3 C-15 4 -34 9 -39 24 C-45 40 -29 48 -17 39 C-7 31 -4 18 -4 3Z" fill="none" stroke="#405c49" stroke-width="6.5" stroke-linejoin="round"/>
           </g>
-          <circle r="4" fill="#b49a70"/>
+          <circle r="5" fill="#8e9885" stroke="#d8d8bb" stroke-width="1"/>
+          <path d="M-2 -2 L2 2" stroke="#46594d" stroke-width="1.5"/>
         </svg>
       </button>
 </div>

@@ -8,6 +8,7 @@ import {WATER_CAPACITY,WATERING_RULES,wateringAmount} from './prototype/watering
 import {configForClaim} from './prototype/claim.mjs';
 import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './prototype/tree-versions.mjs';
 import {applyCheat} from './prototype/cheats.mjs';
+import {saveLeafTrims} from './prototype/leaf-trim-events.mjs';
 import {canPrune,CUT_MODEL} from './prototype/pruning-model.mjs';
 import {NATURAL_GROWTH,NATURAL_GROWTH_POLICIES} from './prototype/core/v3/natural-growth.mjs';
 import {coordinates,weatherAt} from './weather-service.mjs';
@@ -48,21 +49,22 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
           const count=after?.count??0,pageSize=Math.min(GALLERY_PAGE_SIZE,GALLERY_LIMIT-count);
           const records=await store.listGallery(sort,{after,query,limit:pageSize+1}),trees=records.slice(0,pageSize);
           const last=trees.at(-1),nextCursor=records.length>pageSize&&count+trees.length<GALLERY_LIMIT?Buffer.from(JSON.stringify({sort,query,id:last.id,at:activity(last)[activityKey(sort)],count:count+trees.length})).toString('base64url'):null;
-          return send(200,{trees:trees.map(tree=>({id:tree.id,name:tree.name??'',version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],...activity(tree)})),sort,limit:GALLERY_LIMIT,pageSize:GALLERY_PAGE_SIZE,nextCursor,serverNow:Date.now()});
+          return send(200,{trees:trees.map(tree=>({id:tree.id,name:tree.name??'',version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,leafTrims:tree.leafTrims??[],waterings:tree.waterings??[],...activity(tree)})),sort,limit:GALLERY_LIMIT,pageSize:GALLERY_PAGE_SIZE,nextCursor,serverNow:Date.now()});
         }
-        const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts|cheats|visits|waterings))?)?$/);if(!route)fail(404,'找不到页面');
+        const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts|cheats|visits|waterings|leaf-trims))?)?$/);if(!route)fail(404,'找不到页面');
         const [,id,action]=route;if(id&&!uuid(id))fail(404,'找不到这盆树');
         if(action==='join')fail(410,'当前版本不支持加入');
         let body={};
         if(req.method==='POST'){
           if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)fail(403,'请从应用页面提交');
           if(!req.headers['content-type']?.startsWith('application/json'))fail(415,'需要 JSON');
-          const bodyLimit=action==='cheats'||!id?1048576:8192;
+          const bodyLimit=action==='cheats'||!id?1048576:action==='leaf-trims'?524288:8192;
           let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>bodyLimit)fail(413,'请求过大');chunks.push(chunk);}try{body=JSON.parse(Buffer.concat(chunks).toString());}catch{fail(400,'无效请求');}if(!body||Array.isArray(body)||typeof body!=='object')fail(400,'无效请求');
         }
-        const result=tree=>({id:tree.id,name:tree.name??'',version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,waterings:tree.waterings??[],wateringRules:WATERING_RULES,revision:tree.revision??0,serverNow:Date.now()});
+        const result=tree=>({id:tree.id,name:tree.name??'',version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,leafTrims:tree.leafTrims??[],waterings:tree.waterings??[],wateringRules:WATERING_RULES,revision:tree.revision??0,serverNow:Date.now()});
         if(req.method==='GET'&&id&&!action){const tree=await store.get(id);if(!tree)fail(404,'找不到这盆树，请检查链接');return send(200,result(tree));}
         if(req.method!=='POST')fail(405,'不支持的操作');
+        if(action==='leaf-trims')return send(200,result(await store.mutate(id,old=>saveLeafTrims(old,body,Date.now()))));
         if(action==='visits'){
           const tree=await store.mutate(id,old=>{
             if(!old)fail(404,'找不到这盆树');

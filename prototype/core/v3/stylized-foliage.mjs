@@ -7,6 +7,25 @@ const sakuraPetal='M0 .06 C-.12 -.11 -.46 -.35 -.46 -.65 Q-.44 -.90 -.14 -1.08 L
 const lilacPetal='M0 .06 C-.12 -.10 -.46 -.40 -.42 -.73 C-.38 -1.11 .33 -1.15 .43 -.81 C.53 -.47 .18 -.11 0 .06Z';
 // One heart-shaped leaflet, rather than an entire four-leaf clover rosette.
 const cloverLeaf='M0 1 C-.18 .66 -.86 .32 -.86 -.27 C-.88 -.90 -.25 -1.07 0 -.49 C.25 -1.07 .88 -.90 .86 -.27 C.86 .32 .18 .66 0 1Z';
+// Sample the same authored curves used below, so scissors follow petals rather
+// than an oval substitute. These normalized polygons are shared and immutable.
+function pathPolygon(path){
+ const points=[];let start=[0,0];
+ for(const [,command,args]of path.matchAll(/([MCLQ])([^MCLQZ]+)/g)){
+  const v=args.match(/-?(?:\d*\.)?\d+/g).map(Number),end=v.slice(-2);
+  if(command==='M'||command==='L')points.push(end);
+  else for(let i=1;i<=24;i++){
+   const t=i/24,u=1-t;
+   points.push(command==='Q'?[0,1].map(k=>u*u*start[k]+2*u*t*v[k]+t*t*end[k]):[0,1].map(k=>u*u*u*start[k]+3*u*u*t*v[k]+3*u*t*t*v[k+2]+t*t*t*end[k]));
+  }
+  start=end;
+ }
+ return points;
+}
+export const STYLIZED_OUTLINES=Object.fromEntries(Object.keys(STYLIZED_LEAVES).map(shape=>{
+ const polygon=pathPolygon(shape==='heart'?cloverLeaf:shape==='sakura'?sakuraPetal:lilacPetal),count=shape==='heart'?1:shape==='sakura'?5:4;
+ return [shape,Array.from({length:count},(_,i)=>{const a=i*Math.PI*2/count;return polygon.map(([x,y])=>[x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a)]);})];
+}));
 export function stylizedLeafMarkup(shape,{x,y,size,angle,color,accent,silhouette=false,showCenter=false}){
   const petal=shape==='sakura'?sakuraPetal:lilacPetal,count=shape==='sakura'?5:4;
   const petals=shape==='heart'?'<path d="'+cloverLeaf+'"/>':Array.from({length:count},(_,i)=>'<path d="'+petal+'" transform="rotate('+(i*360/count)+')"/>').join('');

@@ -19,8 +19,11 @@ import {WATER_CAPACITY,wateringAmount} from './watering-motion.mjs';
 import {createPruning} from './pruning.mjs';
 import {toolHome} from './tool-home.mjs';
 import {createSharing} from './share.mjs';
+import {createLeafTrimming,leafScissors} from './leaf-trimming.mjs';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),debug=params.has('cheat')||params.has('debug');
 const newTreeVersion=runtime.newTreeVersion??LEGACY_VERSION;
+const leafEntry=document.createElement('button');leafEntry.type='button';leafEntry.className='leaf-entry';leafEntry.hidden=true;leafEntry.innerHTML=leafScissors;leafEntry.setAttribute('aria-label','修叶剪：选择整层树冠，拖动修叶');leafEntry.title='修叶';document.querySelector('main').append(leafEntry);
+const leafStyle=document.createElement('link');leafStyle.rel='stylesheet';leafStyle.href='/leaf-trimming.css';document.head.append(leafStyle);
 const visitors=createVisitors({scene:$('insect-layer'),treeElement:$('stage'),layer:$('insect-layer')});
 const weather=startWeather({debug,onSceneChange:scene=>visitors.setMode(scene.night?'night':'day')});
 const wind=startWind($('stage'));
@@ -38,7 +41,8 @@ async function recordVisit(){
  try{await api('/'+treeId+'/visits',{});}catch{visitPending=true;}
  finally{visitInFlight=false;}
 }
-function cheatControls(busy=pruning.busy||watering.busy||playing){
+function cheatControls(busy=pruning.busy||watering.busy||playing||leafEditor.busy){
+ leafEntry.disabled=busy||loading;leafEntry.hidden=busy||!record||treeVersion(current())!==CURRENT_VERSION||!(treeId||sandbox)||Boolean(sandbox&&futureOperations(sandbox,now()));
  $('debug').querySelectorAll('button,input,select').forEach(el=>el.disabled=busy||loading);
  $('save-cheat').disabled=busy||loading||!treeId||!dirty;
  $('undo-draft').disabled=busy||loading||!draftUndo;
@@ -97,8 +101,22 @@ const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$(
  onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);pruning.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);if(!busy&&record)paint(waterSnapshot());},
  onError:error=>{status(error.message||'浇水暂时无法保存，请重试');$('retry').hidden=false;}
 });
+const leafEditor=createLeafTrimming({
+ holder:$('stage'),
+ onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);pruningAvailability();cheatControls();},
+ onSave:async(body,working)=>{
+  if(sandbox){rememberDraft();sandbox.leafTrims=working.leafTrims;changed();return;}
+  let data;try{data=await api('/'+treeId+'/leaf-trims',body);}catch(error){if(error.httpStatus)throw error;data=await api('/'+treeId+'/leaf-trims',body);}
+  record=data;offset=data.serverNow-Date.now();status();
+ },
+ onError:error=>{status(error.message||'修叶暂时无法保存，请稍后再试');$('retry').hidden=false;},
+ onClose:()=>{paint();cheatControls();}
+});
+function pickUpLeafScissors(event){if(event.type==='pointerdown'&&event.button!==0)return;if(!record||loading||playing||pruning.busy||watering.busy||leafEditor.busy||(sandbox&&futureOperations(sandbox,now())))return;leafEditor.open(current(),now(),event);}
+leafEntry.addEventListener('pointerdown',pickUpLeafScissors);leafEntry.addEventListener('click',event=>{if(event.detail===0)pickUpLeafScissors(event);});
 function pruningAvailability(){
- const available=Boolean(record&&(treeId||sandbox)&&!playing&&!(sandbox&&futureOperations(sandbox,now())));
+ const available=Boolean(record&&(treeId||sandbox)&&!playing&&!leafEditor.busy&&!(sandbox&&futureOperations(sandbox,now())));
+ leafEntry.hidden=!available||treeVersion(current())!==CURRENT_VERSION||pruning.busy||watering.busy;leafEntry.disabled=loading;
  $('live-pruning').hidden=!available;
  $('pruning-scissors').disabled=loading;
  pruning.setActive(available&&!loading&&!watering.busy);
@@ -113,7 +131,7 @@ function showName(){const name=treeId?(record?.name??''):$('claim-name').value.t
 $('claim-name').addEventListener('input',showName);
 function paint(tree=snapshot(current(),now())){
  showName();
- if(pruning.busy)return;weather.setTree(tree);$('stage').innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree)});
+ if(pruning.busy||leafEditor.busy)return;weather.setTree(tree);$('stage').innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree)});
  pruning.refresh(tree);watering.refresh(tree);pruningAvailability();wind.refresh();visitors.refresh();visitors.setActive(true);
  if(debug){
   $('age').textContent=`${hours.toFixed(1)} 小时`;
@@ -128,7 +146,7 @@ function stop(){clearTimeout(timer);playing=false;cheatControls();}
 function replay(){stop();const data=structuredClone(current()),end=now(),start=performance.now();if(matchMedia('(prefers-reduced-motion: reduce)').matches){paint();return;}playing=true;cheatControls();const frame=()=>{const p=Math.min(1,(performance.now()-start)/REPLAY_MS);paint(replayFrame(data,end,p));if(p<1)timer=setTimeout(frame,70);else{stop();paint();}};frame();}
 function debugFields(){designFields();$('preset').value=sandbox.config.preset;$('look').value=lookFor(sandbox.config.appearance)?.id||'original';$('seed').value=sandbox.config.seed;$('time').max=Math.min(MAX_CHEAT_HOURS,Math.max(168,Math.ceil(hours),...(sandbox.cuts??[]).map(c=>Math.ceil((c.at-sandbox.createdAt)/HOUR)),...(sandbox.waterings??[]).map(c=>Math.ceil((c.at-sandbox.createdAt)/HOUR))));$('time').value=hours;}
 function resetSandbox(){stop();sandbox=structuredClone(record);draftUndo=null;hours=Math.max(0,(Date.now()+offset-record.createdAt)/HOUR);dirty=false;debugFields();paint();cheatStatus(treeId?'已载入保存的状态':'调整后的样本会随认领保存');}
-async function sync(){if(loading||playing||pruning.busy||watering.busy||waterQueue.length||(!treeId)||sandbox)return;loading=true;pruningAvailability();try{const data=await api('/'+treeId),initial=!record;record=data;offset=data.serverNow-Date.now();void recordVisit();$('share').hidden=false;$('retry').hidden=true;status();if(debug){resetSandbox();$('debug').hidden=false;}if(initial)replay();else paint();}catch(e){status(e.message||'暂时无法连接');$('retry').hidden=false;}finally{loading=false;cheatControls();pruningAvailability();}}
+async function sync(){if(loading||playing||pruning.busy||watering.busy||leafEditor.busy||waterQueue.length||(!treeId)||sandbox)return;loading=true;pruningAvailability();try{const data=await api('/'+treeId),initial=!record;record=data;offset=data.serverNow-Date.now();void recordVisit();$('share').hidden=false;$('retry').hidden=true;status();if(debug){resetSandbox();$('debug').hidden=false;}if(initial)replay();else paint();}catch(e){status(e.message||'暂时无法连接');$('retry').hidden=false;}finally{loading=false;cheatControls();pruningAvailability();}}
 $('retry').onclick=async()=>{try{await flushWater();status();$('retry').hidden=true;await sync();}catch(e){status(e.message||'暂时无法保存，请重试');}};
 let claimId=crypto.randomUUID();
 function showPreview(){
@@ -182,6 +200,7 @@ function changeSample(){
    variation:Number($('design-variation').value),density:Number($('design-density').value)});
  }else{const pot=before.pot;sandbox.config=normalize({...before,preset:$('preset').value,seed:$('seed').value,appearance:LOOKS.find(l=>l.id===$('look').value)});if(pot)sandbox.config.pot=pot;}
  if(geometryChanged||(modern&&(before.variation!==sandbox.config.variation||before.density!==sandbox.config.density))){sandbox.cuts=[];if(modern)sandbox.config.growthPolicy=NATURAL_GROWTH;}
+ if(geometryChanged||['variation','density','crown','leaf'].some(k=>before[k]!==sandbox.config[k])){sandbox.leafTrims=[];if(before.leaf!==sandbox.config.leaf||before.crown!==sandbox.config.crown)status('树冠外形已变化，旧修叶记录已清空；可撤回上一步。');}
  designFields();changed();paint();
 }
 for(const key of ['crown','leaf','palette','variation','density'])$('design-'+key).onchange=changeSample;

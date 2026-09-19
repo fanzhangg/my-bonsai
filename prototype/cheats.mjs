@@ -5,12 +5,13 @@ import {grow,snapshot,HOUR} from './growth.mjs';
 import {treeVersion,CURRENT_VERSION} from './tree-versions.mjs';
 import {validateDesign} from './core/v3/config.mjs';
 import {canPrune,CUT_MODELS} from './pruning-model.mjs';
+import {rebaseLeafTrims} from './leaf-trim-events.mjs';
 
 export const MAX_CHEAT_HOURS=24*365*100;
 export const MAX_CHEAT_CUTS=4096;
-export function futureOperations(record,at){return (record.cuts??[]).filter(e=>e.at>at).length+(record.waterings??[]).filter(e=>e.at>at).length;}
+export function futureOperations(record,at){return (record.cuts??[]).filter(e=>e.at>at).length+(record.waterings??[]).filter(e=>e.at>at).length+(record.leafTrims??[]).filter(e=>e.at>at).length;}
 // Browsing the past preserves history. An explicit new action forks it.
-export function branchTimeline(record,at){return {...record,cuts:(record.cuts??[]).filter(e=>e.at<=at),waterings:(record.waterings??[]).filter(e=>e.at<=at)};}
+export function branchTimeline(record,at){return {...record,cuts:(record.cuts??[]).filter(e=>e.at<=at),waterings:(record.waterings??[]).filter(e=>e.at<=at),...(record.leafTrims?{leafTrims:record.leafTrims.filter(e=>e.at<=at)}:{})};}
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const validHour=x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=MAX_CHEAT_HOURS;
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
@@ -20,6 +21,7 @@ export function cheatRequest(record,hours){
   look:lookFor(record.config.appearance)?.id??null,hours,
   ...(treeVersion(record)===CURRENT_VERSION?{design:Object.fromEntries(['crown','leaf','palette','variation','density','growthPolicy'].map(key=>[key,record.config[key]]))}:{}),
   waterings:(record.waterings??[]).map(w=>({id:w.id,used:w.used,recoveryHours:w.recoveryHours??0,hour:(w.at-record.createdAt)/HOUR})),
+  ...(record.leafTrims?{leafTrims:record.leafTrims.map(e=>({...e,at:undefined,hour:(e.at-record.createdAt)/HOUR}))}:{}),
   cuts:(record.cuts??[]).map(c=>({id:c.id,branchId:c.branchId,hour:(c.at-record.createdAt)/HOUR,...(c.model?{model:c.model}:{})}))};
 }
 
@@ -66,5 +68,7 @@ export function applyCheat(record,body,at){
   if(modern?!persisted&&!snapshot(history,cut.at).nodes.some(n=>n.id===cut.branchId&&canPrune(n)):!branches.has(cut.branchId)&&!snapshot(history,cut.at).nodes.some(n=>n.id===cut.branchId&&n.role==='primary'&&n.growth>0))fail(400,'无效剪枝记录');
   history.cuts.push(cut);
  }
- return {...record,config,createdAt,cuts,waterings,revision:(record.revision??0)+1};
+ const next={...record,config,createdAt,cuts,waterings,revision:(record.revision??0)+1};
+ if(record.leafTrims||body.leafTrims)next.leafTrims=rebaseLeafTrims(record,body,next,geometryChanged||record.config.crown!==config.crown||record.config.leaf!==config.leaf);
+ return next;
 }

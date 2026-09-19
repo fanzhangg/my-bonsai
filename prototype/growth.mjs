@@ -5,6 +5,7 @@ import {render} from './core/v3/growing-render.mjs';
 import {treeVersion,CURRENT_VERSION,LEGACY_VERSION} from './tree-versions.mjs';
 import {applyRecovery,branchLevels} from './core/v3/regrowth.mjs';
 import {CUT_MODELS} from './pruning-model.mjs';
+import {applyLeafTrims} from './leaf-trim-model.mjs';
 export {HOUR,FRAME,profile,wateringProgress,wateringRecovery} from './core/v2/growth.mjs';
 // Historical callers without an explicit version remain on v2.
 export const VERSION=LEGACY_VERSION;
@@ -30,7 +31,7 @@ export function grow(record,p,options={}){
    applyRecovery(tree,generate(record.config),record,at);
   }
   tree.engineVersion=CURRENT_VERSION;tree.viewBox=tree.applicationFrame;
-  return tree;
+  return applyLeafTrims(tree,record,at);
 }
 export function snapshot(record,at=Date.now(),options={}){
   if(treeVersion(record)===LEGACY_VERSION)return legacy.snapshot(record,at);
@@ -38,8 +39,8 @@ export function snapshot(record,at=Date.now(),options={}){
   return grow(record,p,{...options,at});
 }
 export function applicationFrame(tree){return tree.engineVersion===CURRENT_VERSION?tree.viewBox:{x:tree.root.x-300,y:tree.root.y-420,width:640,height:620};}
-export function draw(tree,{transparent=false,viewBox=tree.viewBox,id='growing-tree'}={}){
+export function draw(tree,{transparent=false,viewBox=tree.viewBox,id='growing-tree',focusClusterKeys}={}){
   if(tree.engineVersion!==CURRENT_VERSION)return legacy.draw(tree,{transparent,viewBox,id});
-  const svg=render(tree,{hour:tree.hour,id,transparent,viewBox});
+  const svg=render(tree,{hour:tree.hour,id,transparent,viewBox,focusClusterKeys});
   return svg.replace('</svg>',`<ellipse cx="${tree.root.x}" cy="${tree.root.y-4}" rx="4" ry="2.5" fill="#8f6240" opacity="${tree.seedOpacity}"/></svg>`);
 }
