@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {Resvg} from '@resvg/resvg-js';
 import {collisionGrid} from '../prototype/collision-grid.mjs';
 import {galleryPreview} from '../prototype/gallery-preview.mjs';
+import {galleryPaper} from '../gallery-thumbnails.mjs';
 import {configForClaim} from '../prototype/claim.mjs';
 import {CURRENT_VERSION,LEGACY_VERSION} from '../prototype/tree-versions.mjs';
 
@@ -26,6 +27,6 @@ test('gallery previews decode as standalone images for legacy and dense current 
   const before=structuredClone(record),{svg,paper}=galleryPreview(record,1000*3600000);
   const image=new Resvg(svg,{font:{loadSystemFonts:false}}).render();
   assert.equal(image.width,640);assert.equal(image.height,640);assert.ok(image.asPng().length>1000);
-  assert.ok(paper.startsWith('#'));assert.deepEqual(record,before,'preview must not mutate persisted tree data');
+  assert.equal(galleryPaper(record),paper);assert.deepEqual(record,before,'preview must not mutate persisted tree data');
  }
 });

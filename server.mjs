@@ -1,4 +1,6 @@
 import http from 'node:http';
+import {galleryPaper} from './gallery-thumbnails.mjs';
+import {createGalleryThumbnails} from './gallery-thumbnails.mjs';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -19,7 +21,7 @@ const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab]
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
 export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_WEATHER_ENABLED!=='false',publicBaseUrl=process.env.PUBLIC_BASE_URL||process.env.RENDER_EXTERNAL_URL,newTreeVersion=process.env.NEW_TREE_VERSION||CURRENT_VERSION}={}){
   treeVersion({version:newTreeVersion});
-  const shareImage=createShareImageCache();
+  const shareImage=createShareImageCache(),thumbnails=createGalleryThumbnails(store);
   return http.createServer(async(req,res)=>{
     const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
     try{
@@ -36,6 +38,16 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
         let c;try{c=coordinates(url.searchParams.get('lat'),url.searchParams.get('lon'));}catch{fail(400,'无效位置');}
         try{return send(200,await weatherAt(c.lat,c.lon));}catch{fail(503,'天气暂不可用');}
       }
+      const thumbnail=url.pathname.match(/^\/api\/gallery\/([^/]+)\/thumbnail\.png$/);
+      if(thumbnail){
+        if(!['GET','HEAD'].includes(req.method))fail(405,'不支持的操作');
+        if(!uuid(thumbnail[1]))fail(404,'找不到这盆树');
+        const record=await store.get(thumbnail[1]);if(!record)fail(404,'找不到这盆树');
+        const image=await thumbnails.get(record),etag='"'+image.key+'-'+image.generatedAt+'"';
+        const headers={'Content-Type':'image/png','Cache-Control':'public, max-age=60, stale-while-revalidate=3600','ETag':etag,'X-Content-Type-Options':'nosniff'};
+        if(req.headers['if-none-match']===etag){res.writeHead(304,headers);return res.end();}
+        res.writeHead(200,headers);return res.end(req.method==='HEAD'?undefined:image.png);
+      }
       if(url.pathname.startsWith('/api/')){
         if(url.pathname==='/api/gallery'){
           if(req.method!=='GET')fail(405,'不支持的操作');
@@ -49,7 +61,7 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
           const count=after?.count??0,pageSize=Math.min(GALLERY_PAGE_SIZE,GALLERY_LIMIT-count);
           const records=await store.listGallery(sort,{after,query,limit:pageSize+1}),trees=records.slice(0,pageSize);
           const last=trees.at(-1),nextCursor=records.length>pageSize&&count+trees.length<GALLERY_LIMIT?Buffer.from(JSON.stringify({sort,query,id:last.id,at:activity(last)[activityKey(sort)],count:count+trees.length})).toString('base64url'):null;
-          return send(200,{trees:trees.map(tree=>({id:tree.id,name:tree.name??'',version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,leafTrims:tree.leafTrims??[],waterings:tree.waterings??[],...activity(tree)})),sort,limit:GALLERY_LIMIT,pageSize:GALLERY_PAGE_SIZE,nextCursor,serverNow:Date.now()});
+          return send(200,{trees:trees.map(tree=>({id:tree.id,name:tree.name??'',...(url.searchParams.get('preview')==='1'?{config:{preset:tree.config.preset}}:{version:tree.version,createdAt:tree.createdAt,config:tree.config,cuts:tree.cuts,leafTrims:tree.leafTrims??[],waterings:tree.waterings??[]}),paper:galleryPaper(tree),thumbnailUrl:'/api/gallery/'+tree.id+'/thumbnail.png',...activity(tree)})),sort,limit:GALLERY_LIMIT,pageSize:GALLERY_PAGE_SIZE,nextCursor,serverNow:Date.now()});
         }
         const route=url.pathname.match(/^\/api\/trees(?:\/([^/]+)(?:\/(join|cuts|cheats|visits|waterings|leaf-trims))?)?$/);if(!route)fail(404,'找不到页面');
         const [,id,action]=route;if(id&&!uuid(id))fail(404,'找不到这盆树');

@@ -6,7 +6,10 @@ export async function openStore({url=process.env.DATABASE_URL,file=process.env.D
     const {Pool}=await import('pg');const pool=new Pool({connectionString:url,max:5,connectionTimeoutMillis:10000});
     pool.on('error',()=>console.error('Database connection interrupted'));
     await pool.query('CREATE TABLE IF NOT EXISTS bonsai_trees (id uuid PRIMARY KEY, document jsonb NOT NULL)');
+    await pool.query('CREATE TABLE IF NOT EXISTS bonsai_gallery_thumbnails (id uuid PRIMARY KEY, key text NOT NULL, generated_at bigint NOT NULL, paper text NOT NULL, png bytea NOT NULL)');
     return {
+      async getThumbnail(id){const row=(await pool.query('SELECT key,generated_at,paper,png FROM bonsai_gallery_thumbnails WHERE id=$1',[id])).rows[0];return row&&{key:row.key,generatedAt:Number(row.generated_at),paper:row.paper,png:row.png};},
+      async putThumbnail(id,image){await pool.query('INSERT INTO bonsai_gallery_thumbnails(id,key,generated_at,paper,png) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET key=EXCLUDED.key,generated_at=EXCLUDED.generated_at,paper=EXCLUDED.paper,png=EXCLUDED.png',[id,image.key,image.generatedAt,image.paper,image.png]);},
       async listGallery(sort='active',{after=null,query='',limit=GALLERY_PAGE_SIZE}={}){
         const key={active:'GREATEST(interacted,visited)',interacted:'interacted',visited:'visited'}[sort];
         if(!key)throw new Error('Invalid gallery sort');
@@ -26,7 +29,10 @@ export async function openStore({url=process.env.DATABASE_URL,file=process.env.D
   if(process.env.NODE_ENV==='production')throw new Error('Production requires DATABASE_URL');
   let documents={};try{documents=JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
   let queue=Promise.resolve();
+  const thumbnails=file+'.thumbnails';
   return {
+    async getThumbnail(id){try{const image=JSON.parse(await readFile(path.join(thumbnails,id+'.json'),'utf8'));return {...image,png:Buffer.from(image.png,'base64')};}catch(error){if(error.code==='ENOENT')return;throw error;}},
+    async putThumbnail(id,image){await mkdir(thumbnails,{recursive:true});const target=path.join(thumbnails,id+'.json');await writeFile(target+'.tmp',JSON.stringify({...image,png:image.png.toString('base64')}));await rename(target+'.tmp',target);},
     async listGallery(sort='active',{after=null,query='',limit=GALLERY_PAGE_SIZE}={}){
       await queue;const key=activityKey(sort);if(!key)throw new Error('Invalid gallery sort');
       return structuredClone(Object.values(documents).map(tree=>({tree,at:activity(tree)[key]})).filter(item=>(item.tree.name??'').toLowerCase().includes(query.toLowerCase())&&item.at>0&&(!after||item.at<after.at||(item.at===after.at&&item.tree.id>after.id))).sort((a,b)=>b.at-a.at||a.tree.id.localeCompare(b.tree.id)).slice(0,limit).map(item=>item.tree));

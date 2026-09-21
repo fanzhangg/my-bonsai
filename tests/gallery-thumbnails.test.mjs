@@ -1,0 +1,58 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {openStore} from '../storage.mjs';
+import {createServer} from '../server.mjs';
+import {createGalleryThumbnails,THUMBNAIL_TTL,thumbnailKey} from '../gallery-thumbnails.mjs';
+import {configForClaim} from '../prototype/claim.mjs';
+import {CURRENT_VERSION} from '../prototype/tree-versions.mjs';
+
+test('thumbnail cache deduplicates cold work, serves stale while refreshing, and preserves images on failure',async()=>{
+ const saved=new Map(),store={getThumbnail:async id=>saved.get(id),putThumbnail:async(id,image)=>saved.set(id,image)};
+ let at=100,calls=0,finish;
+ const cache=createGalleryThumbnails(store,{now:()=>at,renderImage:()=>{calls++;return new Promise(resolve=>{finish=resolve;});}});
+ const record={id:'one',config:{},cuts:[]};
+ const a=cache.get(record),b=cache.get(record);
+ await new Promise(setImmediate);assert.equal(calls,1);
+ finish({png:Buffer.from('first'),paper:'#e8dccb'});
+ assert.equal((await a).png.toString(),'first');assert.equal(await a,await b);await cache.idle();
+ await cache.get({...record,lastVisitedAt:1000});assert.equal(calls,1,'visits do not invalidate');
+ at+=THUMBNAIL_TTL;
+ assert.equal((await cache.get(record)).png.toString(),'first');
+ await new Promise(setImmediate);assert.equal(calls,2);
+ finish({png:Buffer.from('second'),paper:'#e8dccb'});await cache.idle();
+ const changed={...record,cuts:[{id:'cut'}]};
+ assert.notEqual(thumbnailKey(changed),thumbnailKey(record));
+ const broken=createGalleryThumbnails(store,{renderImage:async()=>{throw new Error('decode failed');}});
+ assert.equal((await broken.get(changed)).png.toString(),'second');await broken.idle();
+ assert.equal(saved.get('one').png.toString(),'second');
+});
+
+test('server returns persistent PNG thumbnails, conditional GETs, and lightweight gallery records',async t=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'bonsai-thumbnails-')),file=path.join(dir,'trees.json');
+ const store=await openStore({url:'',file}),id=randomUUID(),at=Date.now();
+ const record={id,version:CURRENT_VERSION,createdAt:at-360000000,config:configForClaim(id,CURRENT_VERSION),cuts:[],lastVisitedAt:at};
+ await store.mutate(id,()=>record);
+ const server=createServer(store,{realtimeWeatherEnabled:false});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ t.after(async()=>{await new Promise(r=>server.close(r));await store.close();await rm(dir,{recursive:true,force:true});});
+ const base='http://127.0.0.1:'+server.address().port;
+ const gallery=await (await fetch(base+'/api/gallery?preview=1')).json(),entry=gallery.trees[0];
+ assert.equal(entry.cuts,undefined);assert.equal(entry.waterings,undefined);assert.ok(entry.thumbnailUrl);
+ const url=base+entry.thumbnailUrl;
+ const response=await fetch(url),png=Buffer.from(await response.arrayBuffer());
+ assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');
+ assert.equal(png.subarray(1,4).toString(),'PNG');assert.equal(png.readUInt32BE(16),640);assert.equal(png.readUInt32BE(20),640);
+ assert.match(response.headers.get('cache-control'),/max-age=60/);
+ const etag=response.headers.get('etag');assert.equal((await fetch(url,{headers:{'If-None-Match':etag}})).status,304);
+ assert.equal((await fetch(url,{method:'HEAD'})).status,200);
+ assert.equal((await fetch(base+'/api/gallery/'+randomUUID()+'/thumbnail.png')).status,404);
+ assert.equal((await fetch(base+'/api/gallery/bad/thumbnail.png')).status,404);
+ assert.equal((await fetch(url,{method:'POST'})).status,405);
+ const reopened=await openStore({url:'',file});
+ const cache=createGalleryThumbnails(reopened,{renderImage:()=>{throw new Error('must reuse disk image');}});
+ assert.deepEqual((await cache.get(record)).png,png);await reopened.close();
+ assert.deepEqual(await store.get(id),record,'thumbnail creation must not edit tree or activity');
+});
