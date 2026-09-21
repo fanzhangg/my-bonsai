@@ -26,9 +26,10 @@ Open [localhost:4173](http://127.0.0.1:4173/). Local trees are saved in `data/tr
 
 ## Design and documentation
 
+- [Documentation index](docs/README.md) — design, implementation, research, reviews, and historical archives.
 - Game design: [English](docs/design.en.md) · [简体中文](docs/design.zh-CN.md).
 - [Design system preview](http://127.0.0.1:4173/design-system.html) — interactive trees, pots, colors, and tools; requires the local server.
-- [Original MVP design](docs/一盆树-MVP设计文档.md) — historical product proposal in Chinese; some mechanics have since changed.
+- [Original MVP design](docs/archive/original-mvp.zh-CN.md) — historical product proposal in Chinese; some mechanics have since changed.
 - [Implementation and development reference](docs/implementation-notes.zh-CN.md) — detailed behavior, experiments, and links to technical notes in Chinese.
 
 ## Development and CI

@@ -2,7 +2,7 @@
 
 **English** · [简体中文](design.zh-CN.md) · [README](../README.md)
 
-This document describes the current game's core experience. Both language versions cover the same scope and should be updated together. The [original MVP proposal](一盆树-MVP设计文档.md) is retained as historical context; its participant system, daily pruning limit, and confirmation flow do not describe the current game. Detailed research and implementation notes remain in their original language.
+This document describes the current game's core experience. Both language versions cover the same scope and should be updated together. The [original MVP proposal](archive/original-mvp.zh-CN.md) is retained as historical context; its participant system, daily pruning limit, and confirmation flow do not describe the current game. Detailed research and implementation notes remain in their original language.
 
 ## 1. The experience
 
@@ -34,7 +34,7 @@ Choosing simply to watch is a valid session. New growth takes time; pruning does
 - Pruning changes the living structure. Gradual regrowth preserves the tree's style and leaves room for the player's shaping decisions; natural branch limits prevent unlimited growth.
 - Existing trees keep their saved model version and history when the default for new trees changes.
 
-The growth schedule is an accelerated visual model, not a claim of botanical realism. Exact rules are maintained in the [v3 growth and pruning reference](v3剪枝与生长集成.md).
+The growth schedule is an accelerated visual model, not a claim of botanical realism. Exact rules are maintained in the [v3 growth and pruning reference](implementation/v3-pruning-growth.zh-CN.md).
 
 ## 4. Interaction and presentation
 
@@ -42,7 +42,7 @@ The tree occupies the main scene. Scissors and the watering can behave as tools 
 
 Flat colors, readable silhouettes, restrained controls, and space between foliage layers keep the tree legible on small screens. Time-of-day backgrounds and weather add atmosphere. Live weather requires configuration and location permission; the experience can still use device time without location.
 
-Leaf trimming is currently a separate experiment at `/leaf-trim.html`, with browser-local results. It explores removing individual leaves and retaining a shaped crown outline. It should not be presented as an integrated, server-saved tool in the main game. See the [leaf-trimming design](修叶与树冠微整形设计.md).
+Leaf trimming is currently a separate experiment at `/leaf-trim.html`, with browser-local results. It explores removing individual leaves and retaining a shaped crown outline. It should not be presented as an integrated, server-saved tool in the main game. See the [leaf-trimming design](research/leaf-trimming.zh-CN.md).
 
 ## 5. Sharing and the courtyard
 

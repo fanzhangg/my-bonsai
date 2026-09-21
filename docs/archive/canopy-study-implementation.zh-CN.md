@@ -1,4 +1,6 @@
-> 应用已接入本文算法的冻结副本，最新生命周期、修剪、持久化和部署范围见 [应用 MVP 实现](应用MVP实现.md)。本文记录研究原型的几何与渲染实现，研究入口现为 /research.html。
+> 历史归档：本文保留当时的设计与实验记录，不代表当前功能或发布状态。当前产品设计见 [游戏设计](../design.zh-CN.md)。
+
+> 应用已接入本文算法的冻结副本，最新生命周期、修剪、持久化和部署范围见 [应用 MVP 实现](mvp-implementation.zh-CN.md)。本文记录研究原型的几何与渲染实现，研究入口现为 /research.html。
 
 # 盆景算法当前实现
 
@@ -22,13 +24,13 @@
 
 | 文件 | 职责 |
 |---|---|
-| [`canopy.mjs`](../prototype/canopy.mjs) | 配置归一化、七款造型、参考骨架变换、冠区和细枝生成、SVG 绘制 |
-| [`appearance.mjs`](../prototype/appearance.mjs) | 叶形、叶色、树干色、背景及六套组合的枚举和默认值 |
-| [`canopy-study.mjs`](../prototype/canopy-study.mjs) | 款式/配色对照、调参、缓存、候选读写与导出 |
-| [`specimens.mjs`](../prototype/specimens.mjs) | 提供旧版完整模型；新版提取其主干、主枝和冠区作为基础 |
-| [`model.mjs`](../prototype/model.mjs) | 新版复用 `sample()` 确定性采样与 `pointOn()` 三次贝塞尔求点 |
-| [`style-render.mjs`](../prototype/style-render.mjs) | 新版复用 `taperedPath()` 变宽枝干轮廓 |
-| [`index.html`](../prototype/index.html)、[`canopy.css`](../prototype/canopy.css)、[`study.css`](../prototype/study.css) | 页面结构及手机/桌面布局 |
+| [`canopy.mjs`](../../prototype/canopy.mjs) | 配置归一化、七款造型、参考骨架变换、冠区和细枝生成、SVG 绘制 |
+| [`appearance.mjs`](../../prototype/appearance.mjs) | 叶形、叶色、树干色、背景及六套组合的枚举和默认值 |
+| [`canopy-study.mjs`](../../prototype/canopy-study.mjs) | 款式/配色对照、调参、缓存、候选读写与导出 |
+| [`specimens.mjs`](../../prototype/specimens.mjs) | 提供旧版完整模型；新版提取其主干、主枝和冠区作为基础 |
+| [`model.mjs`](../../prototype/model.mjs) | 新版复用 `sample()` 确定性采样与 `pointOn()` 三次贝塞尔求点 |
+| [`style-render.mjs`](../../prototype/style-render.mjs) | 新版复用 `taperedPath()` 变宽枝干轮廓 |
+| [`index.html`](../../prototype/index.html)、[`canopy.css`](../../prototype/canopy.css)、[`study.css`](../../prototype/study.css) | 页面结构及手机/桌面布局 |
 
 ```mermaid
 flowchart TD
@@ -158,7 +160,7 @@ divide(parent, start, targets, depth):
 
 ## 7. 六套外观与配置
 
-完整配色见 [盆景视觉方案](盆景视觉方案.md)。当前组合为：
+完整配色见 [盆景视觉方案](visual-styles.zh-CN.md)。当前组合为：
 
 | 方案 | 叶形 / 叶色 | 树干 | 背景 |
 |---|---|---|---|
@@ -260,7 +262,7 @@ clusterProgress = clamp((hour - clusterBorn) / 20, 0, 1)
 | 悬崖真柏 | 4 | 40 | 76 | 88 |
 | 风吹松 | 5 | 50 | 95 | 106 |
 
-运行 `npm start` 启动本地页面；运行 `npm test` 检查模型。最近一次代码验证为 30 项通过，其中 [`tests/canopy.test.mjs`](../tests/canopy.test.mjs) 的 5 项测试覆盖多种子和参数边界、枝叶支撑关系、父子展开顺序、纯渲染、对照骨架、悬崖画幅、七款 × 六套外观的几何不变性及配置重放。浏览器人工检查包含手机宽度、方案切换、自由搭配、候选另存与刷新恢复。
+运行 `npm start` 启动本地页面；运行 `npm test` 检查模型。最近一次代码验证为 30 项通过，其中 [`tests/canopy.test.mjs`](../../tests/canopy.test.mjs) 的 5 项测试覆盖多种子和参数边界、枝叶支撑关系、父子展开顺序、纯渲染、对照骨架、悬崖画幅、七款 × 六套外观的几何不变性及配置重放。浏览器人工检查包含手机宽度、方案切换、自由搭配、候选另存与刷新恢复。
 
 ## 12. 当前限制和后续接入点
 
