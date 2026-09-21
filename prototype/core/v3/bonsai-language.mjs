@@ -68,20 +68,19 @@ export function crownCoversTip(c,n){
   return hits.length>=2&&y>=Math.min(...hits)&&y<=Math.max(...hits);
 }
 
-// Foliage inherited from a reference skeleton can miss the extended end of a
-// carrying branch. Audit the final geometry, not just the old leaf-site IDs.
+// Only fine shoots carry mature foliage. Structural branches may end below
+// their leafy shoots; covering those ends creates extra crowns inside the tree.
 function coverExposedTips(tree){
   for(const n of tree.nodes){
-    if(n.role==='trunk')continue;
+    if(n.role!=='twig')continue;
     const family=tree.clusters.filter(c=>c.pad===n.pad);
     if(family.some(c=>crownCoversTip(c,n)))continue;
     const candidates=family.length?family:tree.clusters;
     const nearest=candidates.reduce((best,c)=>!best||Math.hypot(c.x-n.ex,c.y-n.ey)<Math.hypot(best.x-n.ex,best.y-n.ey)?c:best,null);
     if(!nearest)continue;
-    const carrying=n.role==='primary'||n.role==='bough';
     const c={...nearest,key:`tip-crown:${n.id}`,node:n.id,pad:n.pad,
-      x:n.ex,y:n.ey,rx:carrying?clamp(nearest.rx*.85,24,42):clamp(nearest.rx*.62,14,34),
-      ry:carrying?clamp(nearest.ry*.90,18,32):clamp(nearest.ry*.68,10,25),
+      x:n.ex,y:n.ey,rx:clamp(nearest.rx*.62,14,34),
+      ry:clamp(nearest.ry*.68,10,25),
       contour:{...nearest.contour,skew:nearest.contour.skew*.5},terminalCrown:true};
     anchorCrown(c,n);tree.clusters.push(c);
   }

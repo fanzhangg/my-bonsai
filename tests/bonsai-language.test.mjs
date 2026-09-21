@@ -5,6 +5,7 @@ import {generateTrunkDesign} from '../prototype/trunk-design.mjs';
 import {grow,HOUR} from '../prototype/growth.mjs';
 import {pointOn} from '../prototype/core/v1/model.mjs';
 import {render} from '../prototype/growing-render.mjs';
+import {branchFamily} from '../prototype/pruning-model.mjs';
 
 test('design language retains approved juniper geometry and colors',()=>{
   const config={preset:'juniper',seed:'DESIGN-SYSTEM-01',variation:0},before=generateTrunkDesign(config),after=generateLanguage(config);
@@ -24,7 +25,7 @@ test('all curated form, crown, leaf and color combinations retain finite attache
         assert(Math.hypot(n.x-p.x,n.y-p.y)<.001,`${f.id} attached branch`);
       }
       assert(n.width>=n.tipWidth&&n.tipWidth>0);
-      if(n.role!=='trunk')assert(t.clusters.some(c=>c.pad===n.pad&&crownCoversTip(c,n)),`${f.id}/${crown}: no exposed mature branch tip`);
+      if(n.role==='twig')assert(t.clusters.some(c=>c.pad===n.pad&&crownCoversTip(c,n)),`${f.id}/${crown}: no exposed mature branch tip`);
     }
     for(const c of t.clusters){assert(index.has(c.node));assert(c.rx>0&&c.ry>0);assert.equal(c.layerPalette.length,4);}
     const frame=languageFrame(t),svg=render(t,{viewBox:frame});
@@ -38,12 +39,12 @@ test('all curated form, crown, leaf and color combinations retain finite attache
 test('extended mature branch tips carry attached foliage and cut foliage does not reappear',()=>{
   const record={createdAt:0,config:{preset:'juniper',palette:'mist',variation:.85,density:.8,seed:'655bc0bf-ed33-4435-bbf6-e27eafaff27a'},cuts:[]};
   const options={generator:generateLanguage,at:200*HOUR},tree=grow(record,1,options);
-  assert(tree.clusters.some(c=>c.terminalCrown),'regression seed includes formerly bare carrying tips');
-  for(const n of tree.nodes.filter(n=>n.role!=='trunk')){
+  for(const n of tree.nodes.filter(n=>n.role==='twig')){
     assert(tree.clusters.some(c=>c.pad===n.pad&&crownCoversTip(c,n)),`${n.id}: covered after growth transforms`);
   }
-  const crown=tree.clusters.find(c=>c.terminalCrown);
-  const cut=grow({...record,cuts:[{id:'tip-cut',seq:1,at:200*HOUR,branchId:crown.node}]},1,options);
+  const branch=tree.nodes.find(n=>n.role==='primary'),family=branchFamily(tree.nodes,branch.id);
+  const crown=tree.clusters.find(c=>family.has(c.node));
+  const cut=grow({...record,cuts:[{id:'tip-cut',seq:1,at:200*HOUR,branchId:branch.id}]},1,options);
   assert(!cut.clusters.some(c=>c.node===crown.node),'coverage repair must happen before pruning');
   for(const c of cut.clusters)assert.deepEqual(c,tree.clusters.find(original=>original.key===c.key));
 });

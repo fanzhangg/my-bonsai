@@ -37,7 +37,7 @@ test('extreme controls keep connected tapered wood, supported crowns and distinc
         const local=parent.width+(parent.tipWidth-parent.width)*(n.attachment??1);
         assert(n.width<=local+1e-6,`${id}/${i}: child must fit parent`);
         if(n.role!=='trunk'){
-          assert(t.clusters.some(c=>c.pad===n.pad&&crownCoversTip(c,n)),`${id}/${i}: mature side-branch tip has foliage`);
+          if(n.role==='twig')assert(t.clusters.some(c=>c.pad===n.pad&&crownCoversTip(c,n)),`${id}/${i}: mature fine tip has foliage`);
           assert.equal(n.branchTier,parent.branchTier+1,'count forks, not trunk segments');
           const tier=Math.min(n.branchTier,4);
           assert(n.width<=[0,22,9,5.2,3.2][tier]+1e-6,`${id}/${i}: tier width ceiling`);

@@ -18,7 +18,9 @@ const rawRadius=angle=>{
  return max;
 };
 const size=Math.min(group.rx,group.ry)*.88;
-const heart=Array.from({length:360},(_,i)=>{const t=i*Math.PI/180;return {x:center.x+16*Math.sin(t)**3/17*size,y:center.y-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))/17*size};});
+// Give the target a distinct cleft in fine-tip foliage, without depending on
+// the removed carrying-branch filler. Keep the silhouette assertions strict.
+const heart=Array.from({length:360},(_,i)=>{const t=i*Math.PI/180;return {x:center.x+16*Math.sin(t)**3/17*size,y:center.y-(13*Math.cos(t)-6*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))/17*size};});
 const targetRadius=a=>{let lo=0,hi=Math.max(group.rx,group.ry)*3;for(let i=0;i<20;i++){const m=(lo+hi)/2;if(inside({x:center.x+Math.cos(a)*m,y:center.y+Math.sin(a)*m},heart))lo=m;else hi=m;}return lo;};
 const angles=Array.from({length:192},(_,i)=>i*Math.PI/96),original=angles.map(rawRadius),desired=angles.map(targetRadius),targets=[];
 for(let step=0;step<2000;step++){

@@ -43,7 +43,7 @@ test('v3 freezes the reviewed design and generates every form/palette/pot reprod
   const record={version:CURRENT_VERSION,config,createdAt:0,cuts:[]},mature=grow(record,1),frame=applicationFrame(mature);
   for(const progress of [0,.3,.6,1]){const t=grow(record,progress);assert.deepEqual(applicationFrame(t),frame);assert(!/NaN|Infinity/.test(draw(t)));}
   for(const c of mature.clusters){assert(c.x-c.rx>=frame.x&&c.x+c.rx<=frame.x+frame.width);assert(c.y-c.ry>=frame.y&&c.y+c.ry<=frame.y+frame.height);}
-  for(const n of mature.nodes.filter(n=>n.role!=='trunk'))assert(mature.clusters.some(c=>c.pad===n.pad&&crownCoversTip(c,n)),'mature tips retain attached crowns');
+  for(const n of mature.nodes.filter(n=>n.role==='twig'))assert(mature.clusters.some(c=>c.pad===n.pad&&crownCoversTip(c,n)),'mature tips retain attached crowns');
   assert(pruningPoints(mature.nodes).length>=2,'new wood can be targeted by the existing scissors');
   const stable=structuredClone(mature);mature.nodes[0].width=0;mature.clusters.length=0;assert.deepEqual(grow(record,1),stable,'cache cannot be poisoned by callers');
   const ruby=grow({...record,config:normalizeDesign({...config,palette:'ruby'})},1);

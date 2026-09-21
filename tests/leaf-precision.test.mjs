@@ -71,8 +71,9 @@ test('even a boundary leaf cannot be cut by a crosshair deep inside its silhouet
 test('new immature foliage uses identical coordinates and size for drawing and scissors',()=>{
  const record={version:CURRENT_VERSION,createdAt:0,config:normalizeDesign({preset:'broom',seed:'young-leaf-aim'}),cuts:[],leafTrims:[]};
  let checked=0;
- for(const hours of [0,2,6,18]){
+ for(const hours of [96,120,144,168]){
   const tree=snapshot(record,hours*HOUR);
+  // Wait for fine shoots: structural branch ends no longer get filler crowns.
   // Exercise the renderer's unfolding phase explicitly; trained starter
   // crowns are born at -100 and have already finished unfolding on adoption.
   tree.clusters[0].born=tree.hour-3;tree.clusters[0].duration=20;
