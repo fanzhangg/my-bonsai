@@ -1,0 +1,7 @@
+/* A quiet signature, clear of the scene controls and plant name. */
+.site-brand{position:fixed;right:max(24px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:3;display:flex;align-items:center;gap:8px;min-height:44px;color:var(--ink,#35483b);text-decoration:none;font-size:13px;letter-spacing:.12em;border-radius:8px}
+.site-brand svg{display:block;width:28px;height:28px;flex:none}
+.site-brand:hover{color:var(--action,#355d47)}
+.site-brand:focus-visible{outline:2px solid currentColor;outline-offset:5px}
+body:has(.gallery-grid) .site-brand{position:relative;justify-content:center;right:auto;bottom:auto;width:fit-content;margin:24px auto}
+@media(max-width:600px){.site-brand{right:max(18px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));font-size:12px;gap:6px}.site-brand svg{width:24px;height:24px}}

@@ -12,13 +12,13 @@ export function publicOrigin(req,configured){
 }
 export function shareMetadata(record,origin,at=Date.now()){
  const data=shareData(record,origin,at);
- const tags=[['property','og:type','website'],['property','og:site_name','一盆树'],['property','og:locale','zh_CN'],
+ const tags=[['property','og:type','website'],['property','og:site_name','我的盆栽'],['property','og:locale','zh_CN'],
   ['property','og:title',data.title],['property','og:description',data.text],['property','og:url',data.url],
   ['property','og:image',data.image],['property','og:image:type','image/png'],
   ['property','og:image:width',SHARE_WIDTH],['property','og:image:height',SHARE_HEIGHT],['property','og:image:alt','我种的盆栽，快来给它浇水'],
   ['name','description',data.text],['name','twitter:card','summary_large_image'],['name','twitter:title',data.title],
   ['name','twitter:description',data.text],['name','twitter:image',data.image],['name','twitter:image:alt','我种的盆栽']];
- return `<title>${escape(data.title)} · 一盆树</title>\n<link rel="canonical" href="${escape(data.url)}">\n`+
+ return `<title>${escape(data.title)} · 我的盆栽</title>\n<link rel="canonical" href="${escape(data.url)}">\n`+
   tags.map(([kind,key,value])=>`<meta ${kind}="${key}" content="${escape(value)}">`).join('\n');
 }
 export function renderShareImage(record,at=Date.now()){

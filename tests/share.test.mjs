@@ -84,7 +84,7 @@ test('named trees use their name in invitations and safely escaped social titles
  assert.equal(nativeShareData(data,null,{}).title,data.title);
  const html=shareMetadata(record,'https://garden.example');
  const title=SHARE_TITLE+'「小松 &lt;芽&gt; &amp; &quot;叶&quot;」';
- assert(html.includes('<title>'+title+' · 一盆树</title>'));
+ assert(html.includes('<title>'+title+' · 我的盆栽</title>'));
  assert(html.includes('property="og:title" content="'+title+'"'));
  assert(html.includes('name="twitter:title" content="'+title+'"'));
  for(const name of [undefined,'','   '])assert.equal(shareData({...record,name},'https://garden.example').title,SHARE_TITLE);

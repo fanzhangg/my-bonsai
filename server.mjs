@@ -132,12 +132,12 @@ export function createServer(store,{realtimeWeatherEnabled=process.env.REALTIME_
       const name=url.pathname==='/gallery'||url.pathname==='/gallery/'?'/gallery.html':url.pathname==='/'||/^\/t\/[^/]+$/.test(url.pathname)?'/index.html':decodeURIComponent(url.pathname);
       const target=path.resolve(root,`.${name}`);if(!target.startsWith(root+path.sep)||!['.html','.css','.mjs','.svg'].includes(path.extname(target)))fail(404,'找不到页面');
       let file;try{file=await readFile(target);}catch{fail(404,'找不到页面');}
-      if(sharedTree)file=file.toString('utf8').replace('<title>一盆树</title>',shareMetadata(sharedTree,publicOrigin(req,publicBaseUrl)));
+      if(sharedTree)file=file.toString('utf8').replace('<title>我的盆栽</title>',shareMetadata(sharedTree,publicOrigin(req,publicBaseUrl)));
       res.writeHead(200,{'Content-Type':({'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[path.extname(target)]+'; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});res.end(req.method==='HEAD'?undefined:file);
     }catch(e){send(e.status||503,{error:e.status?e.message:'暂时无法保存，请稍后重试'});}
   });
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  const store=await openStore();const server=createServer(store);server.listen(Number(process.env.PORT||4173),process.env.HOST||(process.env.NODE_ENV==='production'?'0.0.0.0':'127.0.0.1'),()=>console.log(`一盆树: http://localhost:${process.env.PORT||4173}`));
+  const store=await openStore();const server=createServer(store);server.listen(Number(process.env.PORT||4173),process.env.HOST||(process.env.NODE_ENV==='production'?'0.0.0.0':'127.0.0.1'),()=>console.log(`我的盆栽: http://localhost:${process.env.PORT||4173}`));
   process.on('SIGTERM',()=>server.close(async()=>{await store.close();process.exit(0);}));
 }
