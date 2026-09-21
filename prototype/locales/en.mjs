@@ -242,4 +242,6 @@ export const english=Object.fromEntries(`这棵树已更新，请先重新载入
 秋金|Autumn gold
 枫红|Maple red
 跟随浏览器|Browser language
-语言|Language`.split('\n').map(line=>{const at=line.indexOf('|');return [line.slice(0,at),line.slice(at+1)];}));
+语言|Language
+问题反馈|Feedback
+问题反馈（在新标签页打开 GitHub Issues）|Feedback (opens GitHub Issues in a new tab)`.split('\n').map(line=>{const at=line.indexOf('|');return [line.slice(0,at),line.slice(at+1)];}));

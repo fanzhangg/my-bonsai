@@ -16,6 +16,9 @@ main{position:relative;width:100%;max-width:none;min-height:100svh;padding:0;dis
 .new-tree{right:auto;left:max(20px,env(safe-area-inset-left));text-decoration:none}
 .gallery-link{display:none;right:auto;left:max(20px,env(safe-area-inset-left));text-decoration:none}
 .home .gallery-link{display:block}
+.feedback-link{display:none;text-decoration:none}
+.home .feedback-link{display:block}
+.home #regenerate{top:calc(max(20px,env(safe-area-inset-top)) + 58px)}
 #status{position:fixed;bottom:18px;left:20px;right:20px;z-index:4;margin:0}
 #retry{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:4}
 .debug-mode main{display:block}.debug-mode #stage{margin:auto;height:75svh}.debug-mode #welcome{position:static;transform:none;padding:10px}.debug-mode #debug{margin:20px auto 40px;width:calc(100% - 36px)}
