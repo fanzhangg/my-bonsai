@@ -1,3 +1,4 @@
+import {t} from './i18n.mjs';
 import {snapshot,draw,applicationFrame} from './growth.mjs';
 import {leafLayers,referenceRim,snippedRim,smoothLeafPath,inside,SNIP_MODEL,SNIP_TARGET_LIMIT,leafSites,snipNearEdge,snipTarget,nearbyEdgeLeaves,proposeSnip,eraseEvent} from './leaf-trim-model.mjs';
 import {outerLeafEdges} from './leaf-edge.mjs';
@@ -24,8 +25,9 @@ const el=(tag,attrs)=>{const n=document.createElementNS(ns,tag);for(const [k,v]o
 
 // Independent tool, with the same pick up / target / release rhythm as pruning.
 export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()=>{},onError=()=>{}}){
- const editor=document.createElement('div');editor.className='leaf-editor';editor.hidden=true;editor.tabIndex=-1;editor.setAttribute('role','application');editor.setAttribute('aria-label','修叶');
+ const editor=document.createElement('div');editor.className='leaf-editor';editor.hidden=true;editor.tabIndex=-1;editor.setAttribute('role','application');editor.setAttribute('aria-label',t('修叶'));
  editor.innerHTML='<div class="leaf-canvas"></div><p class="leaf-sr-only" role="status" aria-live="polite"></p><button class="leaf-tool" type="button" aria-label="拖动修叶剪到一层树冠，按住拖动修叶，松手保存；Esc 放回">'+leafScissors+'</button><div class="leaf-floating" hidden>'+leafScissors+'</div>';
+ editor.querySelector('.leaf-tool').setAttribute('aria-label',t('拖动修叶剪到一层树冠，按住拖动修叶，松手保存；Esc 放回'));
  document.body.append(editor);
  editor.style.setProperty('--leaf-snip-duration',(SNIP_INTERVAL_MS-10)+'ms');
  const canvas=editor.querySelector('.leaf-canvas'),hint=editor.querySelector('[role=status]'),tool=editor.querySelector('.leaf-tool'),floating=editor.querySelector('.leaf-floating');
@@ -36,11 +38,11 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
  }
  function render(){
   canvas.innerHTML=draw(tree,{transparent:true,viewBox:applicationFrame(tree),id:'leaf-editor-tree',focusClusterKeys:selected?.clusters.map(c=>c.key)});
-  svg=canvas.querySelector('svg');svg.removeAttribute('role');svg.setAttribute('aria-label','选择整层树冠');
+  svg=canvas.querySelector('svg');svg.removeAttribute('role');svg.setAttribute('aria-label',t('选择整层树冠'));
   const overlay=el('g',{'data-leaf-selection':'true'});
   for(const g of [...groups].sort((a,b)=>a.z-b.z)){
    if(selected)continue;
-   const target=el('g',{'data-layer-id':g.id,role:'button',tabindex:'0','aria-label':'选择第 '+(groups.indexOf(g)+1)+' 层树冠',class:'leaf-layer'});
+   const target=el('g',{'data-layer-id':g.id,role:'button',tabindex:'0','aria-label':t('选择第 ')+(groups.indexOf(g)+1)+t(' 层树冠'),class:'leaf-layer'});
    for(const c of g.clusters)target.append(el('path',{d:smoothLeafPath(rims.get(c.key)),fill:'transparent'}));
    const scale=svgScale(),dot=el('circle',{cx:g.x,cy:g.y,r:5/scale,class:'leaf-layer-dot','vector-effect':'non-scaling-stroke'});
    target.append(dot);overlay.append(target);
@@ -57,7 +59,7 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
   floating.classList[inRange?'add':'remove']('is-in-range');
  }
  function choose(g){
-  selected=g;edges=outerLeafEdges(selected,catalog);targets=[];stroke=null;keyboardPoint=null;render();say('已选第 '+(groups.indexOf(g)+1)+' 层树冠。按住拖动修叶，松手保存；Esc 放回。');
+  selected=g;edges=outerLeafEdges(selected,catalog);targets=[];stroke=null;keyboardPoint=null;render();say(t('已选第 ')+(groups.indexOf(g)+1)+t(' 层树冠。按住拖动修叶，松手保存；Esc 放回。'));
  }
  function hit(p){return [...groups].sort((a,b)=>b.z-a.z).find(g=>g.clusters.some(c=>inside(p,rims.get(c.key))));}
  function falling(cuts){
@@ -116,7 +118,7 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
   if(!active||saving)return;
   releaseCapture();
   if(!targets.length){close();return;}
-  saving=true;tool.hidden=true;floating.classList.remove('is-snipping','is-in-range');say('正在保存修叶');
+  saving=true;tool.hidden=true;floating.classList.remove('is-snipping','is-in-range');say(t('正在保存修叶'));
   const id=crypto.randomUUID(),operations=[{model:SNIP_MODEL,crownId:selected.id,targets}];
   const working={...base,leafTrims:[...(base.leafTrims??[]),{...eraseEvent(proposeSnip(tree,operations[0]),at,id+':0',(base.leafTrims?.length??0)+1),batchId:id}]};
   try{
@@ -135,8 +137,8 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
   const g=gesture;releaseCapture();
   if(targets.length){void finish();return;}
   if(!g.moved&&g.target){choose(groups.find(layer=>layer.id===g.target));return;}
-  if(!g.moved&&g.fromTool){say('选择一层树冠，按住拖动修叶');return;}
-  if(selected&&!g.fromTool&&hit(world({x:g.x,y:g.y-g.offset}))?.id===selected.id){say('请将准星靠近树冠外缘。Esc 放回。');return;}
+  if(!g.moved&&g.fromTool){say(t('选择一层树冠，按住拖动修叶'));return;}
+  if(selected&&!g.fromTool&&hit(world({x:g.x,y:g.y-g.offset}))?.id===selected.id){say(t('请将准星靠近树冠外缘。Esc 放回。'));return;}
   close();
  });
  editor.addEventListener('pointercancel',e=>{if(active&&!saving&&gesture?.id===e.pointerId)close();});
@@ -154,7 +156,7 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
    const step=(e.shiftKey?.5:2)/svgScale();keyboardPoint={x:keyboardPoint.x+(e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0),y:keyboardPoint.y+(e.key==='ArrowDown'?step:e.key==='ArrowUp'?-step:0)};
    const p=screen(keyboardPoint);place(p);
   }
-  if([' ','Enter'].includes(e.key)&&selected&&!e.repeat){e.preventDefault();const p=screen(keyboardPoint??{x:selected.x,y:selected.y});place(p);append(p);if(targets.length)void finish();else say('请将准星靠近树冠外缘。Shift 加方向键微调。');}
+  if([' ','Enter'].includes(e.key)&&selected&&!e.repeat){e.preventDefault();const p=screen(keyboardPoint??{x:selected.x,y:selected.y});place(p);append(p);if(targets.length)void finish();else say(t('请将准星靠近树冠外缘。Shift 加方向键微调。'));}
  });
  const cancel=()=>{if(active&&!saving)close();};
  window.addEventListener('blur',cancel);window.addEventListener('resize',cancel);
@@ -170,7 +172,7 @@ export function createLeafTrimming({holder,onSave,onBusyChange=()=>{},onClose=()
    editor.hidden=false;tool.hidden=false;tool.style.left=home.x+'px';tool.style.top=(home.y+40)+'px';floating.hidden=true;keyboardPoint=null;
    layout();render();holder.style.visibility='hidden';document.body.classList.add('leaf-editing');editor.focus({preventScroll:true});
    if(event?.type==='pointerdown')begin(event,true);
-   onBusyChange(true);say('选择一层树冠，按住拖动修叶，松手保存；Esc 放回。');
+   onBusyChange(true);say(t('选择一层树冠，按住拖动修叶，松手保存；Esc 放回。'));
   }
  };
 }

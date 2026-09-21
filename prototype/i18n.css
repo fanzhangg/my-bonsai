@@ -1,0 +1,7 @@
+.language-picker{display:none;position:fixed;bottom:env(safe-area-inset-bottom,0px);right:max(12px,env(safe-area-inset-right));z-index:3;opacity:.5}
+.home .language-picker{display:block}
+.language-picker:hover,.language-picker:focus-within{opacity:1}
+.language-picker select{appearance:none;font:11px system-ui,sans-serif;text-align:center;color:inherit;background:transparent;border:0;border-radius:4px;min-height:44px;max-width:160px;padding:8px 12px;cursor:pointer}
+.language-picker select:focus-visible{outline:3px solid #bd875c;outline-offset:3px}
+.language-picker option{color:#35483b;background:#faf9f3}
+body.leaf-editing .language-picker,.home:has(#status:not([hidden])) .language-picker{display:none}

@@ -1,3 +1,4 @@
+import {t} from './i18n.mjs';
 import {waterPoint,waterImpact,nearPlanter,waterFacing,createWaterTank,spendWater,refillWaterTank,WATER_CAPACITY} from './watering-motion.mjs';
 import {toolHome} from './tool-home.mjs';
 import {collisionGrid} from './collision-grid.mjs';
@@ -43,7 +44,7 @@ export function createWatering({scene,holder,can,water,status,initialProgress=.5
   can.style.setProperty('--drain-tilt',((1-Math.min(1,tank.remaining/900))*-8)+'deg');
   water.dataset.phase=flowing?(tank.remaining<600?'drops':tank.remaining<900?'draining':'stream'):'idle';
   water.dataset.flowing=String(flowing);
-  if(pouring&&tank.remaining>0)status.textContent=near?'正在浇水，可以继续移动水壶。':'已离开盆栽，停止出水。移回附近可继续。';
+  if(pouring&&tank.remaining>0)status.textContent=near?t('正在浇水，可以继续移动水壶。'):t('已离开盆栽，停止出水。移回附近可继续。');
   return flowing;
  }
  function emit(time,dt){
@@ -116,10 +117,10 @@ export function createWatering({scene,holder,can,water,status,initialProgress=.5
  async function returnHome(){
   if(returning)return;returning=true;can.classList.remove('is-held');const destination=home();
   if(active&&!reduced())await can.animate([{translate:position.x+'px '+position.y+'px'},{translate:destination.x+'px '+destination.y+'px'}],{duration:380,easing:'cubic-bezier(.2,.7,.2,1)'}).finished.catch(()=>{});
-  place(home());refillWaterTank(tank);pouredThisHold=false;showWater();status.textContent='水壶已补满，可以再次拿起。';returning=false;notify();
+  place(home());refillWaterTank(tank);pouredThisHold=false;showWater();status.textContent=t('水壶已补满，可以再次拿起。');returning=false;notify();
  }
  function complete(){
-  cancelAnimationFrame(raf);raf=0;pouring=false;clearWater();can.classList.remove('is-pouring','is-draining');water.dataset.phase='idle';water.dataset.flowing='false';status.textContent=tank.remaining<=0?'水壶已空，松手放回补水。':'放回水壶，补满后可继续。';
+  cancelAnimationFrame(raf);raf=0;pouring=false;clearWater();can.classList.remove('is-pouring','is-draining');water.dataset.phase='idle';water.dataset.flowing='false';status.textContent=tank.remaining<=0?t('水壶已空，松手放回补水。'):t('放回水壶，补满后可继续。');
   void finish();notify();
  }
  function frame(timestamp){
@@ -141,10 +142,10 @@ export function createWatering({scene,holder,can,water,status,initialProgress=.5
  function pour(){
   if(!held||pouring||pouredThisHold||tank.remaining<=0)return;
   pouring=true;pouredThisHold=true;started=performance.now();lastFrame=started;lastEmit=started;animationTime=started;previousNozzle=null;
-  can.classList.add('is-pouring');status.textContent='正在浇水，可以继续移动水壶。';raf=requestAnimationFrame(frame);
+  can.classList.add('is-pouring');status.textContent=t('正在浇水，可以继续移动水壶。');raf=requestAnimationFrame(frame);
  }
  function check(){const g=geometry();if(nearPlanter(position,g.soil,g.top,g.factor))pour();if(pouring)updateFlow(performance.now());}
- function begin(){if(!active||returning||held||pouring||saving)return false;held=true;notify();invalidate();pouredThisHold=pouring;can.classList.add('is-held');status.textContent=pouring?'继续移动水壶，水流会跟随壶嘴。':'移到盆栽或花盆附近即可浇水。';return true;}
+ function begin(){if(!active||returning||held||pouring||saving)return false;held=true;notify();invalidate();pouredThisHold=pouring;can.classList.add('is-held');status.textContent=pouring?t('继续移动水壶，水流会跟随壶嘴。'):t('移到盆栽或花盆附近即可浇水。');return true;}
  function move(e){
   if(!held||e.pointerId!==pointer)return;const r=scene.getBoundingClientRect();place({x:e.clientX-r.x,y:e.clientY-r.y-(e.pointerType==='touch'?48:0)});check();
  }

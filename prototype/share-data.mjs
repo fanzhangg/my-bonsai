@@ -4,10 +4,11 @@ export const SHARE_WIDTH=1200,SHARE_HEIGHT=630;
 export function shareVersion(record,at=Date.now()){
  return `${record.revision??0}-${Math.floor(at/60000)}`;
 }
-export function shareData(record,origin,at=Date.now()){
+export function shareData(record,origin,at=Date.now(),language='zh'){
  const url=new URL('/t/'+record.id,origin).href;
  const name=typeof record.name==='string'?record.name.trim():'';
- return {title:name?`${SHARE_TITLE}「${name}」`:SHARE_TITLE,text:SHARE_TEXT,url,image:`${url}/share.png?v=${shareVersion(record,at)}`};
+ const title=language==='en'?'Come see my bonsai':SHARE_TITLE;
+ return {title:name?(language==='en'?`${title}: ${name}`:`${title}「${name}」`):title,text:language==='en'?'Water my bonsai and watch it grow with me.':SHARE_TEXT,url,image:`${url}/share.png?v=${shareVersion(record,at)}`};
 }
 export const invitation=data=>`${data.title}\n${data.text}\n${data.url}`;
 // Keep this synchronous so navigator.share is called during the user's click.

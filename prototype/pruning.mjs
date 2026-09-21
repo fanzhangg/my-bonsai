@@ -1,3 +1,4 @@
+import {t} from './i18n.mjs';
 import {branchFamily,pruningPoints,pruningTarget,canPrune} from './pruning-model.mjs';
 import {toolHome} from './tool-home.mjs';
 import {pruningBitmap} from './pruning-bitmap.mjs';
@@ -12,8 +13,8 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
   const markers=document.createElement('div');markers.className='pruning-points';markers.setAttribute('aria-hidden','true');scene.append(markers);
   message.classList.add('pruning-sr-only');
   tool.setAttribute('aria-pressed','false');
-  tool.setAttribute('aria-label','点击或拖动剪刀，靠近提示点选择旁支；也可按空格拿起，用方向键选择，再按空格剪下');
-  const instruction=()=>choices.length?(keyboard?'用方向键选择提示点，空格剪下 · Esc 取消':clickMode?'靠近提示点，点击剪下 · Esc 取消':'拖向提示点，松手剪下 · 也可点击拿起'):'暂时没有可剪的旁支 · Esc 取消';
+  tool.setAttribute('aria-label',t('点击或拖动剪刀，靠近提示点选择旁支；也可按空格拿起，用方向键选择，再按空格剪下'));
+  const instruction=()=>choices.length?(keyboard?t('用方向键选择提示点，空格剪下 · Esc 取消'):clickMode?t('靠近提示点，点击剪下 · Esc 取消'):t('拖向提示点，松手剪下 · 也可点击拿起')):t('暂时没有可剪的旁支 · Esc 取消');
   const elements=ids=>[...svg.querySelectorAll('[data-wind-wood],[data-wind-node]')].filter(el=>ids.has(tree.nodes[Number(el.getAttribute(el.hasAttribute('data-wind-wood')?'data-wind-wood':'data-wind-node'))]?.id));
   function position(x,y){toolPosition={x,y};tool.style.left='0px';tool.style.top='0px';tool.style.translate=`${x}px ${y}px`;}
   function home(){return toolHome(scene,64);}
@@ -28,8 +29,8 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
       const outline=make('path',{d:`M${n.x} ${n.y} C${n.cx1} ${n.cy1} ${n.cx2} ${n.cy2} ${n.ex} ${n.ey}`,'aria-hidden':'true'});outline.classList.add('pruning-outline');svg.append(outline);
       markers.children[choices.findIndex(c=>c.node.id===next.node.id)]?.classList.add('is-selected');
       tool.classList.add('is-snapped');scene.classList.add('has-pruning-target');
-      message.textContent=`已选中${next.node.pruningLevel===2?'二级侧枝':'旁支'} · ${keyboard?'空格':clickMode?'点击':'松手'}剪下这簇枝叶`;
-    }else message.textContent=next?.protected?'主干保留，请靠近旁支上的提示点':instruction();
+      message.textContent=t('已选中{branch} · {action}剪下这簇枝叶',{branch:next.node.pruningLevel===2?t('二级侧枝'):t('旁支'),action:keyboard?t('空格'):clickMode?t('点击'):t('松手')});
+    }else message.textContent=next?.protected?t('主干保留，请靠近旁支上的提示点'):instruction();
   }
   function showPoints(){
     const matrix=svg.getScreenCTM();choices=pruningPoints(tree.nodes,removed,Math.hypot(matrix.a,matrix.b));
@@ -67,7 +68,7 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
       // Close from the current opening angle, even midway through the idle cycle.
       const blades=[...tool.querySelectorAll('.scissor-half')];
       const poses=blades.map(blade=>getComputedStyle(blade).transform);
-      tool.classList.add('is-snipping');message.textContent='咔嚓。';
+      tool.classList.add('is-snipping');message.textContent=t('咔嚓。');
       await Promise.all([
         ...blades.map((blade,i)=>animate(blade,[{transform:poses[i]},{transform:'rotate(0deg)'}],{duration:180,easing:'cubic-bezier(.3,0,.7,1)'})),
         animate(tool,[{rotate:'0deg'},{rotate:'-3deg',offset:.55},{rotate:'0deg'}],{duration:180})
@@ -94,9 +95,9 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
       tool.classList.remove('is-held','is-snipping');
       await Promise.all([falling,returnHome()]);
       busy=false;
-      message.textContent=tree.nodes.some(n=>canPrune(n)&&!removed.has(n.id))?'枝叶落下，留出一点空。稀疏处会重新萌芽。':'旁支已剪完，休息一阵后会慢慢长出新枝。';
+      message.textContent=tree.nodes.some(n=>canPrune(n)&&!removed.has(n.id))?t('枝叶落下，留出一点空。稀疏处会重新萌芽。'):t('旁支已剪完，休息一阵后会慢慢长出新枝。');
     }else{
-      clear();tool.classList.remove('is-held');await returnHome();busy=false;message.textContent='点击或拖动剪刀，靠近树上的提示点。';
+      clear();tool.classList.remove('is-held');await returnHome();busy=false;message.textContent=t('点击或拖动剪刀，靠近树上的提示点。');
     }
     onBusyChange(false);onSettled();
   }
@@ -128,7 +129,7 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
     if(!held||!keyboard||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
     e.preventDefault();if(!choices.length)return;
     keyboardIndex=(keyboardIndex+(['ArrowLeft','ArrowUp'].includes(e.key)?-1:1)+choices.length)%choices.length;
-    const choice=choices[keyboardIndex];select(choice);const p=screen(choice.point);position(p.x,p.y+12);message.textContent=`已选中${choice.node.pruningLevel===2?'二级侧枝':'旁支'} ${keyboardIndex+1}，共 ${choices.length} 根 · 空格剪下`;
+    const choice=choices[keyboardIndex];select(choice);const p=screen(choice.point);position(p.x,p.y+12);message.textContent=t('已选中{branch} {index}，共 {count} 根 · 空格剪下',{branch:choice.node.pruningLevel===2?t('二级侧枝'):t('旁支'),index:keyboardIndex+1,count:choices.length});
   });
   window.addEventListener('blur',()=>finish(false));
   document.addEventListener('visibilitychange',()=>{if(document.hidden)finish(false);});

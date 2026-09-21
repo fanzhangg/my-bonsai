@@ -1,9 +1,10 @@
+import {t} from './i18n.mjs';
 import {edgePoint,flightPoint,visitTiming,flightAppearance} from './visitor-flight.mjs';
 
 const butterflies=[
-  {name:'淡杏蝶',color:'#c9b68c',size:22,wing:'M24 24Q9 4 8 14Q7 23 17 26Q10 33 16 34Q23 34 24 24Z'},
-  {name:'米白蝶',color:'#ded9c4',size:20,wing:'M24 24C20 13 10 8 9 17Q8 24 17 26Q10 31 16 34Q24 34 24 24Z'},
-  {name:'灰蓝蝶',color:'#9eafb0',size:21,wing:'M24 24L10 10Q4 20 17 26Q10 32 16 33Q23 33 24 24Z'}
+  {name:t('淡杏蝶'),color:'#c9b68c',size:22,wing:'M24 24Q9 4 8 14Q7 23 17 26Q10 33 16 34Q23 34 24 24Z'},
+  {name:t('米白蝶'),color:'#ded9c4',size:20,wing:'M24 24C20 13 10 8 9 17Q8 24 17 26Q10 31 16 34Q24 34 24 24Z'},
+  {name:t('灰蓝蝶'),color:'#9eafb0',size:21,wing:'M24 24L10 10Q4 20 17 26Q10 32 16 33Q23 33 24 24Z'}
 ];
 function butterflyMarkup(type){
   const wing=`<path d="${type.wing}" fill="${type.color}"/>`;
@@ -14,8 +15,8 @@ const firefly='<span class="visitor-firefly" aria-hidden="true"></span>';
 export function createVisitors({scene,treeElement,layer,onCount=()=>{},onStatus=()=>{},focusTarget=layer}){
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   let active=false,paused=false,mode='day',bugs=[],clock=0,last=0,raf=0,perches=[],hasFoliage=false;
-  const label=()=>mode==='day'?'蝴蝶':'萤火虫';
-  function updateCount(){ onCount(`${bugs.filter(b=>b.phase==='idle'||b.phase==='enter').length} 位访客`); }
+  const label=()=>mode==='day'?t('蝴蝶'):t('萤火虫');
+  function updateCount(){ onCount(t('{count} 位访客',{count:bugs.filter(b=>b.phase==='idle'||b.phase==='enter').length})); }
   // Map real leaf-cluster surfaces into the overlay, including SVG letterboxing.
   function measurePerches(){
     const bounds=layer.getBoundingClientRect();
@@ -89,17 +90,17 @@ export function createVisitors({scene,treeElement,layer,onCount=()=>{},onStatus=
         const target=!resting&&Math.hypot(dx,dy)>.01?Math.atan2(dy,dx)*180/Math.PI+90:b.angle;
         const turn=((target-b.angle+540)%360)-180;
         b.angle+=turn*(reduced.matches?1:.09);
-        const t=reduced.matches?0:clock/1000;
-        const beat=(Math.sin(t*(25+b.index*3)+b.seed)+1)/2;
+        const seconds=reduced.matches?0:clock/1000;
+        const beat=(Math.sin(seconds*(25+b.index*3)+b.seed)+1)/2;
         const spread=reduced.matches?.8:.35+beat*.65;
         b.heading.style.transform=`rotate(${b.angle}deg)`;
-        b.folded.style.transform=`scaleX(${reduced.matches?1:.94+Math.sin(t*1.1+b.seed)*.06})`;
+        b.folded.style.transform=`scaleX(${reduced.matches?1:.94+Math.sin(seconds*1.1+b.seed)*.06})`;
         b.wings[0].style.transform=`scaleX(${spread})`;
         b.wings[1].style.transform=`scaleX(${spread*(resting?.62:.88)})`;
         const behavior=resting?'resting':'flying';
         if(b.button.dataset.behavior!==behavior){
           b.button.dataset.behavior=behavior;
-          b.button.setAttribute('aria-label',`${butterflies[b.index].name}，${resting?'停在树冠休息':'飞舞中'}，点击让它飞走`);
+          b.button.setAttribute('aria-label',t('{name}，{state}，点击让它飞走',{name:butterflies[b.index].name,state:resting?t('停在树冠休息'):t('飞舞中')}));
         }
       }
       b.current=p;
@@ -130,7 +131,7 @@ export function createVisitors({scene,treeElement,layer,onCount=()=>{},onStatus=
     b.button.style.setProperty('--butterfly-size',`${butterflies[b.index].size*individualSize}px`);
     b.button.style.setProperty('--offset',`${-Math.random()*4}s`);
     b.button.style.setProperty('--glow-size',individualSize);
-    b.button.setAttribute('aria-label',`${label()} ${b.slot+1}，点击让它飞走`);
+    b.button.setAttribute('aria-label',t('{name} {index}，点击让它飞走',{name:label(),index:b.slot+1}));
     delete b.button.dataset.behavior;
     const destination=position(b);
     b.angle=Math.atan2(destination.y-b.entry.y,destination.x-b.entry.x)*180/Math.PI+90;
@@ -149,7 +150,7 @@ export function createVisitors({scene,treeElement,layer,onCount=()=>{},onStatus=
   function dismiss(b){
     if(b.phase==='leave'||b.phase==='waiting')return;
     depart(b,true);
-    onStatus(paused?`已暂停。继续飞舞后，这只${label()}会飞走。`:`这只${label()}飞远了。等一会儿，也许会有新的访客。`);
+    onStatus(paused?t('已暂停。继续飞舞后，这只{name}会飞走。',{name:label()}):t('这只{name}飞远了。等一会儿，也许会有新的访客。',{name:label()}));
     updateCount();renderBugs();
   }
   function reset({initial=false}={}){
@@ -157,7 +158,7 @@ export function createVisitors({scene,treeElement,layer,onCount=()=>{},onStatus=
     const positions=mode==='day'?[[32,35],[65,30],[57,53]]:[[29,36],[68,35],[40,55],[60,60],[74,50]];
     bugs=positions.map(([x,y],i)=>{
       const button=document.createElement('button');button.type='button';button.className=`visitor-bug ${mode==='day'?'visitor-butterfly':'visitor-glow'}`;
-      button.setAttribute('aria-label',`${label()} ${i+1}，点击让它飞走`);
+      button.setAttribute('aria-label',t('{name} {index}，点击让它飞走',{name:label(),index:i+1}));
       button.style.visibility='hidden';button.disabled=true;button.dataset.phase='waiting';
       const b={button,x,y,index:i%3,slot:i,visits:0,phase:'waiting',nextVisit:i===0?0:i*(1800+Math.random()*1800)};
       button.addEventListener('click',()=>dismiss(b));layer.append(button);return b;
@@ -178,7 +179,7 @@ export function createVisitors({scene,treeElement,layer,onCount=()=>{},onStatus=
         }
       });
     }
-    onStatus(initial?'小访客已经在枝叶间飞舞，轻触一只试试。':paused?'已重新邀请，继续飞舞后，小访客会从画面外飞来。':'小访客正从远处飞来，也会随兴离开。');
+    onStatus(initial?t('小访客已经在枝叶间飞舞，轻触一只试试。'):paused?t('已重新邀请，继续飞舞后，小访客会从画面外飞来。'):t('小访客正从远处飞来，也会随兴离开。'));
     updateCount();renderBugs();sync();
   }
   function frame(now){
