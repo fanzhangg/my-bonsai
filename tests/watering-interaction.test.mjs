@@ -6,18 +6,29 @@ import {toolHome} from '../prototype/tool-home.mjs';
 class Element extends EventTarget{
  constructor(){super();this.clientWidth=390;this.clientHeight=844;this.dataset={};this.style={setProperty(){}};this.classes=new Set();this.classList={add:(...v)=>v.forEach(x=>this.classes.add(x)),remove:(...v)=>v.forEach(x=>this.classes.delete(x)),contains:v=>this.classes.has(v)};}
  querySelector(){return null;}
- append(){}
- setAttribute(){}
+ append(el){(this.children??=[]).push(el);}
+ setAttribute(key,value){(this.attrs??={})[key]=String(value);}
  setPointerCapture(){}
  getBoundingClientRect(){return {x:0,y:0};}
+ remove(){}
 }
-function setup(t){
+function setup(t,{flow=false,fail=false}={}){
  const win=new Element(),doc=new Element();doc.createElementNS=()=>new Element();
- const globals={window:win,document:doc,matchMedia:()=>({matches:true}),getComputedStyle:()=>({getPropertyValue:()=> '0px'}),ResizeObserver:class{observe(){}},cancelAnimationFrame(){}};
+ let tick=null,renderCount=0,geometryReads=0,collisionReads=0,dosed=0;const saved=[],errors=[];
+ const globals={window:win,document:doc,matchMedia:()=>({matches:true}),getComputedStyle:()=>({getPropertyValue:()=> '0px'}),ResizeObserver:class{observe(){}},cancelAnimationFrame(){tick=null;},requestAnimationFrame(fn){tick=fn;return 1;},DOMPoint:class{constructor(x,y){this.x=x;this.y=y;}matrixTransform(){return this;}}};
  for(const [key,value] of Object.entries(globals)){const previous=Object.getOwnPropertyDescriptor(globalThis,key);Object.defineProperty(globalThis,key,{value,configurable:true});t.after(()=>previous?Object.defineProperty(globalThis,key,previous):delete globalThis[key]);}
  const scene=new Element(),can=new Element(),holder=new Element(),water=new Element(),status=new Element();
- const watering=createWatering({scene,can,holder,water,status,renderTree:()=>null});watering.setActive(true);
- return {win,doc,can,watering};
+ let tree=null;
+ if(flow){
+  tree={root:{x:200,y:600},progress:.5};const svg=new Element(),vessel=new Element();
+  svg.getScreenCTM=vessel.getScreenCTM=()=>({a:1,inverse(){return this;}});
+  can.querySelector=()=>vessel;holder.querySelector=()=>svg;
+  svg.querySelector=selector=>selector==='[data-wind-tree]'?{getBBox(){geometryReads++;return {y:100};}}:{getBoundingClientRect:()=>({bottom:600})};
+  svg.querySelectorAll=()=>{collisionReads++;return [];};
+  can.classList.toggle=(name,on)=>on?can.classes.add(name):can.classes.delete(name);
+ }
+ const watering=createWatering({scene,can,holder,water,status,renderTree:()=>{renderCount++;return tree;},onDose:used=>dosed+=used,onFinish:async used=>{saved.push(used);if(fail)throw new Error('offline');},onError:error=>errors.push(error)});watering.setActive(true);
+ return {win,doc,can,water,watering,step:time=>tick?.(time),get renderCount(){return renderCount;},get geometryReads(){return geometryReads;},get collisionReads(){return collisionReads;},get dosed(){return dosed;},saved,errors};
 }
 function fire(el,type,details={}){const event=new Event(type,{cancelable:true});Object.assign(event,{button:0,pointerId:1,pointerType:'touch',isPrimary:true,...details});el.dispatchEvent(event);}
 
@@ -47,4 +58,63 @@ test('tool homes preserve spacing and clear portrait and landscape safe areas',t
   assert.ok(can.x-56>=insets.left);assert.ok(can.x+56<=scissors.x-56);
   assert.ok(scissors.x+56<=width-insets.right);assert.ok(scissors.y+56<=height-insets.bottom-40);
  }
+});
+
+for(const fail of [false,true])test(`pouring caches geometry and renders once after settling (save failure: ${fail})`,async t=>{
+ const h=setup(t,{flow:true,fail});
+ fire(h.can,'pointerdown');fire(h.can,'pointermove',{clientX:200,clientY:348});
+ let time=performance.now()+300;
+ for(let i=0;i<20;i++)h.step(time+=60);
+ assert.equal(h.renderCount,1,'no full tree replacement during water animation');
+ assert.ok(h.dosed>0);assert.ok(h.geometryReads<=2);assert.equal(h.collisionReads,2,'one query for crowns and one for solid geometry');
+ fire(h.win,'scroll');h.step(time+=60);assert.equal(h.collisionReads,4,'scroll invalidates collision coordinates');
+ fire(h.can,'pointercancel');await Promise.resolve();
+ assert.equal(h.renderCount,1,'last drops still use the original tree');
+ for(let i=0;i<60;i++)h.step(time+=60);
+ await Promise.resolve();
+ assert.equal(h.watering.busy,false);assert.equal(h.renderCount,2);
+ assert.deepEqual(h.saved,[h.dosed],'partial dose is saved exactly once');
+ assert.equal(h.errors.length,fail?1:0);
+});
+
+test('hiding the page flushes the used dose and settles deferred growth',async t=>{
+ const h=setup(t,{flow:true});fire(h.can,'pointerdown');fire(h.can,'pointermove',{clientX:200,clientY:348});
+ h.step(performance.now()+400);assert.ok(h.dosed>0);
+ h.doc.hidden=true;fire(h.doc,'visibilitychange');await Promise.resolve();
+ assert.equal(h.watering.busy,false);assert.deepEqual(h.saved,[h.dosed]);assert.equal(h.renderCount,2);
+});
+
+test('slow frames retain a connected stream from nozzle to impact instead of isolated zero-length strokes',t=>{
+ const h=setup(t,{flow:true});fire(h.can,'pointerdown');fire(h.can,'pointermove',{clientX:200,clientY:348});
+ let time=performance.now()+300;
+ for(let i=0;i<25;i++)h.step(time+=120);
+ const path=h.water.children[2].attrs.d;
+ assert.equal((path.match(/ M/g)??[]).length,1,'stationary pouring must remain one connected stream');
+ assert.ok((path.match(/ Q/g)??[]).length>20,'continuous water needs samples independent of frame rate');
+ h.step(time+=900);
+ const afterStall=h.water.children[2].attrs.d;
+ assert.equal((afterStall.match(/ M/g)??[]).length,1,'a long frame must not empty the stream');
+ assert.ok((afterStall.match(/ Q/g)??[]).length>20);
+});
+
+test('leaving the tree stops new water and re-entry starts a separate stream without bridging the pause',t=>{
+ const h=setup(t,{flow:true});fire(h.can,'pointerdown');fire(h.can,'pointermove',{clientX:200,clientY:348});
+ let time=performance.now()+300;
+ for(let i=0;i<10;i++)h.step(time+=60);
+ const dose=h.dosed;fire(h.can,'pointermove',{clientX:1000,clientY:348});
+ for(let i=0;i<3;i++)h.step(time+=120);
+ assert.equal(h.dosed,dose);assert.equal(h.water.dataset.flowing,'false');
+ fire(h.can,'pointermove',{clientX:200,clientY:348});h.step(time+=120);
+ assert.ok(h.dosed>dose);assert.equal(h.water.dataset.flowing,'true');
+ assert.equal((h.water.children[2].attrs.d.match(/ M/g)??[]).length,2,'new pour must not connect to water emitted before the pause');
+});
+
+test('slow rendering still transitions to drops, empties once and clears all streams',async t=>{
+ const h=setup(t,{flow:true});fire(h.can,'pointerdown');fire(h.can,'pointermove',{clientX:200,clientY:348});
+ let time=performance.now()+300,sawDrops=false;
+ for(let i=0;i<130;i++){h.step(time+=120);sawDrops ||= h.water.dataset.phase==='drops';}
+ await Promise.resolve();assert.equal(sawDrops,true);assert.equal(h.dosed,4000);assert.deepEqual(h.saved,[4000]);
+ assert.equal(h.can.dataset.remaining,'0');assert.equal(h.water.dataset.flowing,'false');
+ assert.ok(h.water.children.slice(0,5).every(el=>el.attrs.d===''));
+ fire(h.can,'pointercancel');await Promise.resolve();assert.equal(h.watering.busy,false);assert.equal(h.can.dataset.remaining,'4000');
 });

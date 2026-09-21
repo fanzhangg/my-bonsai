@@ -1,19 +1,21 @@
 import {branchFamily,pruningPoints,pruningTarget,canPrune} from './pruning-model.mjs';
 import {toolHome} from './tool-home.mjs';
+import {pruningBitmap} from './pruning-bitmap.mjs';
+import {releaseBitmap} from './svg-bitmap.mjs';
 
 export function createPruning({scene,treeElement,tool,message,onCommit=async()=>{},onBusyChange=()=>{},onSettled=()=>{},onError=()=>{}}){
   let tree=null,svg=null;const ns='http://www.w3.org/2000/svg';
   const make=(tag,attrs={})=>{const el=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);return el;};
   const removed=new Set(),reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
   let active=false,held=false,busy=false,target=null,pointer=null,keyboard=false,keyboardIndex=-1;
-  let choices=[],gesture=null,clickMode=false;
+  let choices=[],gesture=null,clickMode=false,toolPosition={x:0,y:0};
   const markers=document.createElement('div');markers.className='pruning-points';markers.setAttribute('aria-hidden','true');scene.append(markers);
   message.classList.add('pruning-sr-only');
   tool.setAttribute('aria-pressed','false');
   tool.setAttribute('aria-label','点击或拖动剪刀，靠近提示点选择旁支；也可按空格拿起，用方向键选择，再按空格剪下');
   const instruction=()=>choices.length?(keyboard?'用方向键选择提示点，空格剪下 · Esc 取消':clickMode?'靠近提示点，点击剪下 · Esc 取消':'拖向提示点，松手剪下 · 也可点击拿起'):'暂时没有可剪的旁支 · Esc 取消';
   const elements=ids=>[...svg.querySelectorAll('[data-wind-wood],[data-wind-node]')].filter(el=>ids.has(tree.nodes[Number(el.getAttribute(el.hasAttribute('data-wind-wood')?'data-wind-wood':'data-wind-node'))]?.id));
-  function position(x,y){tool.style.left=`${x}px`;tool.style.top=`${y}px`;}
+  function position(x,y){toolPosition={x,y};tool.style.left='0px';tool.style.top='0px';tool.style.translate=`${x}px ${y}px`;}
   function home(){return toolHome(scene,64);}
   function screen(p){const q=new DOMPoint(p.x,p.y).matrixTransform(svg.getScreenCTM()),r=scene.getBoundingClientRect();return {x:q.x-r.x,y:q.y-r.y};}
   function clear(){svg?.querySelectorAll('.pruning-selected').forEach(el=>el.classList.remove('pruning-selected'));svg?.querySelectorAll('.pruning-outline').forEach(el=>el.remove());markers.querySelectorAll('.is-selected').forEach(el=>el.classList.remove('is-selected'));tool.classList.remove('is-snapped');scene.classList.remove('has-pruning-target');target=null;}
@@ -53,8 +55,8 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
   }
   async function animate(el,frames,options){const animation=el.animate(frames,{...options,duration:reduced()?1:options.duration});try{await animation.finished;}catch{} }
   async function returnHome(){
-    const h=home(),from={x:parseFloat(tool.style.left),y:parseFloat(tool.style.top)};
-    await animate(tool,[{left:`${from.x}px`,top:`${from.y}px`},{left:`${h.x}px`,top:`${h.y}px`}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)'});
+    const h=home(),from=toolPosition;
+    await animate(tool,[{translate:`${from.x}px ${from.y}px`},{translate:`${h.x}px ${h.y}px`}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)'});
     const destination=home();position(destination.x,destination.y);
   }
   async function finish(commit){
@@ -70,15 +72,25 @@ export function createPruning({scene,treeElement,tool,message,onCommit=async()=>
         ...blades.map((blade,i)=>animate(blade,[{transform:poses[i]},{transform:'rotate(0deg)'}],{duration:180,easing:'cubic-bezier(.3,0,.7,1)'})),
         animate(tool,[{rotate:'0deg'},{rotate:'-3deg',offset:.55},{rotate:'0deg'}],{duration:180})
       ]);
+      const family=branchFamily(tree.nodes,chosen.id),pieces=elements(family);
+      // Capture while saving. A decode failure must never prevent a valid cut.
+      const capture=reduced()?Promise.resolve(null):pruningBitmap(svg,pieces,scene,chosen).catch(()=>null);
       try{await onCommit(chosen.id);}catch(error){
+        capture.then(result=>releaseBitmap(result?.bitmap));
         clear();tool.classList.remove('is-held','is-snipping');await returnHome();busy=false;onBusyChange(false);onError(error);onSettled();return;
       }
-      const family=branchFamily(tree.nodes,chosen.id),fall=make('g'),pieces=elements(family);
-      clear();for(const el of pieces)fall.append(el);svg.append(fall);
-      for(const id of family)removed.add(id);
-      fall.style.transformOrigin=`${chosen.x}px ${chosen.y}px`;
+      const captured=await capture;
+      clear();for(const id of family)removed.add(id);
       const direction=chosen.ex<chosen.x?-1:1;
-      const falling=animate(fall,[{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${direction*9}px,8px) rotate(${direction*7}deg)`,opacity:1,offset:.2},{transform:`translate(${direction*65}px,210px) rotate(${direction*30}deg)`,opacity:0}],{duration:900,easing:'cubic-bezier(.4,0,.85,.55)'}).then(()=>fall.remove());
+      let falling;
+      if(captured&&!document.hidden){
+        const {bitmap,scale}=captured;pieces.forEach(el=>el.remove());scene.append(bitmap);
+        falling=animate(bitmap,[{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${direction*9*scale}px,${8*scale}px) rotate(${direction*7}deg)`,opacity:1,offset:.2},{transform:`translate(${direction*65*scale}px,${210*scale}px) rotate(${direction*30}deg)`,opacity:0}],{duration:900,easing:'cubic-bezier(.4,0,.85,.55)'}).then(()=>releaseBitmap(bitmap));
+      }else{
+        // Unsupported image decoding / reduced motion: settle the cut without
+        // falling back to animating thousands of vector paths on a slow device.
+        releaseBitmap(captured?.bitmap);pieces.forEach(el=>el.remove());falling=Promise.resolve();
+      }
       tool.classList.remove('is-held','is-snipping');
       await Promise.all([falling,returnHome()]);
       busy=false;

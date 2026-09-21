@@ -51,7 +51,7 @@ test('click pickup shows points, hovering snaps and marks selection, second clic
   const h=setup(t);h.pickup();
   assert.equal(h.markers.children.length,1);assert.equal(h.pruning.busy,true);assert.equal(h.tool.getAttribute('aria-pressed'),'true');
   const point=h.point();fire(h.win,'pointermove',{...point,clientY:point.clientY+20});
-  assert.equal(parseFloat(h.tool.style.top),point.clientY+12);
+  assert.equal(Number(h.tool.style.translate.split(' ')[1].replace('px','')),point.clientY+12);
   assert.ok(h.markers.children[0].classList.contains('is-selected'));assert.ok(h.wood.classList.contains('pruning-selected'));assert.match(h.message.textContent,/已选中旁支 · 点击/);
   fire(h.win,'pointerdown',point);fire(h.win,'pointerup',point);fire(h.win,'pointerup',point);await settled();
   assert.deepEqual(h.commits,['side']);assert.deepEqual(h.busy,[true,false]);assert.equal(h.pruning.busy,false);assert.equal(h.markers.children.length,0);assert.equal(h.svg.children.length,0);
@@ -120,7 +120,7 @@ test('scissors return to the current viewport if it changes during the return an
   const h=setup(t);h.pickup();
   h.tool.animate=()=>{h.scene.clientWidth=844;h.scene.clientHeight=390;return {finished:Promise.resolve()};};
   fire(h.win,'keydown',{key:'Escape'});await settled();
-  assert.equal(h.tool.style.left,'780px');assert.equal(h.tool.style.top,'320px');assert.equal(h.pruning.busy,false);
+  assert.equal(h.tool.style.translate,'780px 320px');assert.equal(h.pruning.busy,false);
 });
 test('keyboard selection shares markers; key repeat does not cut and a failed save preserves the branch',async t=>{
   const h=setup(t,{fail:true});fire(h.tool,'keydown',{key:' '});fire(h.tool,'keydown',{key:'ArrowRight'});

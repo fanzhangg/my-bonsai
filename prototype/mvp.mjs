@@ -98,7 +98,8 @@ const watering=createWatering({scene:$('live-watering'),holder:$('stage'),can:$(
   if(sandbox){rememberDraft();sandbox.waterings??=[];sandbox.waterings.push({id:crypto.randomUUID(),at:now(),amount:wateringAmount(used,sandbox.wateringRules),recoveryHours:used*recoveryRate,used});pendingWater=Math.max(0,pendingWater-used);pendingRecovery=Math.max(0,pendingRecovery-used*recoveryRate);changed();return;}
   waterQueue.push({id:crypto.randomUUID(),used,recoveryHours:used*recoveryRate});await flushWater();
  },
- onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);pruning.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);if(!busy&&record)paint(waterSnapshot());},
+ onBusyChange:busy=>{wind.setPaused(busy);visitors.setActive(!busy);pruning.setActive(!busy&&!loading&&!playing&&Boolean(record&&(treeId||sandbox)));cheatControls(busy);},
+ onSettled:()=>{if(record)paint(waterSnapshot());},
  onError:error=>{status(error.message||'浇水暂时无法保存，请重试');$('retry').hidden=false;}
 });
 const leafEditor=createLeafTrimming({

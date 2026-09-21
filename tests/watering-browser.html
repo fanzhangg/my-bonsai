@@ -5,6 +5,8 @@
 <h1>Watering nozzle browser regression</h1>
 <p>Run <code>node tests/watering-browser.mjs</code> and open its local URL. Uses the application SVG, styles and watering controller. Pink marker = rendered nozzle; water must start there.</p>
 <label><input id="legacy" type="checkbox" checked>Simulate legacy WebKit omitting outer SVG CSS transforms from getScreenCTM()</label>
+<label><input id="dense" type="checkbox" checked>Dense v3 tree</label>
+<label>Frame interval <select id="cadence"><option value="16.67">60fps</option><option value="60">60ms</option><option value="120" selected>120ms (about 8fps)</option><option value="250">250ms (4fps)</option></select></label>
 <button id="run">Run mobile and desktop checks</button>
 <pre id="results">Ready</pre>
 <iframe title="Watering preview" width="390" height="700"></iframe>
@@ -26,8 +28,10 @@ document.querySelector('#run').onclick=async()=>{
   const script=d.createElement('script');script.type='module';script.textContent=`
    import {createWatering} from '/watering.mjs';
    import {snapshot,draw,VERSION} from '/growth.mjs';
+   import {CURRENT_VERSION} from '/tree-versions.mjs';
    import {configForClaim} from '/claim.mjs';
-   const holder=document.querySelector('#stage'),tree=snapshot({version:VERSION,createdAt:Date.now()-7*86400000,config:configForClaim('watering-browser'),cuts:[]});
+   const version=${document.querySelector('#dense').checked?'CURRENT_VERSION':'VERSION'};
+   const holder=document.querySelector('#stage'),tree=snapshot({version,createdAt:Date.now()-1000*3600000,config:{...configForClaim('mobile-perf-3',version),density:.8},cuts:[]});
    holder.innerHTML=draw(tree,{transparent:true,viewBox:{x:tree.root.x-300,y:tree.root.y-420,width:640,height:620}});
    window.watering=createWatering({scene:document.querySelector('#live-watering'),holder,can:document.querySelector('#watering-can'),water:document.querySelector('#watering-water'),status:document.querySelector('#watering-status'),renderTree:()=>tree});
    window.watering.setActive(true);
@@ -50,13 +54,17 @@ document.querySelector('#run').onclick=async()=>{
   // Pointer movement uses touch's 48px finger offset, without pointer capture.
   // Keyboard pickup keeps the controller pointer null, so use that same id.
   let time=w.performance.now()+300;
+  // Keep the nozzle above foliage: a nozzle touching a leaf correctly has only
+  // a few pixels of free jet, which is not a useful continuity assertion.
+  const pourY=d.querySelector('[data-wind-tree]').getBoundingClientRect().top-65;
   for(const [label,x] of [['right',width/2+90],['left',width/2-90],['right again',width/2+90],['left again',width/2-90]]){
-   const event=new w.Event('pointermove');Object.assign(event,{pointerId:null,pointerType:'touch',clientX:x,clientY:height*.4+48});can.dispatchEvent(event);
-   for(let i=0;i<8;i++){time+=60;tick?.(time);}
+   const event=new w.Event('pointermove');Object.assign(event,{pointerId:null,pointerType:'touch',clientX:x,clientY:pourY+48});can.dispatchEvent(event);
+   for(let i=0;i<8;i++){time+=Number(document.querySelector('#cadence').value);tick?.(time);}
    const path=d.querySelectorAll('.watering-stream')[2].getAttribute('d');
    const match=path.match(/M([-\d.]+) ([-\d.]+)/),rect=marker.getBoundingClientRect();
    const error=match?Math.hypot(Number(match[1])-(rect.x+rect.width/2),Number(match[2])-(rect.y+rect.height/2)):Infinity;
-   reports.push(`${width}×${height} ${label}: ${error<1?'PASS':'FAIL'} — nozzle/stream gap ${error.toFixed(2)}px`);
+   const length=d.querySelectorAll('.watering-stream')[2].getTotalLength();
+   reports.push(`${width}×${height} ${label}: ${error<1&&length>10?'PASS':'FAIL'} — nozzle gap ${error.toFixed(2)}px, visible jet ${length.toFixed(1)}px`);
   }
   results.textContent=reports.join('\n');
  }

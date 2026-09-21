@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><title>Mobile bonsai performance review</title>
+<style>body{font:14px system-ui;background:#eee;color:#24362b;margin:16px}nav{display:flex;gap:16px;margin:12px 0}iframe{border:1px solid #888;background:white}pre{white-space:pre-wrap}button,select{font:inherit}</style>
+<h1>手机尺寸性能验收</h1>
+<p>隔离测试数据。桌面浏览器的手机尺寸检查，不等同于真实手机性能。</p>
+<nav><a href="/t/__TREE__" target="preview">密集盆栽</a><a href="/gallery" target="preview">Gallery</a>
+<label>视口 <select id="size"><option>390×844</option><option>320×568</option><option>844×390</option><option>1280×800</option></select></label><button id="reset">清零计数</button></nav>
+<pre id="metrics">等待页面</pre><iframe title="手机预览" name="preview" width="390" height="844" src="/gallery"></iframe>
+<script>
+ const frame=document.querySelector('iframe'),metrics=document.querySelector('#metrics');let replacements=0,bitmapFalls=0,observer;
+ document.querySelector('#size').onchange=e=>{const [w,h]=e.target.value.split('×');frame.width=w;frame.height=h;};
+ document.querySelector('#reset').onclick=()=>{replacements=0;bitmapFalls=0;};
+ frame.onload=()=>{
+  observer?.disconnect();replacements=0;bitmapFalls=0;
+  const body=frame.contentDocument?.body;if(!body)return;
+  observer=new frame.contentWindow.MutationObserver(changes=>{for(const change of changes){if(change.target.id==='stage')replacements++;for(const node of change.addedNodes)if(node.nodeType===1&&node.hasAttribute('data-pruning-bitmap'))bitmapFalls++;}});
+  observer.observe(body,{childList:true,subtree:true});
+ };
+ setInterval(()=>{
+  const d=frame.contentDocument;if(!d?.body)return;
+  metrics.textContent=`视口 ${frame.width}×${frame.height} · 页面 DOM ${d.querySelectorAll('*').length} 个元素\n整树替换 ${replacements} 次 · 位图掉落 ${bitmapFalls} 次 · Gallery 位图 ${d.querySelectorAll('.tree-art canvas').length} 张\n浇水剩余 ${d.querySelector('#watering-can')?.dataset.remaining??'—'} · ${d.querySelector('#watering-status')?.textContent??''}`;
+ },500);
+</script>
