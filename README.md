@@ -24,13 +24,9 @@ npm start
 
 Open [localhost:4173](http://127.0.0.1:4173/). Local trees are saved in `data/trees.json` by default. Run checks with `npm test`.
 
-## Design and documentation
+## Design
 
-- [Documentation index](docs/README.md) — design, implementation, research, reviews, and historical archives.
-- Game design: [English](docs/design.en.md) · [简体中文](docs/design.zh-CN.md).
-- Design system documentation (Chinese): [Tree generation](docs/design/bonsai-generation.zh-CN.md) · [UI and pots](docs/design/ui-system.zh-CN.md) · [Colors](docs/design/ui-colors.zh-CN.md). Read directly on GitHub; no local server required.
-- [Original MVP design](docs/archive/original-mvp.zh-CN.md) — historical product proposal in Chinese; some mechanics have since changed.
-- [Implementation and development reference](docs/implementation-notes.zh-CN.md) — detailed behavior, experiments, and links to technical notes in Chinese.
+[Explore the design guide](https://one-bonsai.onrender.com/design-system.html) — the game experience, visual principles, and interactive previews of trees, pots, colors, and care tools. Opens directly in your browser; the guide is in Chinese.
 
 ## Development and CI
 

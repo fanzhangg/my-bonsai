@@ -73,7 +73,7 @@ document.querySelectorAll('[data-pot-scale]').forEach(b=>b.addEventListener('cli
 const tabs=[...document.querySelectorAll('[role=tab]')];
 const populated=new Set();
 function showPanel(name,updateHash=true){
-  if(!tabs.some(tab=>tab.id===`tab-${name}`))name='compose';
+  if(!tabs.some(tab=>tab.id===`tab-${name}`))name='overview';
   tabs.forEach(tab=>{const active=tab.id===`tab-${name}`;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;$(tab.getAttribute('aria-controls')).hidden=!active;});
   if(!populated.has(name)){if(name==='trees')buildTrees();if(name==='branches')createBranchReview($('panel-branches'));if(name==='pots')buildPots();if(name==='system')buildSystem();populated.add(name);}
   if(name==='colors')colorReview.render();
@@ -89,6 +89,15 @@ tabs.forEach((tab,index)=>{
   tab.addEventListener('click',()=>showPanel(tab.id.slice(4)));
   tab.addEventListener('keydown',e=>{let next;if(e.key==='ArrowRight')next=(index+1)%tabs.length;if(e.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;if(next!==undefined){e.preventDefault();tabs[next].click();tabs[next].focus();}});
 });
+document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',event=>{
+  if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+  const target=tabs.find(tab=>tab.id===`tab-${link.hash.slice(1)}`);
+  if(!target)return;
+  event.preventDefault();
+  showPanel(link.hash.slice(1));
+  target.focus({preventScroll:true});
+  target.closest('.tabs').scrollIntoView({block:'start'});
+}));
 function usePot(id){const p=POT_PRESETS.find(p=>p.id===id);for(const key of ['shape','tone','pattern'])state[key]=p[key];showPanel('compose');paint();}
 $('preset-strip').addEventListener('click',e=>{const b=e.target.closest('[data-preset]');if(b)usePot(b.dataset.preset);});
 
@@ -96,13 +105,13 @@ function buildTrees(){
   $('tree-gallery').innerHTML=PRESETS.map((p,i)=>`<article class="tree-card"><span class="index">T0${i+1} / ${MORPHOLOGY[p.id].form}</span><div class="tree-art">${scene(p.id,POT_PRESETS.find(x=>x.id===notes[p.id].pot),'original','mature',true,false,treeReview)}</div><h3>${p.name}</h3><p>${treeReview.morphology?MORPHOLOGY[p.id].note:p.note}<br>建议盆形：${notes[p.id].pair}</p><button type="button" data-tree-preview="${p.id}">搭配这棵树 →</button></article>`).join('');
   $('tree-review-status').textContent=`${treeReview.morphology?'新版形态':'旧版对照'} · 样本 ${String(treeReview.sample).padStart(2,'0')} · 同一镜头与盆器`;
 }
-$('tree-gallery').addEventListener('click',e=>{const b=e.target.closest('[data-tree-preview]');if(b){state.tree=b.dataset.treePreview;usePot(notes[state.tree].pot);tabs[0].focus();}});
+$('tree-gallery').addEventListener('click',e=>{const b=e.target.closest('[data-tree-preview]');if(b){state.tree=b.dataset.treePreview;usePot(notes[state.tree].pot);$('tab-compose').focus();}});
 $('tree-review-view').addEventListener('change',e=>{treeReview.view=e.target.value;buildTrees();});
 $('tree-review-version').addEventListener('change',e=>{treeReview.morphology=e.target.value==='new';buildTrees();});
 $('tree-review-sample').addEventListener('click',()=>{treeReview.sample=treeReview.sample%5+1;buildTrees();});
 function buildPots(){
   $('pot-gallery').innerHTML=POT_PRESETS.map(p=>{const s=SHAPES.find(s=>s.id===p.shape);return `<article class="pot-card"><span class="index">P${p.id} / ${s.name}</span>${potSvg(p,`gallery-${p.id}`)}<h3>${p.name}</h3><p>${s.note}</p><div class="ratio"><span>宽 : 高 ≈ ${(s.width/s.height).toFixed(1)} : 1</span><span>${PATTERNS.find(x=>x.id===p.pattern).name}</span></div><button type="button" data-gallery-preset="${p.id}">放入组合预览</button></article>`;}).join('');
-  $('pot-gallery').addEventListener('click',e=>{const b=e.target.closest('[data-gallery-preset]');if(b){usePot(b.dataset.galleryPreset);tabs[0].focus();}});
+  $('pot-gallery').addEventListener('click',e=>{const b=e.target.closest('[data-gallery-preset]');if(b){usePot(b.dataset.galleryPreset);$('tab-compose').focus();}});
   $('pattern-gallery').innerHTML=PATTERNS.map(p=>`<article class="pattern-item">${potSvg({shape:'soft',tone:'porcelain',pattern:p.id},`pattern-${p.id}`)}<h3>${p.name}</h3><p>${p.note}</p></article>`).join('');
   $('pot-anatomy').innerHTML=`<svg viewBox="-145 -62 310 238" role="img" aria-label="盆体、花纹、盆沿、土面四层分解示意"><g transform="translate(0 120)"><path d="M-88 0 V18 Q-88 49 -53 49 H53 Q88 49 88 18 V0Z" fill="#deded2"/></g><g transform="translate(0 71)" stroke="#6e8ba6" stroke-width="2" fill="none"><path d="M-45 12 L-26 -3 L-9 12 M-18 7 L3 -12 L32 12"/></g><ellipse cy="30" rx="88" ry="9" fill="#efeee5" stroke="#c3c9b9" stroke-width=".7"/><ellipse cy="30" rx="81" ry="6" fill="#faf9f3"/><ellipse cy="-22" rx="81" ry="6" fill="#505141"/><ellipse cy="-22" rx="60" ry="3.5" fill="#76815e"/><path d="M-105 -20 V145 M105 -20 V145" stroke="#aeb7a5" stroke-dasharray="3 5" fill="none"/><g font-family="sans-serif" font-size="11" fill="#6a7568"><text x="116" y="148">01</text><text x="116" y="82">02</text><text x="116" y="34">03</text><text x="116" y="-18">04</text></g></svg>`;
 }
@@ -117,11 +126,11 @@ const colorReview=createColorReview({
   getState:()=>state,
   updateState:patch=>{Object.assign(state,patch);paint();},
   renderTree:(look,applicationPot)=>scene(state.tree,state,look,state.stage,false,applicationPot),
-  editPot:()=>{showPanel('compose');tabs[0].focus();}
+  editPot:()=>{showPanel('compose');$('tab-compose').focus();}
 });
 document.querySelectorAll('[data-open-colors]').forEach(button=>button.addEventListener('click',()=>{showPanel('colors');$('tab-colors').focus();}));
 const visitorReview=createVisitorReview({getState:()=>state,renderTree:()=>scene(state.tree,state,state.look,state.stage)});
 const pruningReview=createPruningReview();
 const wateringReview=createWateringReview();
 window.addEventListener('hashchange',()=>showPanel(location.hash.slice(1),false));
-paint();showPanel(location.hash.slice(1)||'compose',false);
+paint();showPanel(location.hash.slice(1)||'overview',false);

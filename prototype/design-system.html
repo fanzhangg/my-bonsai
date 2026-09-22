@@ -1,23 +1,45 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>我的盆栽 · 设计系统审核</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"><link rel="stylesheet" href="/design-system-watering.css"><link rel="stylesheet" href="/design-system-branches.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>我的盆栽 · 设计指南</title><link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/colors.css"><link rel="stylesheet" href="/design-system-visitors.css"><link rel="stylesheet" href="/design-system-pruning.css"><link rel="stylesheet" href="/design-system-watering.css"><link rel="stylesheet" href="/design-system-branches.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"></head>
 <body>
-<header class="masthead"><a class="brand" href="/">我的盆栽<span>形态、色彩与界面设计系统</span></a><a class="draft" href="/bonsai-design.html">盆栽设计语言 ↗</a></header>
+<header class="masthead"><a class="brand" href="/">我的盆栽<span>设计指南</span></a><a class="draft" href="/">去看一棵树 ↗</a></header>
 <main>
-  <div class="intro"><div><p class="eyebrow">BONSAI / DESIGN LANGUAGE</p><h1>树有姿态，盆有形。</h1><p class="lede">一套安静的简笔语言，让树形、盆形、花纹与颜色自由相遇。</p></div><div class="scope"><span>07 <small>现有树形</small></span><span>08 <small>盆器提案</small></span></div></div>
-  <nav class="tabs" role="tablist" aria-label="设计系统章节">
-    <button id="tab-compose" role="tab" aria-controls="panel-compose" aria-selected="true" tabindex="0">01 搭配实验室</button>
-    <button id="tab-trees" role="tab" aria-controls="panel-trees" aria-selected="false" tabindex="-1">02 树形谱系</button>
-    <button id="tab-branches" role="tab" aria-controls="panel-branches" aria-selected="false" tabindex="-1">枝干对照</button>
-    <button id="tab-pots" role="tab" aria-controls="panel-pots" aria-selected="false" tabindex="-1">03 盆器家族</button>
-    <button id="tab-colors" role="tab" aria-controls="panel-colors" aria-selected="false" tabindex="-1">04 色彩与天气</button>
-    <button id="tab-system" role="tab" aria-controls="panel-system" aria-selected="false" tabindex="-1">05 基础与组件</button>
-    <button id="tab-motion" role="tab" aria-controls="panel-motion" aria-selected="false" tabindex="-1">06 动效设计</button>
-    <button id="tab-visitors" role="tab" aria-controls="panel-visitors" aria-selected="false" tabindex="-1">07 小小访客</button>
-    <button id="tab-pruning" role="tab" aria-controls="panel-pruning" aria-selected="false" tabindex="-1">08 剪枝</button>
-    <button id="tab-watering" role="tab" aria-controls="panel-watering" aria-selected="false" tabindex="-1">09 浇水</button>
+  <div class="intro"><div><p class="eyebrow">MY BONSAI / DESIGN GUIDE</p><h1>一棵树，慢慢成为你的风景。</h1><p class="lede">从一次认养到每次回访，了解这盆树如何生长、如何被塑造，以及每一种形态与交互背后的选择。</p></div></div>
+  <nav class="tabs" role="tablist" aria-label="设计指南章节">
+    <button id="tab-overview" role="tab" aria-controls="panel-overview" aria-selected="true" tabindex="0">设计总览</button>
+    <button id="tab-trees" role="tab" aria-controls="panel-trees" aria-selected="false" tabindex="-1">树形</button>
+    <button id="tab-pots" role="tab" aria-controls="panel-pots" aria-selected="false" tabindex="-1">盆器</button>
+    <button id="tab-colors" role="tab" aria-controls="panel-colors" aria-selected="false" tabindex="-1">色彩</button>
+    <button id="tab-system" role="tab" aria-controls="panel-system" aria-selected="false" tabindex="-1">界面</button>
+    <button id="tab-motion" role="tab" aria-controls="panel-motion" aria-selected="false" tabindex="-1">动效</button>
+    <button id="tab-pruning" role="tab" aria-controls="panel-pruning" aria-selected="false" tabindex="-1">剪枝</button>
+    <button id="tab-watering" role="tab" aria-controls="panel-watering" aria-selected="false" tabindex="-1">浇水</button>
+    <button id="tab-compose" role="tab" aria-controls="panel-compose" aria-selected="false" tabindex="-1">搭配实验</button>
+    <button id="tab-branches" role="tab" aria-controls="panel-branches" aria-selected="false" tabindex="-1">枝干研究</button>
+    <button id="tab-visitors" role="tab" aria-controls="panel-visitors" aria-selected="false" tabindex="-1">访客实验</button>
   </nav>
-  <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose">
+  <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+    <div class="guide-intent"><p class="eyebrow">01 / 游戏体验</p><h2>没有任务清单，只有一棵值得回来的树。</h2><p>我的盆栽是一款手机优先的网页游戏。认养一棵随机幼树，给它起名或保留原样，通过固定链接回来观察和照料。没有分数、胜负或每日打卡，只看一眼，也是完整的一次体验。</p>
+      <ol class="guide-journey"><li><span>遇见与认养</span><p>认领眼前这棵树，保留它的姿态、叶色与盆器。</p></li><li><span>观察与照料</span><p>回访时看到生长回放，拿起剪刀或水壶，做一点小调整。</p></li><li><span>离开与回访</span><p>新枝随时间渐渐长出。分享链接，或到小院探望别人的树。</p></li></ol>
+      <p class="guide-aside">树的变化会被保存；剪枝不会立即补回。没有账号或所有者权限，持有链接的人都可以探望和操作。</p>
+    </div>
+    <div class="section-heading"><div><p class="eyebrow">02 / 视觉设计</p><h2>先读懂轮廓，再发现细节。</h2></div><span>点击章节，边看原则边比较样本</span></div>
+    <div class="guide-grid">
+      <a class="guide-card" href="#trees"><span class="guide-category">形态 / 07 种树形</span><h3>枝干有骨，树冠有留白 <span aria-hidden="true">↗</span></h3><p>从干线收分、枝条走向到叶层间距，比较完整枝叶、裸枝与剪影。</p></a>
+      <a class="guide-card" href="#pots"><span class="guide-category">盆器 / 08 款搭配</span><h3>让盆托住树的性格 <span aria-hidden="true">↗</span></h3><p>以盆形决定重心，以花纹和颜色点缀。八款预设已用于新树认养。</p></a>
+      <a class="guide-card" href="#colors"><span class="guide-category">色彩 / 时刻与天气</span><h3>背景退后，枝叶显现 <span aria-hidden="true">↗</span></h3><p>在晨光、白昼与夜色中比较树、盆和背景，观察材质如何适应场景。</p></a>
+      <a class="guide-card" href="#system"><span class="guide-category">界面 / 层级与反馈</span><h3>把画面留给树 <span aria-hidden="true">↗</span></h3><p>克制文字与装饰，用清晰的按钮状态、字阶和间距组织操作。</p></a>
+    </div>
+    <div class="section-heading"><div><p class="eyebrow">03 / 交互与动效</p><h2>操作像照料，反馈要清楚。</h2></div><span>独立演示，不修改你认养的盆栽</span></div>
+    <div class="guide-grid guide-grid-three">
+      <a class="guide-card" href="#pruning"><span class="guide-category">剪枝</span><h3>留下想要的轮廓 <span aria-hidden="true">↗</span></h3><p>拿起剪刀，靠近旁支后松手剪下。主干保留，后续生长沿剩余结构展开。</p></a>
+      <a class="guide-card" href="#watering"><span class="guide-category">浇水</span><h3>把水壶带到花盆旁 <span aria-hidden="true">↗</span></h3><p>用水流和盆面的回应表达照料。主游戏中的浇水也会影响生长进程。</p></a>
+      <a class="guide-card" href="#motion"><span class="guide-category">风与天气</span><h3>树干稳，枝梢轻动 <span aria-hidden="true">↗</span></h3><p>细枝与叶片轻摆，天气烘托气氛；尊重系统的减少动态效果设置。</p></a>
+    </div>
+    <div class="guide-experiments"><div><p class="eyebrow">04 / 探索实验</p><h2>把设计拆开，再试一种可能。</h2><p>这些页面保留候选方案和比较工具；实验效果不等于主游戏的默认表现。修叶是独立原型，结果只保存在当前浏览器。</p></div><ul><li><a href="#compose">树与盆的搭配实验 <span aria-hidden="true">↗</span></a></li><li><a href="#branches">枝干候选对照 <span aria-hidden="true">↗</span></a></li><li><a href="/bonsai-design.html">树形、叶冠与生长实验 <span aria-hidden="true">↗</span></a></li><li><a href="#visitors">蝴蝶与萤火虫交互实验 <span aria-hidden="true">↗</span></a></li><li><a href="/leaf-trim.html">逐片修叶原型 <span aria-hidden="true">↗</span></a></li></ul></div>
+  </section>
+  <section id="panel-compose" role="tabpanel" aria-labelledby="tab-compose" hidden>
+    <div class="section-heading"><div><p class="eyebrow">EXPERIMENT / COMPOSITION</p><h2>从一组搭配开始，试出另一种性格。</h2></div><span>自由组合预览 · 不改变认养预设</span></div>
     <div class="composer">
       <div class="canvas-wrap"><div class="canvas-meta"><span>组合预览</span><div class="segmented" aria-label="生长阶段"><button data-stage="young" aria-pressed="false">幼苗</button><button data-stage="mature" aria-pressed="true">成树</button></div></div><div id="composition" class="composition"></div><div class="caption"><div><h2 id="composition-name"></h2><p id="composition-detail"></p></div><span class="stamp">同一棵树 · 固定样本</span></div></div>
       <aside class="options" aria-label="组合选项">
@@ -41,7 +63,7 @@
   </section>
   <section id="panel-branches" role="tabpanel" aria-labelledby="tab-branches" hidden></section>
   <section id="panel-pots" role="tabpanel" aria-labelledby="tab-pots" hidden>
-    <div class="section-heading"><div><p class="eyebrow">POT / FORM × PATTERN × COLOR</p><h2>轮廓是骨架，花纹是点缀</h2></div><span>八款提案 · 延续上一轮编号</span></div><div id="pot-gallery" class="pot-gallery"></div>
+    <div class="section-heading"><div><p class="eyebrow">POT / FORM × PATTERN × COLOR</p><h2>轮廓是骨架，花纹是点缀</h2></div><span>八款认养预设 · 形状、花纹与颜色一同保存</span></div><div id="pot-gallery" class="pot-gallery"></div>
     <div class="section-heading"><h2>花纹语汇</h2><span>以同一盆形和盆色比较</span></div><div id="pattern-gallery" class="pattern-gallery"></div>
     <div class="anatomy"><div id="pot-anatomy"></div><div><p class="eyebrow">ONE COMPONENT / FOUR LAYERS</p><h2>一个盆器，四层构成</h2><ol><li><b>盆体</b><span>单色轮廓决定宽高与重心</span></li><li><b>花纹</b><span>约束在盆壁内，保持大块留白</span></li><li><b>盆沿</b><span>浅色边沿统一俯视角度</span></li><li><b>土面</b><span>深色底与一块苔色承接树根</span></li></ol></div></div>
   </section>
@@ -57,8 +79,8 @@
     <div class="principles"><article><span>背景</span><h3>低饱和，留出空间</h3><p>晨间淡紫灰，白昼浅青灰，落日淡杏色，夜间深蓝灰。天气只改变气氛。</p></article><article><span>材质</span><h3>分别适应背景</h3><p>树干与四档叶色沿用应用算法；新盆器保持选定色系，按背景调整明暗。</p></article><article><span>交互</span><h3>安静，也清楚</h3><p>主要操作采用苔绿与浅灰绿。图标保持实色，按钮文字与键盘焦点清晰可见。</p></article></div>
   </section>
   <section id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden>
-    <div class="section-heading"><div><p class="eyebrow">FOUNDATIONS / COMPONENTS</p><h2>少一点修饰，多一点留白</h2></div><span>现有语言 + 本轮规范提案</span></div>
-    <div class="foundation-grid"><article><h3>审核页基色 <small>固定浅色界面</small></h3><div id="ui-colors" class="token-colors"></div></article><article><h3>盆器原始色 <small>提案</small></h3><div id="pot-colors" class="token-colors"></div></article></div>
+    <div class="section-heading"><div><p class="eyebrow">FOUNDATIONS / COMPONENTS</p><h2>少一点修饰，多一点留白</h2></div><span>界面设计参考 · 组件状态演示</span></div>
+    <div class="foundation-grid"><article><h3>设计页基色 <small>固定浅色界面</small></h3><div id="ui-colors" class="token-colors"></div></article><article><h3>盆器原始色 <small>基础色板</small></h3><div id="pot-colors" class="token-colors"></div></article></div>
     <div class="review-note color-crosslink"><strong>动态配色</strong><span>应用内的背景、材质和控件随天气与时刻变化；六套树色统一在场景中比较。</span><button type="button" data-open-colors>查看色彩与天气 →</button></div>
     <div class="foundation-grid standards"><article><h3>字阶与间距</h3><div class="type-row"><b class="type-title">我的盆栽</b><code>标题 28 / 40</code></div><div class="type-row"><b class="type-section">选择一个盆器</b><code>章节 20 / 30</code></div><div class="type-row"><span>圆润轮廓，安静生长。</span><code>正文 14 / 22</code></div><div class="type-row"><small>辅助说明与编号</small><code>辅助 12 / 18</code></div><div class="space-scale"><span>4</span><span>8</span><span>12</span><span>16</span><span>24</span><span>32</span></div><p class="minor">苹方 / 微软雅黑 · 4px 间距基准 · 内容随窄屏换行</p></article>
     <article><h3>交互状态</h3><div class="state-examples"><div><button class="primary" id="sample-claim">认领这棵树</button><small>主操作 / 圆角 999</small></div><div><button class="sample-option" aria-pressed="false" id="sample-option">选择圆腹</button><small>点击切换选中状态</small></div><div><button disabled>暂不可用</button><small>禁用 / 无交互</small></div><div><button class="focus-demo">键盘焦点</button><small>焦点 / 铜色外框</small></div></div><p id="component-status" class="minor" role="status">状态演示 · 不创建真实盆栽</p><p class="minor">点击区域 ≥ 44px · 选中同时使用描边、底色与文字标记。</p></article></div>
@@ -88,6 +110,7 @@
     <div class="principles"><article><span>01 / 相遇</span><h3>小小的，不抢戏</h3><p>淡杏、米白、灰蓝三种小剪影，用轻微轮廓变化区分。无翅纹和描边，沿弧线轻飞；停留 6–8 秒时侧身合翅，身体贴近叶面。白天最多 3 只蝴蝶，夜晚最多 5 点萤光，数量随来访变化。触摸范围保持 48px。</p></article><article><span>02 / 回应</span><h3>一点，就飞远</h3><p>点击、轻触或按 Enter / 空格，小访客从当前位置向外飞走，约 1.1 秒沿弧线飞远，同时缩小、淡出。只回应被点到的那一只。</p></article><article><span>03 / 回来</span><h3>留一点等待</h3><p>小访客会在停留 14–35 秒后自行离开。间隔 4–16 秒，随机的新访客沿弧线从左、右或上方飞入，用 3–5 秒由小到大、由淡到清晰地靠近树冠。暂停或离开章节时停止计时。</p></article></div>
   </section>
   <section id="panel-pruning" role="tabpanel" aria-labelledby="tab-pruning" hidden>
+    <div class="section-heading"><div><p class="eyebrow">CARE / PRUNING</p><h2>剪去一点，让枝间留出空间。</h2></div><span>独立演示 · 拿起剪刀，靠近旁支后松手</span></div>
     <div id="pruning-scene" class="pruning-scene">
       <div id="pruning-tree" class="pruning-tree"></div>
       <p id="pruning-message" class="pruning-sr-only" role="status" aria-live="polite">拿起剪刀，慢慢靠近一根旁支。</p>
@@ -110,6 +133,7 @@
     </div>
   </section>
   <section id="panel-watering" role="tabpanel" aria-labelledby="tab-watering" hidden>
+    <div class="section-heading"><div><p class="eyebrow">CARE / WATERING</p><h2>一壶水，一点生长的回应。</h2></div><span>独立演示 · 拖动水壶靠近花盆开始浇水</span></div>
     <div id="watering-scene" class="watering-scene">
       <div id="watering-tree" class="watering-tree"></div>
       <svg id="watering-water" class="watering-water" aria-hidden="true"></svg>
@@ -130,6 +154,6 @@
       </button>
     </div>
   </section>
-  <footer><span>我的盆栽 · Design review 0.2</span><span>现有树形与配色算法 / 八款盆器 / 已接入随机认养</span></footer>
+  <footer><span>我的盆栽 · 设计指南</span><a href="#overview">回到设计总览 ↑</a></footer>
 </main><script type="module" src="/design-system.mjs"></script>
 </body></html>
